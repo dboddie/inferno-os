@@ -1,0 +1,42 @@
+<../../../mkconfig
+
+# must match mem.h
+BY2PG=4096
+
+# Redefine target and architecture.
+SYSTARG=$OSTARG
+OBJTYPE=spim
+INSTALLDIR=$ROOT/Inferno/$OBJTYPE/bin
+
+loadaddr=0x81c00000
+
+# Re-read the target configuration file.
+<$ROOT/mkfiles/mkfile-$SYSTARG-$OBJTYPE
+
+OBJ=\
+	start0.$O\
+	start1.$O
+
+# Since each object file is assembled to produce its own binary, strip the
+# suffix from each of them to find the binaries to delete when cleaning up.
+CLEANEXTRA=${OBJ:%.$O=%} uImage-* *.bin
+
+default:V: $OBJ
+
+%.$O:	%.s
+	$AS $ASFLAGS $stem.s
+	$LD -a -H0 -l -R$BY2PG -T$loadaddr -s -o $stem $stem.$O
+	dd if=$stem of=$stem.bin bs=1 skip=76
+	mkimage -A mips -O linux -T kernel -C none -a $loadaddr -e $loadaddr -n $stem -d $stem.bin uImage-$stem
+
+%.$O:	%.c
+	$CC $CFLAGS $stem.c
+
+clean:V:	cleanconf-$SHELLTYPE
+		rm -f *.[$OS] *.root.[sh] errstr.h *.out $CLEANEXTRA
+
+cleanconf-sh:V:
+		for i in $CONFLIST $CLEANCONFLIST
+		do
+			rm -f $i.c i$i i$i.* $i.ver
+		done
