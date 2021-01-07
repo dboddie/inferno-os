@@ -13,8 +13,8 @@ NOSCHED
 
 TEXT    start(SB), $0           /* The storage must be 8-bytes aligned. */
 
-    CONST(FB_START, R8)         /* r8 = framebuffer start register  */
-    MOVW    0(R8), R8           /* r8 = *(r8 + 0)   */
+    CONST(FB_START, R8)         /* r8 = framebuffer start register */
+    MOVW    0(R8), R8           /* r8 = *(r8 + 0) */
     MOVW    $0xa0000000, R9
     OR      R8, R9, R8
 
@@ -24,7 +24,7 @@ TEXT    start(SB), $0           /* The storage must be 8-bytes aligned. */
     CONST(0xff77cc44, R10)
 
 loop:
-    MOVW    R10, 0(R8)          /* *(r9 + 0) = r10  */
+    MOVW    R10, 0(R8)          /* *(r8 + 0) = r10 */
     ADDU    $4, R8
     BNE     R8, R9, loop
     NOP

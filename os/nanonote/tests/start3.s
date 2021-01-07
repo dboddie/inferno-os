@@ -32,7 +32,7 @@ end:
 TEXT    fbdraw(SB), $0
 
     CONST(FB_START, R8)         /* r8 = framebuffer start register  */
-    MOVW    0(R8), R8           /* r8 = *(r8 + 0)   */
+    MOVW    0(R8), R8           /* r8 = *(r8 + 0) */
     MOVW    $0xa0000000, R9
     OR      R9, R8
 
@@ -40,7 +40,7 @@ TEXT    fbdraw(SB), $0
     ADDU    R8, R9
 
 loop:
-    MOVW    A0, 0(R8)          /* *(r8 + 0) = r4  */
+    MOVW    A0, 0(R8)          /* *(r8 + 0) = r4 */
     ADDU    $4, R8
     BNE     R8, R9, loop
     NOP
