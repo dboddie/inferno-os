@@ -15,7 +15,9 @@ loadaddr=0x81c00000
 
 OBJ=\
 	start0.$O\
-	start1.$O
+	start1.$O\
+	start2.$O\
+	start3.$O
 
 # Since each object file is assembled to produce its own binary, strip the
 # suffix from each of them to find the binaries to delete when cleaning up.

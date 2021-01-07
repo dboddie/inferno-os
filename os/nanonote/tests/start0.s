@@ -11,3 +11,6 @@ TEXT    start(SB), $8
     MOVW    $setR30(SB), R30
     MOVW    $123, R2
     RETURN
+
+/* This program appears to cause the Nanonote's U-Boot to restart several times
+   before booting from NAND flash. */
