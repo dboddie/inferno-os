@@ -21,9 +21,16 @@ OBJ=\
 
 # Since each object file is assembled to produce its own binary, strip the
 # suffix from each of them to find the binaries to delete when cleaning up.
-CLEANEXTRA=${OBJ:%.$O=%} uImage-* *.bin
+CLEANEXTRA=${OBJ:%.$O=%} uImage-* *.bin main4
 
 default:V: $OBJ
+
+main4:  start4.s main4.c
+	$AS $ASFLAGS start4.s
+	$CC $CFLAGS main4.c
+	$LD -a -H0 -l -R$BY2PG -T$loadaddr -s -o main4 start4.$O main4.$O
+	dd if=main4 of=main4.bin bs=1 skip=76
+	mkimage -A mips -O linux -T kernel -C none -a $loadaddr -e $loadaddr -n main4 -d main4.bin uImage-main4
 
 %.$O:	%.s
 	$AS $ASFLAGS $stem.s
