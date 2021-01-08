@@ -8,7 +8,7 @@
 #include "mem.h"
 #include "mips.s"
 
-#define FB_START 0xb3050044
+#define FB_START 0x13050044
 #define T0 R8
 #define A0 R4
 
@@ -31,7 +31,7 @@ end:
 
 TEXT    fbdraw(SB), $0
 
-    CONST(FB_START, R8)         /* r8 = framebuffer start register  */
+    CONST(KSEG1|FB_START, R8)         /* r8 = framebuffer start register  */
     MOVW    0(R8), R8           /* r8 = *(r8 + 0) */
     MOVW    $0xa0000000, R9
     OR      R9, R8
