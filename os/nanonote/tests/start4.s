@@ -2,7 +2,7 @@
     Little endian MIPS32 for Ben Nanonote
     Contains parts of Plan 9's 9/rb port.
 
-    Test setting of the status register and subroutine calls.
+    Test subroutine calls.
 */
 
 #include "mem.h"
@@ -19,6 +19,7 @@ NOSCHED
 
 TEXT    start(SB), $0           /* The storage must be 8-bytes aligned. */
 
+    /* Make the framebuffer green. */
     CONST(Green, A0)
     JAL     fbdraw(SB)
     NOP
@@ -30,10 +31,11 @@ TEXT    start(SB), $0           /* The storage must be 8-bytes aligned. */
     ADDU    $(MACHSIZE-BY2V), R(MACH), SP
     MOVW    R(MACH), R1
 
+    /* Call a function to obtain a pixel value to make the framebuffer blue. */
     JAL     main(SB)
     NOP
 
-//    CONST(Pink, A0)
+    /* Copy the return value into the first parameter to the fbdraw routine. */
     MOVW    R2, A0
     JAL     fbdraw(SB)
     NOP
