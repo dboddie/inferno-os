@@ -34,9 +34,9 @@
 #define	MAXMACH		1   /* max # cpus system can run; see active.machs */
 #define STACKALIGN(sp)	((sp) & ~7)		/* bug: assure with alloc */
 #define	BLOCKALIGN	16
-#define CACHELINESZ	32			/* mips24k */
-#define ICACHESIZE	(64*1024)		/* rb450g */
-#define DCACHESIZE	(32*1024)		/* rb450g */
+#define CACHELINESZ	32			/* assume the same as mips24k */
+#define ICACHESIZE	(16*1024)		/* JZ4720 */
+#define DCACHESIZE	(16*1024)		/* JZ4720 */
 
 #define MASK(w)		FMASK(0, w)
 
