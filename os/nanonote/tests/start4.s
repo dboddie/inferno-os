@@ -28,11 +28,6 @@ TEXT    start(SB), $-8
     JAL     main(SB)
     NOP
 
-    /* Copy the return value into the first parameter to the fbdraw routine. */
-    MOVW    R1, A0
-    JAL     fbdraw(SB)
-    NOP
-
 end:
     JMP     end
     NOP
