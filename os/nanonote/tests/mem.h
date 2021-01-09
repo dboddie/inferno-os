@@ -15,18 +15,10 @@
 #define MAXBY2PG (16*1024) /* rounding for UTZERO in executables; see mkfile */
 #define UTROUND(t)	ROUNDUP((t), MAXBY2PG)
 
-#ifndef BIGPAGES
 #define	BY2PG		4096			/* bytes per page */
 #define	PGSHIFT		12			/* log2(BY2PG) */
 #define	PGSZ		PGSZ4K
 #define MACHSIZE	(2*BY2PG)
-#else
-/* 16K pages work very poorly */
-#define	BY2PG		(16*1024)		/* bytes per page */
-#define	PGSHIFT		14			/* log2(BY2PG) */
-#define PGSZ		PGSZ16K
-#define MACHSIZE	BY2PG
-#endif
 
 #define	KSTACK		8192			/* Size of kernel stack */
 #define	WD2PG		(BY2PG/BY2WD)		/* words per page */
@@ -324,6 +316,8 @@
 #define TSTKTOP (KSEG2+USTKSIZE-BY2PG)	/* top of temporary stack */
 #define TSTKSIZ (1024*1024/BY2PG)	/* can be at most UTSKSIZE/BY2PG */
 #define	KZERO	KSEG0			/* base of kernel address space */
-#define	KTZERO	(KZERO+0x20000)		/* first address in kernel text */
-#define MEMSIZE	(256*MB)		/* fixed memory on routerboard */
-#define PCIMEM	0x10000000		/* on rb450g */
+#define	KTZERO	(KZERO+0x1c00000)       /* first address in kernel text */
+#define MEMSIZE	(32*MB)		        /* fixed memory on Nanonote */
+
+/* Peripherals */
+#define FB_START 0x13050044

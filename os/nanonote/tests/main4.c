@@ -2,6 +2,8 @@
 
 extern void fbdraw(unsigned int v);
 
+#define Pink    0xff80ff
+
 unsigned int main(void)
 {
 /*
@@ -16,5 +18,5 @@ unsigned int main(void)
 */
 //    fbdraw(0xff4477cc); /* blue */
 
-    return 0xff4477cc;
+    return Pink;
 }

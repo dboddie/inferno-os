@@ -8,44 +8,38 @@
 #include "mem.h"
 #include "mips.s"
 
-#define FB_START 0x13050044
 #define T0 R8
 #define A0 R4
 
 #define Green   0xff77cc44
-#define Pink    0xffcc7744
 
-NOSCHED
+SCHED
 
-TEXT    start(SB), $0           /* The storage must be 8-bytes aligned. */
-
-    /* Make the framebuffer green. */
-    CONST(Green, A0)
-    JAL     fbdraw(SB)
-    NOP
+/* The storage must be 8-bytes aligned but does not need to perform stack
+   operations because this is where the stack pointer is set up. */
+TEXT    start(SB), $-8
 
     MOVW    $setR30(SB), R30
 
-    /* initialize Mach, including stack */
-    MOVW    $MACHADDR, R(MACH)
-    ADDU    $(MACHSIZE-BY2V), R(MACH), SP
-    MOVW    R(MACH), R1
+    /* Set the stack pointer. */
+    MOVW    $0x80010000, SP
 
     /* Call a function to obtain a pixel value to make the framebuffer blue. */
     JAL     main(SB)
     NOP
 
     /* Copy the return value into the first parameter to the fbdraw routine. */
-    MOVW    R2, A0
+    MOVW    R1, A0
     JAL     fbdraw(SB)
     NOP
 
 end:
     JMP     end
+    NOP
 
 /* Framebuffer test */
 
-TEXT    fbdraw(SB), $0
+TEXT    fbdraw(SB), $-8
 
     CONST(KSEG1|FB_START, R8)         /* r8 = framebuffer start register  */
     MOVW    0(R8), R8           /* r8 = *(r8 + 0) */
