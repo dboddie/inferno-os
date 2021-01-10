@@ -36,6 +36,7 @@ end:
 
 TEXT    fbdraw(SB), $-8
 
+    MOVW    R1, A0
     CONST(KSEG1|FB_START, R8)         /* r8 = framebuffer start register  */
     MOVW    0(R8), R8           /* r8 = *(r8 + 0) */
     MOVW    $0xa0000000, R9
