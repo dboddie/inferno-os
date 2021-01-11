@@ -322,13 +322,13 @@
 #define TSTKSIZ (1024*1024/BY2PG)	/* can be at most UTSKSIZE/BY2PG */
 #define	KZERO	KSEG0			/* base of kernel address space */
 #define BTOFF   0x4c                    /* execution offset into boot image */
-#define	KTZERO	(KZERO+0x1c00000+BTOFF) /* first address in kernel text */
+#define	KTZERO	(KZERO+0x8000+BTOFF)    /* first address in kernel text */
 #define MEMSIZE	(32*MB)		        /* fixed memory on Nanonote */
 
-/* Memory map - starts at 0x90000000, ends at 0xafffffff (512MB) */
+/* Memory map - starts at 0x80000000, ends at 0x82000000 (32MB) */
 /* Limit memory to 128MB due to branch limitations in JIT-compiled code. */
 #define MEMORY_TOP      0x81f00000  /* End of memory Inferno can use */
-                                    /* Framebuffer is created by U-Boot above this */
+/* Framebuffer is created by U-Boot above this at 0x81fb5000. */
 
 /* Peripherals */
 #define LCD_SA0 0x13050044

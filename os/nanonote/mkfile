@@ -7,11 +7,11 @@ SYSTARG=$OSTARG
 OBJTYPE=spim
 INSTALLDIR=$ROOT/Inferno/$OBJTYPE/bin
 
-loadaddr=0x81c00000
+loadaddr=0x80008000
 
 # must match mem.h
 BY2PG=4096
-KTZERO=0x81c0004c
+KTZERO=0x8000804c
 
 <$ROOT/mkfiles/mkfile-$SYSTARG-$OBJTYPE
 

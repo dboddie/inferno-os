@@ -14,7 +14,7 @@ TEXT    start(SB), $-8
 
     MOVW    $setR30(SB), R30
 
-    /* Set the stack pointer to . */
+    /* Set the stack pointer to just above the Mach structure. */
     MOVW    $(MACHADDR+BY2PG), SP
 
     JMP     main(SB)
