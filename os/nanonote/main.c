@@ -1,0 +1,325 @@
+#include "u.h"
+#include "../port/lib.h"
+#include "dat.h"
+#include "mem.h"
+#include "fns.h"
+#include "version.h"
+#include "io.h"
+
+#include "../port/uart.h"
+PhysUart* physuart[1];
+
+Conf conf;
+Mach *m = (Mach*)MACHADDR;
+Proc *up = 0;
+
+extern int main_pool_pcnt;
+extern int heap_pool_pcnt;
+extern int image_pool_pcnt;
+
+void confinit(void)
+{
+    ulong base = PGROUND((ulong)end);
+
+    /* U-Boot appears to allocate a framebuffer in the DRAM above 0xae000000,
+       so set the top of memory just below this. */
+    conf.topofmem = MEMORY_TOP;
+    conf.base0 = base;
+
+    conf.npage1 = 0;
+    conf.npage0 = (conf.topofmem - base)/BY2PG;
+    conf.npage = conf.npage0 + conf.npage1;
+    conf.ialloc = (((conf.npage*(main_pool_pcnt))/100)/2)*BY2PG;
+
+    conf.nproc = 100 + ((conf.npage*BY2PG)/MB)*5;
+    conf.nmach = 1;
+
+    active.machs = 1;
+    active.exiting = 0;
+}
+
+static void poolsizeinit(void)
+{
+    ulong nb;
+    nb = conf.npage*BY2PG;
+    poolsize(mainmem, (nb*main_pool_pcnt)/100, 0);
+    poolsize(heapmem, (nb*heap_pool_pcnt)/100, 0);
+    poolsize(imagmem, (nb*image_pool_pcnt)/100, 1);
+}
+
+#define Red  0x5f0000
+#define Orange  0x5f3f00
+#define Green  0x005f00
+
+void fbdraw(unsigned int v)
+{
+    unsigned int *fb_addr_reg = (unsigned int *)(LCD_SA0 | KSEG1);
+    unsigned int *addr = (unsigned int *)(*fb_addr_reg);
+    unsigned int i;
+
+    for (i = 0; i < 0x9800; i++) {
+        addr[i] = v;
+    }
+
+    i = 0;
+
+    for (int s = 28; s >= 0; s -= 4)
+    {
+        unsigned int d = ((unsigned int)addr >> s) & 0x0f;
+        for (int j = 3; j >= 0; j -= 1)
+        {
+            unsigned int b = (d >> j) & 1;
+
+            for (int k = 0; k < 8; k++) {
+                for (int l = 0; l < 3; l++)
+                    addr[i + ((3 - j)*4) + l + (k * 320)] = b ? 0xffffff : 0;
+            }
+        }
+
+        i += 24;
+    }
+
+}
+
+void main(void)
+{
+    fbdraw(Red);
+
+    /* Mach is defined in dat.h, edata and end are in port/lib.h */
+    memset(m, 0, sizeof(Mach));
+    fbdraw(Orange);
+    memset(edata, 0, end-edata);
+
+    fbdraw(Green);
+
+    quotefmtinstall();
+    confinit();
+    xinit();                    /* in port/xalloc.c */
+    poolinit();                 /* in port/alloc.c */
+    poolsizeinit();
+    //trapinit();                 /* in trap.c */
+
+    screeninit();               /* in screen.c */
+    print("\nBooting Inferno...\n");
+
+    timersinit();               /* in port/portclock.c */
+//    clockinit();                /* in clock.c */
+    printinit();                /* in port/devcons.c */
+/*
+    print("ARM id %8.8lux\n", getcpuid());
+    print("Cache info %8.8lux\n", getcacheinfo());
+    print("Board revision %d\n", board_revision());
+    print("CPU mode "); dump_flags();
+    print("System control %8.8lux\n", getsc());
+    print("Instruction set %8.8lux\n", getisac());
+*/
+    print("\nInferno OS %s Vita Nuova\n", VERSION);
+
+//    kbdinit();
+
+    procinit();                 /* in port/proc.c */
+    links();                    /* in the generated efikamx.c file */
+    chandevreset();
+
+    eve = strdup("inferno");
+
+    userinit();
+    schedinit();                /* in port/proc.c and should never return */
+
+    print("to infinite loop\n\n");
+    for (;;);
+}
+
+void
+init0(void)
+{
+    Osenv *o;
+    char buf[2*KNAMELEN];
+
+    up->nerrlab = 0;
+
+    spllo();
+
+    if(waserror())
+        panic("init0 %r");
+
+    /* These are o.k. because rootinit is null.
+     * Then early kproc's will have a root and dot. */
+
+    o = up->env;
+    o->pgrp->slash = namec("#/", Atodir, 0, 0);
+    cnameclose(o->pgrp->slash->name);
+    o->pgrp->slash->name = newcname("/");
+    o->pgrp->dot = cclone(o->pgrp->slash);
+
+    chandevinit();
+
+    if(!waserror()){
+        ksetenv("cputype", "arm", 0);
+        snprint(buf, sizeof(buf), "arm %s", conffile);
+        ksetenv("terminal", buf, 0);
+        poperror();
+    }
+
+    poperror();
+
+    disinit("/osinit.dis");
+}
+
+void
+userinit(void)
+{
+    Proc *p;
+    Osenv *o;
+
+    p = newproc();
+    o = p->env;
+
+    o->fgrp = newfgrp(nil);
+    o->pgrp = newpgrp();
+    o->egrp = newegrp();
+    kstrdup(&o->user, eve);
+
+    strcpy(p->text, "interp");
+
+    p->fpstate = FPINIT;
+
+    /*    Kernel Stack
+        N.B. The -12 for the stack pointer is important.
+        4 bytes for gotolabel's return PC */
+    p->sched.pc = (ulong)init0;
+    p->sched.sp = (ulong)p->kstack+KSTACK;
+
+    ready(p);
+}
+
+void    segflush(void *p, ulong n)
+{
+    //print("segflush: %p %8.8lux\n", p, n);
+}
+
+void    idlehands(void) { return; }
+
+void    exit(int) { return; }
+
+/* For some reason, this function from lib9 isn't linked in, so include it here. */
+void
+exits(char *s)
+{
+	if(s == 0 || *s == 0)
+		exit(0);
+	exit(1);
+}
+
+void    halt(void) { return; }
+
+void    fpinit(void)
+{
+}
+
+
+void
+FPsave(FPenv *fps)
+{
+/*    fps->control = fps->status = getfpscr();
+
+    for (int n = 0; n < 32; n++) {
+        int s = splhi();
+        savefns[n]((uvlong *)fps->regs[n]);
+        splx(s);
+        coherence();
+    }*/
+}
+
+void
+FPrestore(FPenv *fps)
+{
+/*    setfpscr(fps->control);
+
+    for (int n = 0; n < 32; n++) {
+        int s = splhi();
+        restfns[n]((uvlong *)fps->regs[n]);
+        coherence();
+        splx(s);
+    }*/
+}
+
+/* To be moved into trap.c */
+void setpanic(void)
+{
+}
+
+#include "ureg.h"
+
+static void
+getpcsp(ulong *pc, ulong *sp)
+{
+	*pc = getcallerpc(&pc);
+	*sp = (ulong)&pc-4;
+}
+
+void
+callwithureg(void (*fn)(Ureg*))
+{
+	Ureg ureg;
+
+	memset(&ureg, 0, sizeof ureg);
+	getpcsp((ulong*)&ureg.pc, (ulong*)&ureg.sp);
+	ureg.r31 = getcallerpc(&fn);
+	fn(&ureg);
+}
+
+static void
+_dumpstack(Ureg *ureg)
+{
+	ulong l, v, top, i;
+	extern ulong etext;
+
+	if(up == 0)
+		return;
+
+	print("ktrace /kernel/path %.8lux %.8lux %.8lux\n",
+		ureg->pc, ureg->sp, ureg->r31);
+	top = (ulong)up->kstack + KSTACK;
+	i = 0;
+	for(l=ureg->sp; l < top; l += BY2WD) {
+		v = *(ulong*)l;
+		if(KTZERO < v && v < (ulong)&etext) {
+			print("%.8lux=%.8lux ", l, v);
+			if((++i%4) == 0){
+				print("\n");
+				delay(200);
+			}
+		}
+	}
+	print("\n");
+}
+
+void
+dumpstack(void)
+{
+	callwithureg(_dumpstack);
+}
+
+void    reboot(void) { return; }
+
+static void
+linkproc(void)
+{
+	spllo();
+	if (waserror())
+		print("error() underflow: %r\n");
+	else
+		(*up->kpfun)(up->arg);
+	pexit("end proc", 1);
+}
+
+void
+kprocchild(Proc *p, void (*func)(void*), void *arg)
+{
+	p->sched.pc = (ulong)linkproc;
+	p->sched.sp = (ulong)p->kstack+KSTACK;
+
+	p->kpfun = func;
+	p->arg = arg;
+}

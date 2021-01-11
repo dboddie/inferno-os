@@ -1,0 +1,66 @@
+<../../mkconfig
+
+CONF=nanonote
+CONFLIST=nanonote
+
+SYSTARG=$OSTARG
+OBJTYPE=spim
+INSTALLDIR=$ROOT/Inferno/$OBJTYPE/bin
+
+loadaddr=0x81c00000
+
+# must match mem.h
+BY2PG=4096
+KTZERO=0x81c0004c
+
+<$ROOT/mkfiles/mkfile-$SYSTARG-$OBJTYPE
+
+<| $SHELLNAME ../port/mkdevlist $CONF
+
+OBJ=\
+	l.$O\
+	clock.$O\
+#	dump.$O\
+#	trap.$O\
+#	intr.$O\
+	main.$O\
+#	fpimips.$O\
+	tas.$O\
+	$IP\
+	$DEVS\
+	$ETHERS\
+	$LINKS\
+	$PORT\
+	$MISC\
+	$OTHERS\
+	$CONF.root.$O\
+
+LIBNAMES=${LIBS:%=lib%.a}
+LIBDIRS=$LIBS
+
+# Strip off the peripherals prefix of any object paths.
+NOPREFIXOBJ=${OBJ:peripherals/%=%}
+
+HFILES=\
+	mem.h\
+	dat.h\
+	fns.h\
+	io.h\
+
+CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
+KERNDATE=`{$NDATE}
+
+default:V: i$CONF
+
+# Omitting the -f option leads to instructions being generated in the kernel
+# that need FP emulation.
+
+i$CONF: $OBJ $CONF.c $CONF.root.h $LIBNAMES
+	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
+	$LD -f -H0 -l -s -o $target -R$BY2PG -T$KTZERO $NOPREFIXOBJ $CONF.$O $LIBFILES
+	mkimage -A mips -O linux -T kernel -C none -a $loadaddr -e $KTZERO -n Inferno -d inanonote uImage
+
+# Read standard build rules for ports.
+<../port/portmkfile
+
+main.$O:	include/ureg.h
