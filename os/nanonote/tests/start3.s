@@ -8,7 +8,6 @@
 #include "mem.h"
 #include "mips.s"
 
-#define FB_START 0x13050044
 #define T0 R8
 #define A0 R4
 

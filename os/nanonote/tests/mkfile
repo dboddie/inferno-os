@@ -26,6 +26,8 @@ CLEANEXTRA=${OBJ:%.$O=%} uImage-* *.bin main4 main5
 
 default:V: $OBJ
 
+# Link the code at the execution address and load the whole binary using U-Boot
+# then execute the code starting from the beginning of the program.
 main4:  start4.s main4.c
 	$AS $ASFLAGS start4.s
 	$CC $CFLAGS main4.c

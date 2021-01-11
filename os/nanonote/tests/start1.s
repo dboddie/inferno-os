@@ -6,7 +6,6 @@
 #include "mem.h"
 #include "mips.s"
 
-#define FB_START 0xb3050044
 #define T0 R8
 
 NOSCHED
