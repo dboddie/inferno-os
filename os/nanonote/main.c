@@ -24,7 +24,9 @@ void confinit(void)
     /* U-Boot appears to allocate a framebuffer in the DRAM above 0xae000000,
        so set the top of memory just below this. */
     conf.topofmem = MEMORY_TOP;
+    fbprint(MEMORY_TOP, 0);
     conf.base0 = base;
+    fbprint(base, 1);
 
     conf.npage1 = 0;
     conf.npage0 = (conf.topofmem - base)/BY2PG;
@@ -51,6 +53,25 @@ static void poolsizeinit(void)
 #define Orange  0x5f3f00
 #define Green  0x005f00
 
+const unsigned char digits[16][8] = {
+    {0x7c,0x82,0x82,0x92,0x82,0x82,0x7c,0x00},
+    {0x10,0x30,0x50,0x10,0x10,0x10,0x7c,0x00},
+    {0x7c,0x82,0x02,0x0c,0x30,0x40,0xfe,0x00},
+    {0x7c,0x82,0x02,0x3c,0x02,0x82,0x7c,0x00},
+    {0x08,0x18,0x28,0x48,0xfe,0x08,0x08,0x00},
+    {0xfe,0x80,0x80,0xfc,0x02,0x82,0x7c,0x00},
+    {0x7c,0x82,0x80,0xfc,0x82,0x82,0x7c,0x00},
+    {0xfe,0x02,0x04,0x08,0x10,0x20,0x40,0x00},
+    {0x7c,0x82,0x82,0x7c,0x82,0x82,0x7c,0x00},
+    {0x7c,0x82,0x82,0x7e,0x02,0x82,0x7c,0x00},
+    {0x00,0x00,0x3c,0x44,0x44,0x44,0x3a,0x00},
+    {0x40,0x40,0x78,0x44,0x44,0x44,0x78,0x00},
+    {0x00,0x00,0x38,0x44,0x40,0x44,0x38,0x00},
+    {0x04,0x04,0x3c,0x44,0x44,0x44,0x3c,0x00},
+    {0x00,0x00,0x38,0x44,0x7c,0x40,0x3c,0x00},
+    {0x38,0x44,0x40,0x78,0x40,0x40,0x40,0x00}
+};
+
 void fbdraw(unsigned int v)
 {
     unsigned int *fb_addr_reg = (unsigned int *)(LCD_SA0 | KSEG1);
@@ -60,39 +81,44 @@ void fbdraw(unsigned int v)
     for (i = 0; i < 0x9800; i++) {
         addr[i] = v;
     }
+}
 
-    i = 0;
+void fbprint(unsigned int v, unsigned int l)
+{
+    unsigned int *fb_addr_reg = (unsigned int *)(LCD_SA0 | KSEG1);
+    unsigned int *addr = (unsigned int *)(*fb_addr_reg);
+    unsigned int i = l * (320 * 16);
 
     for (int s = 28; s >= 0; s -= 4)
     {
-        unsigned int d = ((unsigned int)addr >> s) & 0x0f;
-        for (int j = 3; j >= 0; j -= 1)
+        unsigned int d = ((unsigned int)v >> s) & 0x0f;
+        for (int k = 0; k < 8; k++)
         {
-            unsigned int b = (d >> j) & 1;
+            unsigned int e = digits[d][k];
 
-            for (int k = 0; k < 8; k++) {
-                for (int l = 0; l < 3; l++)
-                    addr[i + ((3 - j)*4) + l + (k * 320)] = b ? 0xffffff : 0;
+            for (unsigned int j = 0; j < 8; j++)
+            {
+                for (int l = 0; l < 2; l++) {
+                    addr[i + (j * 2) + l + (k * 640)] = (e & 0x80) ? 0xffffff : 0;
+                    addr[i + (j * 2) + l + (k * 640) + 320] = (e & 0x80) ? 0xffffff : 0;
+                }
+
+                e = e << 1;
             }
         }
 
-        i += 24;
+        i += 16;
     }
 
 }
 
 void main(void)
 {
-    fbdraw(Red);
-
     /* Mach is defined in dat.h, edata and end are in port/lib.h */
     memset(m, 0, sizeof(Mach));
-    fbdraw(Orange);
     memset(edata, 0, end-edata);
 
-    fbdraw(Green);
-
-    quotefmtinstall();
+//    quotefmtinstall();
     confinit();
     xinit();                    /* in port/xalloc.c */
     poolinit();                 /* in port/alloc.c */
