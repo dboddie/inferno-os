@@ -327,7 +327,7 @@
 
 /* Memory map - starts at 0x80000000, ends at 0x82000000 (32MB) */
 /* Limit memory to 128MB due to branch limitations in JIT-compiled code. */
-#define MEMORY_TOP      0x81f00000  /* End of memory Inferno can use */
+#define MEMORY_TOP      (KZERO+0x1f00000) /* End of memory Inferno can use */
 /* Framebuffer is created by U-Boot above this at 0x81fb5000. */
 
 /* Peripherals */
