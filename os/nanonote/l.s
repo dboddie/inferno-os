@@ -12,6 +12,10 @@ SCHED
    operations because this is where the stack pointer is set up. */
 TEXT    start(SB), $-8
 
+    MOVW    $3, R8
+    MOVW    R8, M(CONFIG)
+    EHB
+
     MOVW    $setR30(SB), R30
 
     /* Set the stack pointer to just above the Mach structure. */
