@@ -1,6 +1,6 @@
 
-#define KADDR(p)	((void *)p)
-#define PADDR(p)	((ulong)p)
+#define KADDR(p)	((void *)((ulong)(p)|KSEG0))
+#define PADDR(p)	((ulong)(p)|KSEG0)
 #define DMAADDR(va)	(BUSDRAM |((uintptr)(va)))
 #define DMAIO(va)	(BUSIO | ((uintptr)(va)))
 #ifndef MASK
@@ -15,14 +15,6 @@ void	(*serwrite)(char*, int);
 void    (*screenputs)(char*, int);
 
 #include "../port/portfns.h"
-
-/* Locally defined functions that rely on the u-boot wrapper functions */
-void console_getc(int c);
-void console_putc(int);
-void console_puts(char *);
-void console_serputs(char *, int);
-void console_addr(void *a, int nl);
-void console_uint(unsigned int i, int nl);
 
 unsigned int get_vectors_base(void);
 void set_vectors_base(unsigned int);
@@ -109,74 +101,10 @@ uintptr dmaaddr(void *va);
 void 	dmastart(int, int, int, void*, void*, int);
 int 	dmawait(int);
 
-/* Efika MX specific hardware setup */
+/* Nanonote specific hardware setup */
 void    hwinit(void);
 
 #define PTR2UINT(p)     ((uintptr)(p))
 #define UINT2PTR(i)     ((void*)(i))
 
-void    savefp0(uvlong *);
-void    savefp1(uvlong *);
-void    savefp2(uvlong *);
-void    savefp3(uvlong *);
-void    savefp4(uvlong *);
-void    savefp5(uvlong *);
-void    savefp6(uvlong *);
-void    savefp7(uvlong *);
-void    savefp8(uvlong *);
-void    savefp9(uvlong *);
-void    savefp10(uvlong *);
-void    savefp11(uvlong *);
-void    savefp12(uvlong *);
-void    savefp13(uvlong *);
-void    savefp14(uvlong *);
-void    savefp15(uvlong *);
-void    savefp16(uvlong *);
-void    savefp17(uvlong *);
-void    savefp18(uvlong *);
-void    savefp19(uvlong *);
-void    savefp20(uvlong *);
-void    savefp21(uvlong *);
-void    savefp22(uvlong *);
-void    savefp23(uvlong *);
-void    savefp24(uvlong *);
-void    savefp25(uvlong *);
-void    savefp26(uvlong *);
-void    savefp27(uvlong *);
-void    savefp28(uvlong *);
-void    savefp29(uvlong *);
-void    savefp30(uvlong *);
-void    savefp31(uvlong *);
-
-void    restfp0(uvlong *);
-void    restfp1(uvlong *);
-void    restfp2(uvlong *);
-void    restfp3(uvlong *);
-void    restfp4(uvlong *);
-void    restfp5(uvlong *);
-void    restfp6(uvlong *);
-void    restfp7(uvlong *);
-void    restfp8(uvlong *);
-void    restfp9(uvlong *);
-void    restfp10(uvlong *);
-void    restfp11(uvlong *);
-void    restfp12(uvlong *);
-void    restfp13(uvlong *);
-void    restfp14(uvlong *);
-void    restfp15(uvlong *);
-void    restfp16(uvlong *);
-void    restfp17(uvlong *);
-void    restfp18(uvlong *);
-void    restfp19(uvlong *);
-void    restfp20(uvlong *);
-void    restfp21(uvlong *);
-void    restfp22(uvlong *);
-void    restfp23(uvlong *);
-void    restfp24(uvlong *);
-void    restfp25(uvlong *);
-void    restfp26(uvlong *);
-void    restfp27(uvlong *);
-void    restfp28(uvlong *);
-void    restfp29(uvlong *);
-void    restfp30(uvlong *);
-void    restfp31(uvlong *);
+void fbprint(unsigned int v, unsigned int l);
