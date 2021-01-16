@@ -28,9 +28,7 @@ ulong   getisac(void);
 
 ulong	getsp(void);
 ulong	getpc(void);
-ulong	getcpsr(void);
-ulong	getspsr(void);
-ulong	getcpuid(void);
+ulong	getprid(void);
 ulong	getcacheinfo(void);
 ulong	getcallerpc(void*);
 u32int	lcycles(void);
@@ -52,13 +50,15 @@ void	_idlehands(void);
 void	coherence(void);
 void	clockinit(void);
 void	trapinit(void);
-void    power_init(void);
 char *	trapname(int psr);
 int	isvalid_va(void *v);
 int	isvalid_wa(void *v);
-void	setr13(int, void*);
-void	vectors(void);
-void	vtable(void);
+
+void	vecinit(void);
+void	vector0(void);
+void	vector100(void);
+void	vector180(void);
+
 void	setpanic(void);
 void	dumpregs(Ureg*);
 void	dumparound(uint addr);
@@ -67,23 +67,15 @@ int	(*breakhandler)(Ureg*, Proc*);
 void    irqenable(u32int *, u32int, void (*)(Ureg*, void*), void*);
 #define intrenable(i, f, a, b, n) irqenable((i), (f), (a))
 
-void	cachedwbinv(void);
-void	cachedwbse(void*, int);
-void	cachedwbinvse(void*, int);
-void	cachedinvse(void*, int);
-void	cacheiinvse(void*, int);
-void	cacheiinv(void);
-void	cacheuwbinv(void);
+ulong   getstatus(void);
+void    setstatus(ulong);
+ulong   getconfig(void);
+ulong   getebase(void);
 
 void    kbdinit(void);
-void	mmuinit1(void);
-void	mmuinvalidateaddr(u32int);
 void	screeninit(void);
-void	setpower(int, int);
 void	clockcheck(void);
-void	armtimerset(int);
 void	links(void);
-int	fpiarm(Ureg*);
 void	mdelay(uint);
 
 char*	getconf(char*);
