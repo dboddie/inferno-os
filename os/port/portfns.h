@@ -1,6 +1,6 @@
 #define		FPinit() fpinit() /* remove this if math lib is linked */
-void		FPrestore(void*);
-void		FPsave(void*);
+void		FPrestore(FPenv*);
+void		FPsave(FPenv*);
 Timer*		addclock0link(void (*)(void), int);
 Cname*		addelem(Cname*, char*);
 void		addprog(Proc*);
