@@ -1,5 +1,6 @@
 /*
  *	mips user level lock code
+ *      From Plan 9's libc/mips/tas.s
  */
 
 #define	LL(base, rt)	WORD	$((060<<26)|((base)<<21)|((rt)<<16))
