@@ -88,11 +88,13 @@ static void screenwin(void);
 
 void screeninit(void)
 {
+    serwrite = 0;
+
     /* Set the pixel format for the channel used to write data to the screen. */
     memsetchan(&xgscreen, RGB24);
 
     conf.monitor = 1;
-    xgdata.bdata = (uchar*)*(unsigned int *)(LCD_SA0);
+    xgdata.bdata = (uchar*)*(unsigned int *)(LCD_SA0 | KSEG1);
     xgdata.ref	= 1;
     gscreen = &xgscreen;
     gscreen->width = wordsperline(gscreen->r, gscreen->depth);
