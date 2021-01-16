@@ -39,26 +39,28 @@
 
 /* all barriers, clears all hazards; clobbers r/Reg and R22 */
 #define BARRIERS(r, Reg, label) \
-	SYNC; EHB; MOVW $ret(SB), Reg; JALRHB(r)
+	SYNC; EHB; MOVW $barret(SB), Reg; JALRHB(r); NOP
 /* same but return to KSEG1 */
 #define UBARRIERS(r, Reg, label) \
-	SYNC; EHB; MOVW $ret(SB), Reg; OR $KSEG1, Reg; JALRHB(r)
+	SYNC; EHB; MOVW $barret(SB), Reg; OR $KSEG1, Reg; JALRHB(r); NOP
 
-/* alternative definitions using labels */
 #ifdef notdef
+/* alternative definitions using labels */
 /* all barriers, clears all hazards; clobbers r/Reg */
 #define BARRIERS(r, Reg, label) \
 	SYNC; EHB; \
 	MOVW	$label(SB), Reg; \
 	JRHB(r); \
-TEXT label(SB), $-4; \
+        NOP; \
+TEXT label(SB), $0; \
 	NOP
 #define UBARRIERS(r, Reg, label) \
 	SYNC; EHB; \
 	MOVW	$label(SB), Reg; \
 	OR	$KSEG1, Reg; \
 	JRHB(r); \
-TEXT label(SB), $-4; \
+        NOP; \
+TEXT label(SB), $0; \
 	NOP
 #endif
 
