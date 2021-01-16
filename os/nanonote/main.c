@@ -24,9 +24,7 @@ void confinit(void)
     /* U-Boot appears to allocate a framebuffer in the DRAM above 0xae000000,
        so set the top of memory just below this. */
     conf.topofmem = MEMORY_TOP;
-    fbprint(MEMORY_TOP, 0);
     conf.base0 = base;
-    fbprint(base, 1);
 
     conf.npage1 = 0;
     conf.npage0 = (conf.topofmem - base)/BY2PG;
@@ -66,7 +64,7 @@ const unsigned char digits[16][8] = {
     {0x7c,0x82,0x82,0x7e,0x02,0x82,0x7c,0x00},
     {0x00,0x00,0x3c,0x44,0x44,0x44,0x3a,0x00},
     {0x40,0x40,0x78,0x44,0x44,0x44,0x78,0x00},
-    {0x00,0x00,0x38,0x44,0x40,0x44,0x38,0x00},
+    {0x00,0x00,0x3c,0x40,0x40,0x40,0x3c,0x00},
     {0x04,0x04,0x3c,0x44,0x44,0x44,0x3c,0x00},
     {0x00,0x00,0x38,0x44,0x7c,0x40,0x3c,0x00},
     {0x38,0x44,0x40,0x78,0x40,0x40,0x40,0x00}
@@ -75,7 +73,7 @@ const unsigned char digits[16][8] = {
 void fbdraw(unsigned int v)
 {
     unsigned int *fb_addr_reg = (unsigned int *)(LCD_SA0 | KSEG1);
-    unsigned int *addr = (unsigned int *)(*fb_addr_reg);
+    unsigned int *addr = (unsigned int *)(*fb_addr_reg | KSEG1);
     unsigned int i;
 
     for (i = 0; i < 0x9800; i++) {
@@ -86,7 +84,7 @@ void fbdraw(unsigned int v)
 void fbprint(unsigned int v, unsigned int l)
 {
     unsigned int *fb_addr_reg = (unsigned int *)(LCD_SA0 | KSEG1);
-    unsigned int *addr = (unsigned int *)(*fb_addr_reg);
+    unsigned int *addr = (unsigned int *)(*fb_addr_reg | KSEG1);
     unsigned int i = l * (320 * 16);
 
     for (int s = 28; s >= 0; s -= 4)
@@ -118,7 +116,9 @@ void main(void)
     memset(m, 0, sizeof(Mach));
     memset(edata, 0, end-edata);
 
-//    quotefmtinstall();
+    vecinit();
+
+    quotefmtinstall();
     confinit();
     xinit();                    /* in port/xalloc.c */
     poolinit();                 /* in port/alloc.c */
@@ -348,4 +348,24 @@ kprocchild(Proc *p, void (*func)(void*), void *arg)
 
 	p->kpfun = func;
 	p->arg = arg;
+}
+
+/*
+ *  setup MIPS trap vectors
+ */
+void
+vecinit(void)
+{
+    fbdraw(Orange);
+/*	memmove((ulong*)UTLBMISS, (ulong*)vector0, 0x80);
+	memmove((ulong*)XEXCEPTION, (ulong*)vector0, 0x80);
+	memmove((ulong*)CACHETRAP, (ulong*)vector100, 0x80);*/
+	memmove((ulong*)EXCEPTION, (ulong*)vector180, 0x80);
+
+	setstatus(getstatus() & ~BEV);
+}
+
+void exception(void)
+{
+    fbdraw(Red);
 }

@@ -259,16 +259,9 @@
 #define PHYSCONS	(KSEG1|0x10030000)  /* UART base address */
 
 #define PIDXSHFT	12
-#ifndef BIGPAGES
 #define NCOLOR		8
 #define PIDX		((NCOLOR-1)<<PIDXSHFT)
 #define getpgcolor(a)	(((ulong)(a)>>PIDXSHFT) % NCOLOR)
-#else
-/* no cache aliases are possible with pages of 16K or larger */
-#define NCOLOR		1
-#define PIDX		0
-#define getpgcolor(a)	0
-#endif
 #define KMAPSHIFT	15
 
 #define	PTEGLOBL	(1<<0)
@@ -302,28 +295,14 @@
 #define KPTELOG		8
 #define KPTESIZE	(1<<KPTELOG)	/* entries in the kfault soft TLB */
 
-#define TLBPID(n) ((n)&0xFF)
-#define	NTLBPID	256		/* # of pids (affects size of Mach) */
-#define	NTLB	16		/* # of entries (mips 24k) */
-#define TLBOFF	1		/* first tlb entry (0 used within mmuswitch) */
-#define NKTLB	2		/* # of initial kfault tlb entries */
-#define WTLBOFF	(TLBOFF+NKTLB)	/* first large IO window tlb entry */
-#define NWTLB	0		/* # of large IO window tlb entries */
-#define	TLBROFF	(WTLBOFF+NWTLB)	/* offset of first randomly-indexed entry */
-
 /*
  * Address spaces
  */
-#define	UZERO	KUSEG			/* base of user address space */
-#define	UTZERO	(UZERO+MAXBY2PG)	/* 1st user text address; see mkfile */
-#define	USTKTOP	(KZERO-BY2PG)		/* byte just beyond user stack */
-#define	USTKSIZE (8*1024*1024)		/* size of user stack */
-#define TSTKTOP (KSEG2+USTKSIZE-BY2PG)	/* top of temporary stack */
-#define TSTKSIZ (1024*1024/BY2PG)	/* can be at most UTSKSIZE/BY2PG */
 #define	KZERO	KSEG0			/* base of kernel address space */
 #define BTOFF   0x4c                    /* execution offset into boot image */
 #define	KTZERO	(KZERO+0x8000+BTOFF)    /* first address in kernel text */
 #define MEMSIZE	(32*MB)		        /* fixed memory on Nanonote */
+#define STACKTOP (MACHADDR+BY2PG)       /* top of kernel stack */
 
 /* Memory map - starts at 0x80000000, ends at 0x82000000 (32MB) */
 /* Limit memory to 128MB due to branch limitations in JIT-compiled code. */
