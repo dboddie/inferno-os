@@ -295,6 +295,14 @@
 #define KPTELOG		8
 #define KPTESIZE	(1<<KPTELOG)	/* entries in the kfault soft TLB */
 
+#define TLBPID(n) ((n)&0xFF)
+#define	NTLB	32		/* # of entries (JZ4720) */
+#define TLBOFF	1		/* first tlb entry (0 used within mmuswitch) */
+#define NKTLB	2		/* # of initial kfault tlb entries */
+#define WTLBOFF	(TLBOFF+NKTLB)	/* first large IO window tlb entry */
+#define NWTLB	0		/* # of large IO window tlb entries */
+#define	TLBROFF	(WTLBOFF+NWTLB)	/* offset of first randomly-indexed entry */
+
 /*
  * Address spaces
  */
@@ -305,7 +313,6 @@
 #define STACKTOP (MACHADDR+BY2PG)       /* top of kernel stack */
 
 /* Memory map - starts at 0x80000000, ends at 0x82000000 (32MB) */
-/* Limit memory to 128MB due to branch limitations in JIT-compiled code. */
 #define MEMORY_TOP      (KZERO+0x1f00000) /* End of memory Inferno can use */
 /* Framebuffer is created by U-Boot above this at 0x81fb5000. */
 
