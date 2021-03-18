@@ -55,7 +55,7 @@ static Memimage xgscreen =
     { 0, 0, 320, 240 },    /* clipr */
     32,                     /* depth */
     4,                      /* nchan */
-    RGB24,                  /* chan (8-8-8 constant from draw.h) */
+    ARGB32,                 /* chan (8-8-8-8 constant from draw.h) */
     nil,                    /* cmap */
     &xgdata,                /* data */
     0,                      /* zero */
@@ -91,10 +91,10 @@ void screeninit(void)
     serwrite = 0;
 
     /* Set the pixel format for the channel used to write data to the screen. */
-    memsetchan(&xgscreen, RGB24);
+    memsetchan(&xgscreen, ARGB32);
 
     conf.monitor = 1;
-    xgdata.bdata = (uchar*)*(unsigned int *)(LCD_SA0 | KSEG1);
+    xgdata.bdata = (uchar*)(*(unsigned int *)(LCD_SA0 | KSEG1) | KSEG1);
     xgdata.ref	= 1;
     gscreen = &xgscreen;
     gscreen->width = wordsperline(gscreen->r, gscreen->depth);
