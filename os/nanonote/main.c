@@ -76,12 +76,12 @@ void fbdraw(unsigned int v)
     unsigned int *addr = (unsigned int *)(*fb_addr_reg | KSEG1);
     unsigned int i;
 
-    for (i = 0; i < 0x9800; i++) {
+    for (i = 0; i < 0x12c00; i++) {
         addr[i] = v;
     }
 }
 
-void fbprint(unsigned int v, unsigned int l)
+void fbprint(unsigned int v, unsigned int l, unsigned int colour)
 {
     unsigned int *fb_addr_reg = (unsigned int *)(LCD_SA0 | KSEG1);
     unsigned int *addr = (unsigned int *)(*fb_addr_reg | KSEG1);
@@ -97,8 +97,8 @@ void fbprint(unsigned int v, unsigned int l)
             for (unsigned int j = 0; j < 8; j++)
             {
                 for (int l = 0; l < 2; l++) {
-                    addr[i + (j * 2) + l + (k * 640)] = (e & 0x80) ? 0xffffff : 0;
-                    addr[i + (j * 2) + l + (k * 640) + 320] = (e & 0x80) ? 0xffffff : 0;
+                    addr[i + (j * 2) + l + (k * 640)] = (e & 0x80) ? colour : 0;
+                    addr[i + (j * 2) + l + (k * 640) + 320] = (e & 0x80) ? colour : 0;
                 }
 
                 e = e << 1;
@@ -107,7 +107,6 @@ void fbprint(unsigned int v, unsigned int l)
 
         i += 16;
     }
-
 }
 
 void main(void)
@@ -116,6 +115,10 @@ void main(void)
     memset(m, 0, sizeof(Mach));
     memset(edata, 0, end-edata);
 
+//    fbdraw(0x000000);
+//    fbprint(getconfig(), 0, 0xffff00);
+                                /* 0x80000483 -> MIPS32r2 (1), TLB (1),
+                                                 cacheable noncoherent (3) */
     vecinit();
 
     quotefmtinstall();
@@ -356,7 +359,6 @@ kprocchild(Proc *p, void (*func)(void*), void *arg)
 void
 vecinit(void)
 {
-    fbdraw(Orange);
 /*	memmove((ulong*)UTLBMISS, (ulong*)vector0, 0x80);
 	memmove((ulong*)XEXCEPTION, (ulong*)vector0, 0x80);
 	memmove((ulong*)CACHETRAP, (ulong*)vector100, 0x80);*/
@@ -367,5 +369,7 @@ vecinit(void)
 
 void exception(void)
 {
-    fbdraw(Red);
+    fbprint(getepc(), 10, 0xff0000);
+    fbprint(getcause(), 11, 0xff8000);
+    for (;;) {}
 }

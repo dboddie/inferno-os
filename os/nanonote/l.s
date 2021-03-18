@@ -12,6 +12,8 @@ NOSCHED
    operations because this is where the stack pointer is set up. */
 TEXT    start(SB), $-8
 
+    MOVW    $setR30(SB), R30
+
     /* Disable interrupts, FP and ERL, but leave BEV on. */
     MOVW    $BEV, R1
     MOVW    R1, M(STATUS)
@@ -19,11 +21,15 @@ TEXT    start(SB), $-8
     MOVW    R0, M(CAUSE)
     EHB
 
+    MOVW    $TLBROFF, R1
+    MOVW    R1, M(WIRED)
+    EHB
+    MOVW    R0, M(CONTEXT)
+    EHB
+
     MOVW    $3, R8              /* Enable caching */
     MOVW    R8, M(CONFIG)
     EHB
-
-    MOVW    $setR30(SB), R30
 
     /* initialize Mach, including stack */
     MOVW    $MACHADDR, R(MACH)
@@ -151,4 +157,10 @@ TEXT    vector180(SB), $-8
         JMP     (R26)
         NOP
 
-SCHED
+TEXT    getepc(SB), $-8
+        MOVW    M(EPC), R1
+        RETURN
+
+TEXT    getcause(SB), $-8
+        MOVW    M(CAUSE), R1
+        RETURN

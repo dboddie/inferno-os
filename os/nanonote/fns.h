@@ -28,7 +28,9 @@ ulong   getisac(void);
 
 ulong	getsp(void);
 ulong	getpc(void);
+ulong	getepc(void);
 ulong	getprid(void);
+ulong	getcause(void);
 ulong	getcacheinfo(void);
 ulong	getcallerpc(void*);
 u32int	lcycles(void);
@@ -99,4 +101,4 @@ void    hwinit(void);
 #define PTR2UINT(p)     ((uintptr)(p))
 #define UINT2PTR(i)     ((void*)(i))
 
-void fbprint(unsigned int v, unsigned int l);
+void fbprint(unsigned int v, unsigned int l, unsigned int colour);
