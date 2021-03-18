@@ -17,6 +17,8 @@ KTZERO=0x8000804c
 
 <| $SHELLNAME ../port/mkdevlist $CONF
 
+# Define the objects to be built with the loader being the first.
+
 OBJ=\
 	l.$O\
 	clock.$O\
@@ -47,7 +49,7 @@ HFILES=\
 	fns.h\
 	io.h\
 
-CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
+CFLAGS=-l -wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp -I$ROOT/Inferno/$OBJTYPE/include -I$ROOT/Inferno/include
 KERNDATE=`{$NDATE}
 
 default:V: i$CONF
@@ -57,7 +59,7 @@ default:V: i$CONF
 
 i$CONF: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
-	$LD -a -f -H0 -l -s -o $target -R$BY2PG -T$KTZERO $NOPREFIXOBJ $CONF.$O $LIBFILES
+	$LD $LDFLAGS -a -f -H0 -l -s -o $target -R$BY2PG -T$KTZERO $NOPREFIXOBJ $CONF.$O $LIBFILES
 	mkimage -A mips -O linux -T kernel -C none -a $loadaddr -e $KTZERO -n Inferno -d inanonote uImage
 
 # Read standard build rules for ports.
