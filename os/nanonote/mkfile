@@ -54,12 +54,9 @@ KERNDATE=`{$NDATE}
 
 default:V: i$CONF
 
-# Omitting the -f option leads to instructions being generated in the kernel
-# that need FP emulation.
-
 i$CONF: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
-	$LD $LDFLAGS -a -f -H0 -l -s -o $target -R$BY2PG -T$KTZERO $NOPREFIXOBJ $CONF.$O $LIBFILES
+	$LD $LDFLAGS -a -H0 -l -s -o $target -R$BY2PG -T$KTZERO $NOPREFIXOBJ $CONF.$O $LIBFILES
 	mkimage -A mips -O linux -T kernel -C none -a $loadaddr -e $KTZERO -n Inferno -d inanonote uImage
 
 # Read standard build rules for ports.
