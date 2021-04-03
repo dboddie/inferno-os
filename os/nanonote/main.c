@@ -21,9 +21,7 @@ void confinit(void)
 {
     ulong base = PGROUND((ulong)end);
 
-    /* U-Boot appears to allocate a framebuffer in the DRAM above 0xae000000,
-       so set the top of memory just below this. */
-    conf.topofmem = MEMORY_TOP;
+    conf.topofmem = MEMORY_TOP;     /* defined in mem.h */
     conf.base0 = base;
 
     conf.npage1 = 0;
@@ -109,6 +107,14 @@ void fbprint(unsigned int v, unsigned int l, unsigned int colour)
     }
 }
 
+void kbdinit(void)
+{
+    kbdq = qopen(4*1024, 0, 0, 0);
+    qnoblock(kbdq, 1);
+}
+
+extern void clocktest(void);
+
 void main(void)
 {
     /* Mach is defined in dat.h, edata and end are in port/lib.h */
@@ -129,22 +135,15 @@ void main(void)
     //trapinit();                 /* in trap.c */
 
     screeninit();               /* in screen.c */
-    print("\nBooting Inferno...\n");
 
     timersinit();               /* in port/portclock.c */
-//    clockinit();                /* in clock.c */
+    clockinit();                /* in clock.c */
     printinit();                /* in port/devcons.c */
-/*
-    print("ARM id %8.8lux\n", getcpuid());
-    print("Cache info %8.8lux\n", getcacheinfo());
-    print("Board revision %d\n", board_revision());
-    print("CPU mode "); dump_flags();
-    print("System control %8.8lux\n", getsc());
-    print("Instruction set %8.8lux\n", getisac());
-*/
     print("\nInferno OS %s Vita Nuova\n", VERSION);
 
-//    kbdinit();
+    clocktest();
+
+    kbdinit();
 
     procinit();                 /* in port/proc.c */
     links();                    /* in the generated efikamx.c file */
@@ -168,6 +167,7 @@ init0(void)
     up->nerrlab = 0;
 
     spllo();
+    print("interrupts on\n");
 
     if(waserror())
         panic("init0 %r");
@@ -184,14 +184,15 @@ init0(void)
     chandevinit();
 
     if(!waserror()){
-        ksetenv("cputype", "arm", 0);
-        snprint(buf, sizeof(buf), "arm %s", conffile);
+        ksetenv("cputype", "spim", 0);
+        snprint(buf, sizeof(buf), "spim %s", conffile);
         ksetenv("terminal", buf, 0);
         poperror();
     }
 
     poperror();
 
+    print("disinit\n");
     disinit("/osinit.dis");
 }
 
@@ -213,9 +214,7 @@ userinit(void)
 
     p->fpstate = FPINIT;
 
-    /*    Kernel Stack
-        N.B. The -12 for the stack pointer is important.
-        4 bytes for gotolabel's return PC */
+    /* Kernel Stack, 4 bytes for gotolabel's return PC */
     p->sched.pc = (ulong)init0;
     p->sched.sp = (ulong)p->kstack+KSTACK;
 
@@ -303,6 +302,8 @@ _dumpstack(Ureg *ureg)
 {
 	ulong l, v, top, i;
 	extern ulong etext;
+
+for (;;) {}
 
 	if(up == 0)
 		return;
