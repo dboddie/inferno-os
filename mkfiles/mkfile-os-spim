@@ -10,15 +10,15 @@ AR=		iar
 ARFLAGS=	vu
 ARPREFIX=
 
-AS=		0a
-ASFLAGS=
+AS=		va
+ASFLAGS=	-L
 
-CC=		0c
-CFLAGS=		-wFV -I$ROOT/Inferno/spim/include -I$ROOT/include
+CC=		vc
+CFLAGS=		-l -wFV -I$ROOT/Inferno/spim/include -I$ROOT/include
 ANSICPP= -p
 
-LD=		0l
-LDFLAGS=
+LD=		vl
+LDFLAGS=	-m
 
 YACC=		iyacc
 YFLAGS=		-d

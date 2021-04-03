@@ -8,15 +8,15 @@ OS=		v851ok0q2t6
 AR=		ar
 ARFLAGS=	vu
 
-AS=		0a
-ASFLAGS=
+AS=		va
+ASFLAGS=	-L
 
-CC=		0c
-CFLAGS=		-w -I$ROOT/Inferno/$OBJTYPE/include -I$ROOT/Inferno/include -I$ROOT/include
+CC=		vc
+CFLAGS=		-l -w -I$ROOT/Inferno/$OBJTYPE/include -I$ROOT/Inferno/include -I$ROOT/include
 ANSICPP= -p
 
-LD=		0l
-LDFLAGS=
+LD=		vl
+LDFLAGS=	-m
 
 SYSLIBS=	-lc
 

@@ -2,7 +2,11 @@
 #	spim-specific files
 #
 TARGFILES=\
+	frexp-spim.$O\
 	getfcr-spim.$O\
 	memmove-spim.$O\
 	memset-spim.$O\
+	nan-spim.$O\
 	strchr-spim.$O\
+	vlop-spim.$O\
+	vlrt-spim.$O\
