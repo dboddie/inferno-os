@@ -66,7 +66,7 @@ TEXT	getcallerpc(SB), $-8
 
 TEXT	splhi(SB), $-8
 	MOVW	R31, 12(R(MACH))	/* save PC in m->splpc */
-/*	DI(1)			*/	/* old M(STATUS) into R1 */
+/*	DI(1)			*/	/* (MIPS32r2) old M(STATUS) into R1 */
 	MOVW    M(STATUS), R1
 	EHB
 	AND     $~IE, R1, R2
@@ -87,7 +87,7 @@ TEXT    splxpc(SB), $-8
 	RETURN
 
 TEXT	spllo(SB), $-8
-/*	EI(1)			*/	/* old M(STATUS) into R1 */
+/*	EI(1)			*/	/* (MIPS32r2) old M(STATUS) into R1 */
 	MOVW    M(STATUS), R1
 	EHB
 	OR      $IE, R1, R2
