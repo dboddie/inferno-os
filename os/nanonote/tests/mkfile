@@ -22,7 +22,7 @@ OBJ=\
 
 # Since each object file is assembled to produce its own binary, strip the
 # suffix from each of them to find the binaries to delete when cleaning up.
-CLEANEXTRA=${OBJ:%.$O=%} uImage-* *.bin main4 main5
+CLEANEXTRA=${OBJ:%.$O=%} uImage-* *.bin main4 main5 ctest0
 
 default:V: $OBJ
 
@@ -31,12 +31,18 @@ default:V: $OBJ
 main4:  start4.s main4.c
 	$AS $ASFLAGS start4.s
 	$CC $CFLAGS main4.c
-	$LD -a -H0 -l -R$BY2PG -T$execaddr -s -o main4 start4.$O main4.$O
+	$LD $LDFLAGS -a -H0 -l -R$BY2PG -T$execaddr -s -o main4 start4.$O main4.$O
 	mkimage -A mips -O linux -T kernel -C none -a $loadaddr -e $execaddr -n main4 -d main4 uImage-main4
+
+ctest0: commonstart.s ctest0.c fbdraw.c
+	$AS $ASFLAGS commonstart.s
+	$CC $CFLAGS ctest0.c fbdraw.c
+	$LD $LDFLAGS -a -H0 -l -R$BY2PG -T$execaddr -s -o ctest0 commonstart.$O ctest0.$O
+	mkimage -A mips -O linux -T kernel -C none -a $loadaddr -e $execaddr -n ctest0 -d ctest0 uImage-ctest0
 
 %.$O:	%.s
 	$AS $ASFLAGS $stem.s
-	$LD -a -H0 -l -R$BY2PG -T$loadaddr -s -o $stem $stem.$O
+	$LD $LDFLAGS -a -H0 -l -R$BY2PG -T$loadaddr -s -o $stem $stem.$O
 	dd if=$stem of=$stem.bin bs=1 skip=76
 	mkimage -A mips -O linux -T kernel -C none -a $loadaddr -e $loadaddr -n $stem -d $stem.bin uImage-$stem
 

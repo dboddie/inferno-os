@@ -13,7 +13,7 @@
 
 #define Green   0xff77cc44
 
-SCHED
+NOSCHED
 
 /* The storage must be 8-bytes aligned but does not need to perform stack
    operations because this is where the stack pointer is set up. */

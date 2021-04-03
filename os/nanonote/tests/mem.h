@@ -321,3 +321,4 @@
 
 /* Peripherals */
 #define FB_START 0x13050044
+#define LCD_SA0 FB_START
