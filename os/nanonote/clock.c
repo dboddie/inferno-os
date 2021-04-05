@@ -21,8 +21,8 @@ clockintr(Ureg *, void *)
 void
 clockinit(void)
 {
-    *(ulong*)(CGU_CLKGR | KSEG1) &= ~(CGU_TCU | CGU_RTC);
-    fbprint(*(ulong*)(CGU_CLKGR | KSEG1), 0, 0xff0000);
+    /* Propagate the TCU clock by clearing the appropriate bit */
+    *(ulong*)(CGU_CLKGR | KSEG1) &= ~CGU_TCU;
 
     JZTimer *tm = (JZTimer *)(TIMER_BASE | KSEG1);
 
@@ -39,8 +39,8 @@ clockinit(void)
     tm->data_half0 = 0;
     tm->data_full0 = 12000000 / 256;
 
-    // Reset counter0, clear its full match flag, unmask its interrupt, then
-    // enable it
+    /* Reset counter0, clear its full match flag, unmask its interrupt to
+       enable it, then enable the counter itself */
     tm->counter0 = 0;
     tm->flag_clear = TimerCounter0;
     tm->mask_clear = TimerCounter0;
@@ -51,32 +51,24 @@ extern void fbprint(unsigned int v, unsigned int l, unsigned int colour);
 void
 clocktest(void)
 {
+    InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
+    print("%8.8lux\n", ic->source);
+    print("%8.8lux\n", ic->mask);
+    ic->mask_clear = InterruptTCU0;
+    print("%8.8lux\n", ic->mask);
+    print("%8.8lux\n", ic->pending);
+
+    intron(INTMASK);
+    spllo(); /* Enable interrupts */
+    print("%8.8lux\n", getstatus());
+    print("%8.8lux\n", getcause());
+
     JZTimer *tm = (JZTimer *)(TIMER_BASE | KSEG1);
-
-    fbprint(tm->stop, 1, 0xffffff);
-    fbprint(tm->counter_enable, 2, 0xffffff);
-    fbprint(tm->mask, 3, 0xffffff);
-
-    fbprint(tm->control0, 4, 0xffff00);
-    fbprint(tm->data_half0, 5, 0xffff00);
-    fbprint(tm->data_full0, 6, 0xffff00);
-
-    ulong i = 0;
-    for (;;) {
-        fbprint(tm->counter0, 7, 0xffffff);
-        fbprint(i++, 8, 0xff);
-    }
-/*
-    RTC *rtc = (RTC *)(RTC_BASE | KSEG1);
-    fbprint(rtc->control, 1, 0xffffff);
-    fbprint(rtc->second, 2, 0xffff00);
-    fbprint(rtc->second_alarm, 3, 0xffff00);
-    fbprint(rtc->regulator, 4, 0xff00ff);
+    print("%8.8lux\n", tm->mask);
 
     for (;;) {
-        fbprint(rtc->second, 5, 0xffffff);
+        fbprint(tm->counter0, 10, 0xffffff);
     }
-*/
 }
 
 void

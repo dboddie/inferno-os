@@ -61,6 +61,9 @@ void	vector0(void);
 void	vector100(void);
 void	vector180(void);
 
+void	introff(int);
+void	intron(int);
+
 void	setpanic(void);
 void	dumpregs(Ureg*);
 void	dumparound(uint addr);

@@ -146,7 +146,7 @@ void main(void)
     kbdinit();
 
     procinit();                 /* in port/proc.c */
-    links();                    /* in the generated efikamx.c file */
+    links();                    /* in the generated nanonote.c file */
     chandevreset();
 
     eve = strdup("inferno");
@@ -364,6 +364,7 @@ vecinit(void)
 	memmove((ulong*)XEXCEPTION, (ulong*)vector0, 0x80);
 	memmove((ulong*)CACHETRAP, (ulong*)vector100, 0x80);*/
 	memmove((ulong*)EXCEPTION, (ulong*)vector180, 0x80);
+	memmove((ulong*)INTERRUPT, (ulong*)vector180, 0x80);
 
 	setstatus(getstatus() & ~BEV);
 }

@@ -161,6 +161,7 @@
 #define	XEXCEPTION	(KSEG0+0x080)
 #define	CACHETRAP	(KSEG0+0x100)
 #define	EXCEPTION	(KSEG0+0x180)
+#define	INTERRUPT	(KSEG0+0x200)
 
 /*
  * Magic registers

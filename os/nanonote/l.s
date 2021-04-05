@@ -107,6 +107,23 @@ TEXT	coherence(SB), $-8
 	EHB
 	RETURN
 
+/* enable an interrupt; bit is in R1 */
+TEXT	intron(SB), $0
+	MOVW	M(STATUS), R2
+	OR	R1, R2
+	MOVW	R2, M(STATUS)
+	EHB
+	RETURN
+
+/* disable an interrupt; bit is in R1 */
+TEXT	introff(SB), $0
+	MOVW	M(STATUS), R2
+	XOR	$-1, R1
+	AND	R1, R2
+	MOVW	R2, M(STATUS)
+	EHB
+	RETURN
+
 /*
  * access to CP0 registers
  */

@@ -19,13 +19,17 @@ typedef struct RTC RTC;
 #define INTERRUPT_BASE 0x10001000
 
 struct InterruptCtr {
-    ulong source;
-    ulong mask;
-    ulong mask_set;
-    ulong mask_clear;
-    ulong pending;
+    ulong source;                   /* ICSR */
+    ulong mask;                     /* ICMR */
+    ulong mask_set;                 /* ICMSR */
+    ulong mask_clear;               /* ICMCR */
+    ulong pending;                  /* ICPR */
 };
 typedef struct InterruptCtr InterruptCtr;
+
+enum InterruptSource {
+    InterruptTCU0 = 0x00800000
+};
 
 #define TIMER_BASE 0x10002010
 
