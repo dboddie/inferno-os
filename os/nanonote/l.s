@@ -168,11 +168,23 @@ TEXT    barret(SB), $-8
 	JMP	(R22)
 	NOP
 
-/* vector at KSEG0+0x180, others */
+/* vector at KSEG0+0x180, others
+   Use R26 (k0) and R27 (k1) as scratch registers */
 TEXT    vector180(SB), $-8
+        MOVW    $(0x10002010 | KSEG1), R26
+        MOVW    $1, R27
+        MOVW    R27, 0x18(R26)
+        ERET
         MOVW    $exception(SB), R26
         JMP     (R26)
         NOP
+
+/*
+TEXT	exception(SB), $-4
+	MOVW	M(STATUS), R26
+	BEQ	R27, waskernel
+	MOVW	SP, R27	*/		/* delay slot */
+//        ERET
 
 TEXT    getepc(SB), $-8
         MOVW    M(EPC), R1

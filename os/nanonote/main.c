@@ -373,5 +373,6 @@ void exception(void)
 {
     fbprint(getepc(), 10, 0xff0000);
     fbprint(getcause(), 11, 0xff8000);
+    fbprint(getstatus(), 12, 0xffff00);
     for (;;) {}
 }

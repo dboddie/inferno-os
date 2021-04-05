@@ -60,6 +60,7 @@ void	vecinit(void);
 void	vector0(void);
 void	vector100(void);
 void	vector180(void);
+void	vector200(void);
 
 void	introff(int);
 void	intron(int);
