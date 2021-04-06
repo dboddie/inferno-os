@@ -88,6 +88,7 @@ struct Mach
 	ulong	tlbfault;		/* # of tlb faults FIFTH */
 	ulong	ktlbfault;
 	ulong	utlbfault;
+	ulong	exc_sp;                 /* exception stack pointer */
 
 	/* the following is safe to move */
 	ulong	tlbpurge;
@@ -120,8 +121,6 @@ struct Mach
 	int	intr;
 	int	hashcoll;		/* soft-tlb hash collisions */
 	int	paststartup;		/* for putktlb */
-
-	int	stack[1];
 };
 
 extern Mach *m;

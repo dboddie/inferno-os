@@ -171,20 +171,20 @@ TEXT    barret(SB), $-8
 /* vector at KSEG0+0x180, others
    Use R26 (k0) and R27 (k1) as scratch registers */
 TEXT    vector180(SB), $-8
+        MOVW    SP, R26             /* Save SP so that we can call routines */
+        MOVW    $(MACHADDR), R27    /* Use k1 to access the Mach structure (dat.h) */
+        MOVW    28(R27), SP         /* Load the stack pointer to use during
+                                       exceptions */
+        
+        MOVW    R26, SP
+
         MOVW    $(0x10002010 | KSEG1), R26
-        MOVW    $1, R27
+        MOVW    $1, R27                     /* Clear the flag for timer 0 */
         MOVW    R27, 0x18(R26)
         ERET
         MOVW    $exception(SB), R26
         JMP     (R26)
         NOP
-
-/*
-TEXT	exception(SB), $-4
-	MOVW	M(STATUS), R26
-	BEQ	R27, waskernel
-	MOVW	SP, R27	*/		/* delay slot */
-//        ERET
 
 TEXT    getepc(SB), $-8
         MOVW    M(EPC), R1

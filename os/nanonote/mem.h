@@ -164,7 +164,7 @@
 #define	INTERRUPT	(KSEG0+0x200)
 
 /*
- * Magic registers
+ * Magic registers (in Plan 9)
  */
 
 #define	USER		24		/* R24 is up-> */
@@ -213,12 +213,6 @@
 #define	Ureg_r2		(Uoffset+144)
 #define	Ureg_r1		(Uoffset+148)
 
-/* ch and carrera used these defs */
-	/* Sizeof(Ureg) + (R5,R6) + 16 bytes slop + retpc + ur */
-// #define UREGSIZE ((Ureg_r1+4-Uoffset) + 2*BY2V + 16 + BY2WD + BY2WD)
-// #define Uoffset	8
-
-// #define UREGSIZE	(Ureg_r1 + 4 - Uoffset)	/* this ought to work */
 #define UREGSIZE ((Ureg_r1+4-Uoffset) + 2*BY2V + 16 + BY2WD + BY2WD)
 #define Uoffset		0
 #define Notuoffset	8
@@ -312,6 +306,7 @@
 #define	KTZERO	(KZERO+0x8000+BTOFF)    /* first address in kernel text */
 #define MEMSIZE	(32*MB)		        /* fixed memory on Nanonote */
 #define STACKTOP (MACHADDR+BY2PG)       /* top of kernel stack */
+#define ESTACKTOP (STACKTOP+BY2PG)      /* top of exception stack */
 
 /* Memory map - starts at 0x80000000, ends at 0x82000000 (32MB) */
 #define MEMORY_TOP      (KZERO+0x1f00000) /* End of memory Inferno can use */

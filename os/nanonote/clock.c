@@ -45,26 +45,19 @@ clockinit(void)
     tm->flag_clear = TimerCounter0;
     tm->mask_clear = TimerCounter0;
     tm->counter_enable_set = TimerCounter0;
+
+    InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
+    ic->mask_clear = InterruptTCU0;
+    intron(INTMASK);
 }
 
 extern void fbprint(unsigned int v, unsigned int l, unsigned int colour);
 void
 clocktest(void)
 {
-    InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
-    print("%8.8lux\n", ic->source);
-    print("%8.8lux\n", ic->mask);
-    ic->mask_clear = InterruptTCU0;
-    print("%8.8lux\n", ic->mask);
-    print("%8.8lux\n", ic->pending);
-
-    intron(INTMASK);
     spllo(); /* Enable interrupts */
-    print("%8.8lux\n", getstatus());
-    print("%8.8lux\n", getcause());
 
     JZTimer *tm = (JZTimer *)(TIMER_BASE | KSEG1);
-    print("%8.8lux\n", tm->mask);
 
     for (;;) {
         fbprint(tm->counter0, 10, 0xffffff);

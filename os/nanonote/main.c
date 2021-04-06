@@ -121,6 +121,9 @@ void main(void)
     memset(m, 0, sizeof(Mach));
     memset(edata, 0, end-edata);
 
+    /* Set the exception stack pointer to a page above that */
+    m->exc_sp = ESTACKTOP;
+
 //    fbdraw(0x000000);
 //    fbprint(getconfig(), 0, 0xffff00);
                                 /* 0x80000483 -> MIPS32r2 (1), TLB (1),
@@ -140,6 +143,8 @@ void main(void)
     clockinit();                /* in clock.c */
     printinit();                /* in port/devcons.c */
     print("\nInferno OS %s Vita Nuova\n", VERSION);
+    print("mach=%8.8lux\n", m);
+    print("exc_sp=%8.8lux\n", m->exc_sp);
 
     clocktest();
 
