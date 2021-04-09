@@ -171,20 +171,65 @@ TEXT    barret(SB), $-8
 /* vector at KSEG0+0x180, others
    Use R26 (k0) and R27 (k1) as scratch registers */
 TEXT    vector180(SB), $-8
-        MOVW    SP, R26             /* Save SP so that we can call routines */
-        MOVW    $(MACHADDR), R27    /* Use k1 to access the Mach structure (dat.h) */
-        MOVW    28(R27), SP         /* Load the stack pointer to use during
-                                       exceptions */
-        
-        MOVW    R26, SP
 
+        MOVW    $exception(SB), R26
+        JMP     (R26)
+        NOP
+
+TEXT    exception(SB), $-8
+
+        /* Use k1 to access the Mach structure (dat.h)
+           then load exception stack pointer m->exc_sp */
+/*
+        MOVW    $(MACHADDR), R27
+        MOVW    28(R27), R27
+*/
+        MOVW    $ESTACKTOP, R27
+        SUBU    $UREGSIZE, R27
+
+        /* Save SP so that we can call routines */
+        MOVW    SP, R26
+
+        /* Push registers onto the exception stack */
+        MOVW    R31, Ureg_r31(R27)
+        MOVW    R30, Ureg_r30(R27)
+        MOVW    R26, Ureg_sp(R27)
+        MOVW    R28, Ureg_r28(R27)
+
+                                    /* R29 is SP, stored in R26 above */
+                                    /* R26 and R27 are scratch registers */
+        MOVW    R25, Ureg_r25(R27)
+        MOVW    R24, Ureg_r24(R27)
+        MOVW    R23, Ureg_r23(R27)
+        MOVW    R22, Ureg_r22(R27)
+        MOVW    R21, Ureg_r21(R27)
+        MOVW    R20, Ureg_r20(R27)
+        MOVW    R19, Ureg_r19(R27)
+        MOVW    R18, Ureg_r18(R27)
+        MOVW    R17, Ureg_r17(R27)
+        MOVW    R16, Ureg_r16(R27)
+        MOVW    R15, Ureg_r15(R27)
+        MOVW    R14, Ureg_r14(R27)
+        MOVW    R13, Ureg_r13(R27)
+        MOVW    R12, Ureg_r12(R27)
+        MOVW    R11, Ureg_r11(R27)
+        MOVW    R10, Ureg_r10(R27)
+        MOVW    R9, Ureg_r9(R27)
+        MOVW    R8, Ureg_r8(R27)
+        MOVW    R7, Ureg_r7(R27)
+        MOVW    R6, Ureg_r6(R27)
+        MOVW    R5, Ureg_r5(R27)
+        MOVW    R4, Ureg_r4(R27)
+        MOVW    R3, Ureg_r3(R27)
+        MOVW    R2, Ureg_r2(R27)
+        MOVW    R1, Ureg_r1(R27)
+/*
+        MOVW    R26, SP
+*/
         MOVW    $(0x10002010 | KSEG1), R26
         MOVW    $1, R27                     /* Clear the flag for timer 0 */
         MOVW    R27, 0x18(R26)
         ERET
-        MOVW    $exception(SB), R26
-        JMP     (R26)
-        NOP
 
 TEXT    getepc(SB), $-8
         MOVW    M(EPC), R1

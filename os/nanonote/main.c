@@ -373,11 +373,20 @@ vecinit(void)
 
 	setstatus(getstatus() & ~BEV);
 }
-
+/*
 void exception(void)
 {
     fbprint(getepc(), 10, 0xff0000);
     fbprint(getcause(), 11, 0xff8000);
     fbprint(getstatus(), 12, 0xffff00);
     for (;;) {}
+}
+*/
+#include "hardware.h"
+
+void trap(Ureg *)
+{
+    JZTimer *tm = (JZTimer *)(TIMER_BASE | KSEG1);
+    tm->flag_clear = TimerCounter0;
+    fbprint(tm->flag, 11, 0x0080ff);
 }
