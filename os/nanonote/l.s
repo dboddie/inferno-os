@@ -163,6 +163,14 @@ TEXT    getsp(SB), $-8
         MOVW    SP, R1
         RETURN
 
+TEXT    getepc(SB), $-8
+        MOVW    M(EPC), R1
+        RETURN
+
+TEXT    getcause(SB), $-8
+        MOVW    M(CAUSE), R1
+        RETURN
+
 /* target for JALRHB in BARRIERS */
 TEXT    barret(SB), $-8
 	JMP	(R22)
@@ -230,11 +238,3 @@ TEXT    exception(SB), $-8
         MOVW    $1, R27                     /* Clear the flag for timer 0 */
         MOVW    R27, 0x18(R26)
         ERET
-
-TEXT    getepc(SB), $-8
-        MOVW    M(EPC), R1
-        RETURN
-
-TEXT    getcause(SB), $-8
-        MOVW    M(CAUSE), R1
-        RETURN
