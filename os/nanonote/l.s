@@ -24,6 +24,11 @@ TEXT    start(SB), $-8
     MOVW    $TLBROFF, R1
     MOVW    R1, M(WIRED)
     EHB
+    MOVW    M(CAUSE), R1
+    EHB
+    OR      $CAUSE_IV, R1
+    MOVW    R1, M(CAUSE)
+    EHB
     MOVW    R0, M(CONTEXT)
     EHB
 
@@ -184,7 +189,13 @@ TEXT    vector180(SB), $-8
         JMP     (R26)
         NOP
 
-TEXT    exception(SB), $-8
+TEXT    vector200(SB), $-8
+
+        MOVW    $interrupt(SB), R26
+        JMP     (R26)
+        NOP
+
+TEXT    interrupt(SB), $-8
 
         /* Use k1 to access the Mach structure (dat.h)
            then load exception stack pointer m->exc_sp */

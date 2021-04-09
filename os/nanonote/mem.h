@@ -117,6 +117,7 @@
  * M(CAUSE) bits
  */
 
+#define CAUSE_IV        (1<<23) /* separate interrupt vector */
 #define BD		(1<<31)	/* last excep'n occurred in branch delay slot */
 
 /*
