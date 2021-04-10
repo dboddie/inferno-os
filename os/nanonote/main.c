@@ -140,8 +140,6 @@ void main(void)
     printinit();                /* in port/devcons.c */
     print("\nInferno OS %s Vita Nuova\n", VERSION);
     show_cpu_config();
-    print("mach=%8.8lux\n", m);
-    print("exc_sp=%8.8lux\n", m->exc_sp);
 
     clocktest();
 
