@@ -259,9 +259,7 @@ TEXT    interrupt(SB), $-4      /* Don't generate save and restore PC instructio
 	MOVW	R2, Ureg_lo(SP)
 
         JAL     trap(SB)
-	SUBU	$Notuoffset, SP			/* delay slot */
-
-	ADDU	$Notuoffset, SP
+        NOP
 
         /* Pop registers from the stack */
 
