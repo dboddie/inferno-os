@@ -195,7 +195,7 @@ TEXT    vector200(SB), $-8
         JMP     (R26)
         NOP
 
-TEXT    interrupt(SB), $-8
+TEXT    interrupt(SB), $-4      /* Don't generate save and restore PC instructions */
 
         /* Use k1 to access the Mach structure (dat.h)
            then load exception stack pointer m->exc_sp */
@@ -258,13 +258,11 @@ TEXT    interrupt(SB), $-8
 	MOVW	R1, Ureg_hi(SP)
 	MOVW	R2, Ureg_lo(SP)
 
-        MOVW    $(0x10002010 | KSEG1), R26
-        MOVW    $1, R27                     /* Clear the flag for timer 0 */
-        MOVW    R27, 0x18(R26)
-/*
         JAL     trap(SB)
-        NOP
-*/
+	SUBU	$Notuoffset, SP			/* delay slot */
+
+	ADDU	$Notuoffset, SP
+
         /* Pop registers from the stack */
 
 	MOVW	Ureg_hi(SP), R1
