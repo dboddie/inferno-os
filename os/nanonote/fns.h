@@ -78,6 +78,8 @@ void    setstatus(ulong);
 ulong   getconfig(void);
 ulong   getebase(void);
 
+void show_cpu_config(void);
+
 void    kbdinit(void);
 void	screeninit(void);
 void	clockcheck(void);

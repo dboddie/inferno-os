@@ -111,6 +111,9 @@
  */
 
 #define CFG_K0		7	/* kseg0 cachability */
+#define CFG_MT		(7<<7)	/* MMU type */
+#define CFG_AR		(7<<10)	/* architecture revision level */
+#define CFG_AT		(3<<13)	/* MIPS32/64 */
 #define CFG_MM		(1<<18)	/* write-through merging enabled */
 
 /*
