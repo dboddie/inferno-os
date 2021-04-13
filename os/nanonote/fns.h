@@ -51,6 +51,7 @@ void	_idlehands(void);
 
 void	coherence(void);
 void	clockinit(void);
+void    clockintr(Ureg *);
 void	trapinit(void);
 char *	trapname(int psr);
 int	isvalid_va(void *v);

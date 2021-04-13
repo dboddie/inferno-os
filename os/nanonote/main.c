@@ -113,8 +113,6 @@ void kbdinit(void)
     qnoblock(kbdq, 1);
 }
 
-extern void clocktest(void);
-
 void main(void)
 {
     /* Mach is defined in dat.h, edata and end are in port/lib.h */
@@ -141,8 +139,6 @@ void main(void)
     print("\nInferno OS %s Vita Nuova\n", VERSION);
     show_cpu_config();
 
-    clocktest();
-
     kbdinit();
 
     procinit();                 /* in port/proc.c */
@@ -167,7 +163,6 @@ init0(void)
     up->nerrlab = 0;
 
     spllo();
-    print("interrupts on\n");
 
     if(waserror())
         panic("init0 %r");
@@ -192,7 +187,6 @@ init0(void)
 
     poperror();
 
-    print("disinit\n");
     disinit("/osinit.dis");
 }
 
@@ -381,9 +375,10 @@ void exception(void)
 
 void trap(Ureg *)
 {
+    static int i = 0;
     JZTimer *tm = (JZTimer *)(TIMER_BASE | KSEG1);
     tm->flag_clear = TimerCounter0;
-    fbprint(tm->flag, 11, 0x0080ff);
+    fbprint(i++, 0, 0x0080ff);
 }
 
 /*

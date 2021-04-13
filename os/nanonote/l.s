@@ -258,7 +258,8 @@ TEXT    interrupt(SB), $-4      /* Don't generate save and restore PC instructio
 	MOVW	R1, Ureg_hi(SP)
 	MOVW	R2, Ureg_lo(SP)
 
-        JAL     trap(SB)
+        MOVW    SP, R1
+        JAL     clockintr(SB)
         NOP
 
         /* Pop registers from the stack */

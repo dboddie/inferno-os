@@ -13,9 +13,18 @@ enum {
     MinPeriod       = SystimerFreq/(100*HZ)
 };
 
-static void
-clockintr(Ureg *, void *)
+void
+clockintr(Ureg *ureg)
 {
+    static int i = 0;
+    JZTimer *tm = (JZTimer *)(TIMER_BASE | KSEG1);
+    tm->flag_clear = TimerCounter0;
+/*
+    m->ticks++;
+    fbprint((unsigned int)ureg, 0, 0x80ff80);
+    timerintr(ureg - 8, 0);
+    fbprint(i++, 1, 0x0080ff);
+*/
 }
 
 void
@@ -37,7 +46,7 @@ clockinit(void)
     tm->stop_clear = TimerCounter0;
     tm->control0 = TimerPrescale256 | TimerSourceExt;
     tm->data_half0 = 0;
-    tm->data_full0 = 12000000 / 256;
+    tm->data_full0 = MaxPeriod;
 
     /* Reset counter0, clear its full match flag, unmask its interrupt to
        enable it, then enable the counter itself */
