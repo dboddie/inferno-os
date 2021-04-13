@@ -373,12 +373,11 @@ void exception(void)
 
 #include "hardware.h"
 
-void trap(Ureg *)
+void trap(Ureg *ureg)
 {
-    static int i = 0;
-    JZTimer *tm = (JZTimer *)(TIMER_BASE | KSEG1);
-    tm->flag_clear = TimerCounter0;
-    fbprint(i++, 0, 0x0080ff);
+    if (ureg->cause & 0x400) {
+        clockintr(ureg);
+    }
 }
 
 /*

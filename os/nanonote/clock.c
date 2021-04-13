@@ -19,12 +19,10 @@ clockintr(Ureg *ureg)
     static int i = 0;
     JZTimer *tm = (JZTimer *)(TIMER_BASE | KSEG1);
     tm->flag_clear = TimerCounter0;
-/*
-    m->ticks++;
+
     fbprint((unsigned int)ureg, 0, 0x80ff80);
-    timerintr(ureg - 8, 0);
+    hzclock(ureg);
     fbprint(i++, 1, 0x0080ff);
-*/
 }
 
 void
