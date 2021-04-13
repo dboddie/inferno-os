@@ -4,9 +4,9 @@
 TARGFILES=\
 	frexp-spim.$O\
 	getfcr-spim.$O\
-	memmove-spim.$O\
-	memset-spim.$O\
+	memmove.$O\
+	memset.$O\
 	nan-spim.$O\
-	strchr-spim.$O\
+	strchr.$O\
 	vlop-spim.$O\
 	vlrt-spim.$O\
