@@ -40,7 +40,7 @@ init(context: ref Context, nil: list of string)
 	
     print("**\n** Inferno\n** Vita Nuova\n**\n");
 
-    bind("#c", "/dev", sys->MAFTER);
+#    bind("#c", "/dev", sys->MAFTER);
 #    bind("#r", "/dev", sys->MAFTER);		# RTC
 
     #
@@ -63,14 +63,14 @@ init(context: ref Context, nil: list of string)
 #    }
 
 # Use the Draw module to draw on the screen.
-#    draw = load Draw Draw->PATH;
-#    display := draw->Display.allocate(nil);
-#    for (b := 0; b < 256; b += 15) {
-#        display.image.draw(Rect(Point(b*2, 584), Point(b*2 + 30, 588)), display.rgb(b, 0, 0), display.opaque, Point(0, 0));
-#        display.image.draw(Rect(Point(b*2, 588), Point(b*2 + 30, 592)), display.rgb(0, b, 0), display.opaque, Point(0, 0));
-#        display.image.draw(Rect(Point(b*2, 592), Point(b*2 + 30, 596)), display.rgb(0, 0, b), display.opaque, Point(0, 0));
-#        display.image.draw(Rect(Point(b*2, 596), Point(b*2 + 30, 600)), display.rgb(b, b, b), display.opaque, Point(0, 0));
-#    }
+    draw = load Draw Draw->PATH;
+    display := draw->Display.allocate(nil);
+    for (b := 0; b < 256; b++) {
+        display.image.draw(Rect(Point(b, 0), Point(b + 1, 4)), display.rgb(b, 0, 0), display.opaque, Point(0, 0));
+        display.image.draw(Rect(Point(b, 4), Point(b + 1, 8)), display.rgb(0, b, 0), display.opaque, Point(0, 0));
+        display.image.draw(Rect(Point(b, 8), Point(b + 1, 12)), display.rgb(0, 0, b), display.opaque, Point(0, 0));
+        display.image.draw(Rect(Point(b, 12), Point(b + 1, 16)), display.rgb(b, b, b), display.opaque, Point(0, 0));
+    }
 
 #    print("Starting a shell...\n");
     shell := load Sh "/dis/sh.dis";
