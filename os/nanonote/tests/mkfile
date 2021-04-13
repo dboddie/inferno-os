@@ -40,6 +40,12 @@ ctest0: commonstart.s ctest0.c fbdraw.c
 	$LD $LDFLAGS -a -H0 -l -R$BY2PG -T$execaddr -s -o ctest0 commonstart.$O ctest0.$O
 	mkimage -A mips -O linux -T kernel -C none -a $loadaddr -e $execaddr -n ctest0 -d ctest0 uImage-ctest0
 
+stest0: commonstart.s stest0.c fbdraw.c
+	$AS $ASFLAGS commonstart.s
+	$CC $CFLAGS stest0.c fbdraw.c
+	$LD $LDFLAGS -a -H0 -l -R$BY2PG -T$execaddr -s -o stest0 commonstart.$O stest0.$O fbdraw.$O
+	mkimage -A mips -O linux -T kernel -C none -a $loadaddr -e $execaddr -n stest0 -d stest0 uImage-stest0
+
 %.$O:	%.s
 	$AS $ASFLAGS $stem.s
 	$LD $LDFLAGS -a -H0 -l -R$BY2PG -T$loadaddr -s -o $stem $stem.$O
