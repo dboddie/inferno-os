@@ -16,13 +16,24 @@ enum {
 void
 clockintr(Ureg *ureg)
 {
-    static int i = 0;
     JZTimer *tm = (JZTimer *)(TIMER_BASE | KSEG1);
-    tm->flag_clear = TimerCounter0;
+    static int i = 0;
+    static int j = 0;
 
-    fbprint((unsigned int)ureg, 0, 0x80ff80);
-    hzclock(ureg);
-    fbprint(i++, 1, 0x0080ff);
+    if (tm->flag & TimerCounter0) {
+        tm->flag_clear = TimerCounter0;
+        fbprint(i++, 0, 0x0080ff);
+        hzclock(ureg);
+    }
+
+    GPIO *d_flag = (GPIO *)(GPIO_PORT_D_FLAG | KSEG1);
+    GPIO *d_pin = (GPIO *)(GPIO_PORT_D_PIN | KSEG1);
+
+    if (d_flag->data) {
+        fbprint(d_flag->data, 1, 0x008000);
+        d_flag->clear = d_flag->data;
+        fbprint(j++, 2, 0x808000);
+    }
 }
 
 void

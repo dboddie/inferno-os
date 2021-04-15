@@ -107,12 +107,6 @@ void fbprint(unsigned int v, unsigned int l, unsigned int colour)
     }
 }
 
-void kbdinit(void)
-{
-    kbdq = qopen(4*1024, 0, 0, 0);
-    qnoblock(kbdq, 1);
-}
-
 void main(void)
 {
     /* Mach is defined in dat.h, edata and end are in port/lib.h */
@@ -377,7 +371,36 @@ void trap(Ureg *ureg)
 {
     if (ureg->cause & 0x400) {
         clockintr(ureg);
+    } else if (ureg->cause) {
+        fbprint(ureg->cause, 2, 0x800000);
     }
+}
+
+void kbdinit(void)
+{
+//    GPIO *d_dir = (GPIO *)(GPIO_PORT_D_DIR | KSEG1);
+//    d_dir->clear = 0x0003fc00;
+
+    InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
+    ic->mask_clear = InterruptGPIO0 | InterruptGPIO1 | InterruptGPIO2 | InterruptGPIO3;
+
+    GPIO *d_mask = (GPIO *)(GPIO_PORT_D_INTMASK | KSEG1);
+    GPIO *d_trig = (GPIO *)(GPIO_PORT_D_TRIG | KSEG1);
+    GPIO *d_func = (GPIO *)(GPIO_PORT_D_FUNC | KSEG1);
+    GPIO *d_sel = (GPIO *)(GPIO_PORT_D_SEL | KSEG1);
+    GPIO *d_dir = (GPIO *)(GPIO_PORT_D_DIR | KSEG1);
+    GPIO *d_flag = (GPIO *)(GPIO_PORT_D_FLAG | KSEG1);
+    d_mask->set = 0x20000000;
+    d_trig->clear = 0x20000000;
+    d_func->clear = 0x20000000;
+    d_sel->set = 0x20000000;
+    d_dir->clear = 0x20000000;
+    d_flag->clear = 0x20000000;
+
+    d_mask->clear = 0x20000000;
+
+    kbdq = qopen(4*1024, 0, 0, 0);
+    qnoblock(kbdq, 1);
 }
 
 /*
