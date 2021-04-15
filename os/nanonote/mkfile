@@ -25,6 +25,7 @@ OBJ=\
 #	dump.$O\
 #	trap.$O\
 #	intr.$O\
+	kbd.$O\
 	main.$O\
 #	fpimips.$O\
 	tas.$O\
