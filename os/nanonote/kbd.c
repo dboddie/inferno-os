@@ -20,14 +20,14 @@ void kbdinit(void)
     GPIO *d_sel = (GPIO *)(GPIO_PORT_D_SEL | KSEG1);
     GPIO *d_dir = (GPIO *)(GPIO_PORT_D_DIR | KSEG1);
     GPIO *d_flag = (GPIO *)(GPIO_PORT_D_FLAG | KSEG1);
-    d_mask->set = 0x20000000;
-    d_trig->clear = 0x20000000;
-    d_func->clear = 0x20000000;
-    d_sel->set = 0x20000000;
-    d_dir->clear = 0x20000000;
-    d_flag->clear = 0x20000000;
+    d_mask->set = 0x25fc0000;
+    d_trig->clear = 0x25fc0000;
+    d_func->clear = 0x25fc0000;
+    d_sel->set = 0x25fc0000;
+    d_dir->clear = 0x25fc0000;
+    d_flag->clear = 0x25fc0000;
 
-    d_mask->clear = 0x20000000;
+    d_mask->clear = 0x25fc0000;
 
     kbdq = qopen(4*1024, 0, 0, 0);
     qnoblock(kbdq, 1);

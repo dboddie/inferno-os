@@ -18,10 +18,12 @@ clockintr(Ureg *ureg)
 {
     JZTimer *tm = (JZTimer *)(TIMER_BASE | KSEG1);
     static int i = 0;
+    static int j = 0;
 
     if (tm->flag & TimerCounter0) {
         tm->flag_clear = TimerCounter0;
-        fbprint(i++, 0, 0x0080ff);
+        if ((i++ % 100) == 0)
+            fbprint(j++, 0, 0x0080ff);
         hzclock(ureg);
     }
 }
