@@ -18,21 +18,11 @@ clockintr(Ureg *ureg)
 {
     JZTimer *tm = (JZTimer *)(TIMER_BASE | KSEG1);
     static int i = 0;
-    static int j = 0;
 
     if (tm->flag & TimerCounter0) {
         tm->flag_clear = TimerCounter0;
         fbprint(i++, 0, 0x0080ff);
         hzclock(ureg);
-    }
-
-    GPIO *d_flag = (GPIO *)(GPIO_PORT_D_FLAG | KSEG1);
-    GPIO *d_pin = (GPIO *)(GPIO_PORT_D_PIN | KSEG1);
-
-    if (d_flag->data) {
-        fbprint(d_flag->data, 1, 0x008000);
-        d_flag->clear = d_flag->data;
-        fbprint(j++, 2, 0x808000);
     }
 }
 

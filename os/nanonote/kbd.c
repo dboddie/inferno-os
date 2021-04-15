@@ -12,7 +12,7 @@ void kbdinit(void)
 //    d_dir->clear = 0x0003fc00;
 
     InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
-    ic->mask_clear = InterruptGPIO0 | InterruptGPIO1 | InterruptGPIO2 | InterruptGPIO3;
+    ic->mask_clear = InterruptGPIO3;
 
     GPIO *d_mask = (GPIO *)(GPIO_PORT_D_INTMASK | KSEG1);
     GPIO *d_trig = (GPIO *)(GPIO_PORT_D_TRIG | KSEG1);
@@ -31,4 +31,17 @@ void kbdinit(void)
 
     kbdq = qopen(4*1024, 0, 0, 0);
     qnoblock(kbdq, 1);
+}
+
+void kbdintr(void)
+{
+    GPIO *d_flag = (GPIO *)(GPIO_PORT_D_FLAG | KSEG1);
+    GPIO *d_pin = (GPIO *)(GPIO_PORT_D_PIN | KSEG1);
+    static int j = 0;
+
+    if (d_flag->data) {
+        fbprint(d_flag->data, 1, 0x008000);
+        d_flag->clear = d_flag->data;
+        fbprint(j++, 2, 0x808000);
+    }
 }

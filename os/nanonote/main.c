@@ -370,7 +370,11 @@ void exception(void)
 void trap(Ureg *ureg)
 {
     if (ureg->cause & 0x400) {
-        clockintr(ureg);
+        InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
+        if (ic->pending & InterruptTCU0)
+            clockintr(ureg);
+        else if (ic->pending & InterruptGPIO3)
+            kbdintr();
     } else if (ureg->cause) {
         fbprint(ureg->cause, 2, 0x800000);
     }

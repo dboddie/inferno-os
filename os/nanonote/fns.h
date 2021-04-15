@@ -82,6 +82,7 @@ ulong   getebase(void);
 void show_cpu_config(void);
 
 void    kbdinit(void);
+void    kbdintr(void);
 void	screeninit(void);
 void	clockcheck(void);
 void	links(void);
