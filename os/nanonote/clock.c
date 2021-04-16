@@ -61,19 +61,6 @@ clockinit(void)
     intron(INTMASK);
 }
 
-extern void fbprint(unsigned int v, unsigned int l, unsigned int colour);
-void
-clocktest(void)
-{
-    spllo(); /* Enable interrupts */
-
-    JZTimer *tm = (JZTimer *)(TIMER_BASE | KSEG1);
-
-    for (;;) {
-        fbprint(tm->counter0, 10, 0xffffff);
-    }
-}
-
 void
 clockcheck(void)
 {
