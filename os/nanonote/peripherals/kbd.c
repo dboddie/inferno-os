@@ -1,8 +1,8 @@
 #include "u.h"
-#include "../port/lib.h"
-#include "dat.h"
-#include "mem.h"
-#include "fns.h"
+#include "../../port/lib.h"
+#include "../dat.h"
+#include "../mem.h"
+#include "../fns.h"
 
 #include "hardware.h"
 
