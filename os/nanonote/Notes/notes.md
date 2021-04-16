@@ -34,3 +34,10 @@ building appears to cure the problem.
 Using `fbprint` in the `trap` function, referring to the `Ureg` structure
 pointer, causes an exception to occur when the function returns, showing the
 location of the stored registers as the EPC.
+
+## Handling interrupts
+
+When enabling interrupts, unmasking the relevant bits in the interrupt
+controller and enabling them in the peripherals, it is necessary to clear the
+interrupt flags in any peripherals when they occur. If this is not done then
+further interrupts are not delivered.
