@@ -126,6 +126,7 @@ void main(void)
     //trapinit();                 /* in trap.c */
 
     screeninit();               /* in screen.c */
+    powerinit();                /* power button handling */
 
     timersinit();               /* in port/portclock.c */
     clockinit();                /* in clock.c */
@@ -371,10 +372,13 @@ void trap(Ureg *ureg)
 {
     if (ureg->cause & 0x400) {
         InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
-        if (ic->pending & InterruptTCU0)
+        if (ic->pending & InterruptTCU0) {
             clockintr(ureg);
-        else if (ic->pending & InterruptGPIO3)
-            kbdintr();
+            kbdpoll();
+        }
+        if (ic->pending & InterruptGPIO3) {
+            powerintr();
+        }
     } else if (ureg->cause) {
         fbprint(ureg->cause, 2, 0x800000);
     }
