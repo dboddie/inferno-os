@@ -87,7 +87,7 @@ static uchar keys[8][8] = {
     { Esc,  'z',  'x',  'c',  'v',  'b',   'n',  'm'   },
     { '\t', Caps, '\\', '\'', ',',  '.',   '/',  Up    },
     { 'o',  'l',  '=',  Sym,  ' ',  Qi,    Ctrl, 'l'   },
-    { KF|8, 'p',  Del,  '\n', Vup,  Vdown, Down, Right },
+    { KF|8, 'p',  '\b',  '\n', Vup,  Vdown, Down, Right },
     { Shift, Alt, Fn,   No,   No,   No,    No,   No    },
 };
 
