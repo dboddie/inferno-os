@@ -254,7 +254,9 @@ TEXT    interrupt(SB), $-4      /* Don't generate save and restore PC instructio
 
         MOVW    SP, R1
         JAL     trapintr(SB)
-        NOP
+        SUBU    $Notuoffset, SP
+
+        ADDU    $Notuoffset, SP
 
         /* Pop registers from the stack */
 
@@ -366,7 +368,9 @@ TEXT    exception(SB), $-4      /* Don't generate save and restore PC instructio
 
         MOVW    SP, R1
         JAL     trapexc(SB)
-        NOP
+        SUBU    $Notuoffset, SP
+
+        ADDU    $Notuoffset, SP
 
         /* Pop registers from the stack */
 
