@@ -116,14 +116,12 @@ void main(void)
     /* Set the exception stack pointer to a page above that */
     m->exc_sp = ESTACKTOP;
 
-    vecinit();
-
     quotefmtinstall();
     confinit();
     xinit();                    /* in port/xalloc.c */
     poolinit();                 /* in port/alloc.c */
     poolsizeinit();
-    //trapinit();                 /* in trap.c */
+    trapinit();                 /* in trap.c */
 
     screeninit();               /* in screen.c */
     powerinit();                /* power button handling */
@@ -341,29 +339,6 @@ kprocchild(Proc *p, void (*func)(void*), void *arg)
 
 	p->kpfun = func;
 	p->arg = arg;
-}
-
-/*
- *  setup MIPS trap vectors
- */
-void
-vecinit(void)
-{
-/*	memmove((ulong*)UTLBMISS, (ulong*)vector0, 0x80);
-	memmove((ulong*)XEXCEPTION, (ulong*)vector0, 0x80);
-	memmove((ulong*)CACHETRAP, (ulong*)vector100, 0x80);*/
-	memmove((ulong*)EXCEPTION, (ulong*)vector180, 0x80);
-	memmove((ulong*)INTERRUPT, (ulong*)vector200, 0x80);
-
-	setstatus(getstatus() & ~BEV);
-}
-
-void exception(void)
-{
-    fbprint(getepc(), 10, 0xff0000);
-    fbprint(getcause(), 11, 0xff8000);
-    fbprint(getstatus(), 12, 0xffff00);
-    for (;;) {}
 }
 
 /*
