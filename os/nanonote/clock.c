@@ -22,8 +22,6 @@ clockintr(Ureg *ureg)
 
     if (tm->flag & TimerCounter0) {
         tm->flag_clear = TimerCounter0;
-        if ((i++ % 100) == 0)
-            fbprint(j++, 0, 0x0080ff);
         hzclock(ureg);
     }
 }
