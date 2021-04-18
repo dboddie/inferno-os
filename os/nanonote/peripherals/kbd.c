@@ -96,9 +96,31 @@ static uchar shift_keys[8][8] = {
     { 'Q',  'W',  'E',  'R',  'T',  'Y',   'U',  'I'   },
     { 'A',  'S',  'D',  'F',  'G',  'H',   'J',  'K'   },
     { Esc,  'Z',  'X',  'C',  'V',  'B',   'N',  'M'   },
-    { '\t', Caps, '\\', '\'', ',',  '.',   '/',  Up    },
-    { 'O',  'L',  '=',  Sym,  ' ',  Qi,    Ctrl, 'L'   },
+    { '\t', Caps, '|',  '`',  ';',  ':',   '?',  Up    },
+    { 'O',  'L',  '+',  Sym,  ' ',  Qi,    Ctrl, 'L'   },
     { KF|8, 'P',  '\b', '\n', Vup,  Vdown, Down, Right },
+    { Shift, Alt, Fn,   No,   No,   No,    No,   No    },
+};
+
+static uchar sym_keys[8][8] = {
+    { KF|1, KF|2, KF|3, KF|4, KF|5, KF|6,  KF|7, No    },
+    { '!',  '@',  '#',  '$',  '%',  '^',   '&',  '*'   },
+    { 'A',  'S',  'D',  '-',  '_',  '{',   '[',  ']'   },
+    { Esc,  'Z',  'X',  'C',  'V',  'B',   '<',  '>'   },
+    { '\t', Caps, '\\', '\'', '"',  '.',   '/',  Up    },
+    { '(',  '}',  '=',  Sym,  ' ',  Qi,    Ctrl, 'L'   },
+    { KF|8, ')',  '\b', '\n', Vup,  Vdown, Down, Right },
+    { Shift, Alt, Fn,   No,   No,   No,    No,   No    },
+};
+
+static uchar fn_keys[8][8] = {
+    { KF|1, KF|2, KF|3, KF|4, KF|5, KF|6,  KF|7, No    },
+    { 'q',  'w',  'e',  'r',  't',  'y',   '7',  '8'   },
+    { 'a',  's',  'd',  'f',  'g',  'h',   '4',  '5'   },
+    { Esc,  'z',  'x',  'c',  'v',  'b',   '1',  '2'   },
+    { '\t', Caps, '\\', '\'', ',',  '.',   '0',  Up    },
+    { '9',  '6',  '3',  Sym,  ' ',  Qi,    Ctrl, 'l'   },
+    { KF|8, 'p',  '\b',  '\n', Vup,  Vdown, Down, Right },
     { Shift, Alt, Fn,   No,   No,   No,    No,   No    },
 };
 
@@ -123,16 +145,20 @@ void kbdpoll(void)
 
         kbd_state[row][kbd_column] = pressed;
 
-        if (row == 7 && (kbd_column == 0 || kbd_column == 1))  /* shift/alt */
-            continue;
-        else if (row == 5 && kbd_column == 6)   /* ctrl */
-            continue;
+        if (row == 7 && (kbd_column < 3))
+            continue;   /* shift/alt/fn */
+        else if (row == 5 && (kbd_column == 3 || kbd_column == 6))
+            continue;   /* symbol/ctrl */
 
         if (pressed && !was_pressed)
         {
             /* Keys that are pressed now, but weren't before */
-            if (kbd_state[7][0] != 0)
+            if (kbd_state[7][0] != 0)       /* shift */
                 kbdputc(kbdq, shift_keys[row][kbd_column]);
+            else if (kbd_state[5][3] != 0)  /* symbol */
+                kbdputc(kbdq, sym_keys[row][kbd_column]);
+            else if (kbd_state[7][2] != 0)  /* fn */
+                kbdputc(kbdq, fn_keys[row][kbd_column]);
             else
                 kbdputc(kbdq, keys[row][kbd_column]);
         }
