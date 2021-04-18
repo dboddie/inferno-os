@@ -23,7 +23,7 @@ OBJ=\
 	l.$O\
 	clock.$O\
 #	dump.$O\
-#	trap.$O\
+	trap.$O\
 #	intr.$O\
 	peripherals/kbd.$O\
 	main.$O\

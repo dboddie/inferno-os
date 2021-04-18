@@ -366,24 +366,6 @@ void exception(void)
     for (;;) {}
 }
 
-#include "hardware.h"
-
-void trap(Ureg *ureg)
-{
-    if (ureg->cause & 0x400) {
-        InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
-        if (ic->pending & InterruptTCU0) {
-            clockintr(ureg);
-            kbdpoll();
-        }
-        if (ic->pending & InterruptGPIO3) {
-            powerintr();
-        }
-    } else if (ureg->cause) {
-        fbprint(ureg->cause, 11, 0x800000);
-    }
-}
-
 /*
  * Show CPU configuration
  */
