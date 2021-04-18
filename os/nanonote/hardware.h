@@ -91,6 +91,7 @@ enum TimerSource {
 #define GPIO_PORT_C_PIN     0x10010200
 #define GPIO_PORT_C_DATA    0x10010210
 #define GPIO_PORT_C_INTMASK 0x10010220
+#define GPIO_PORT_C_PULL    0x10010230
 #define GPIO_PORT_C_FUNC    0x10010240
 #define GPIO_PORT_C_SEL     0x10010250
 #define GPIO_PORT_C_DIR     0x10010260
@@ -108,7 +109,9 @@ enum TimerSource {
 #define GPIO_PORT_D_FLAG    0x10010380
 
 enum GPIOPins {
-    GPIO_Power = 0x20000000
+    GPIO_Power = 0x20000000,
+    GPIO_Keyboard_In_Mask = 0x05fc0000,
+    GPIO_Keyboard_Out_Mask = 0x0003fc00
 };
 
 struct GPIO {

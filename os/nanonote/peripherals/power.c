@@ -32,9 +32,8 @@ void powerintr(void)
     GPIO *d_flag = (GPIO *)(GPIO_PORT_D_FLAG | KSEG1);
     static int j = 0;
 
-    if (d_flag->data) {
+    if (d_flag->data & GPIO_Power) {
         /* Clear all flags */
-        d_flag->clear = d_flag->data;
-        fbprint(j++, 1, 0x808000);
+        d_flag->clear = GPIO_Power;
     }
 }

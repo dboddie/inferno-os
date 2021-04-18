@@ -380,7 +380,7 @@ void trap(Ureg *ureg)
             powerintr();
         }
     } else if (ureg->cause) {
-        fbprint(ureg->cause, 2, 0x800000);
+        fbprint(ureg->cause, 11, 0x800000);
     }
 }
 
