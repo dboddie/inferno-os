@@ -53,6 +53,7 @@ init(context: ref Context, nil: list of string)
 #    bind("#↓", "/dev", sys->MAFTER);          # power
 #    bind("#S", "/n/sd", sys->MAFTER);           # SDHC card
     bind("#p", "/prog", sys->MREPL);		# prog device
+    bind("#d", "/fd", sys->MREPL);
 
 # A simple nested loop test:
 #    for (i := 1; i <= 12; i++) {

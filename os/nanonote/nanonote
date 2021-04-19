@@ -98,6 +98,7 @@ root
 	/dis/cd.dis
 	/dis/xd.dis
 	/dis/cp.dis
+	/dis/mc.dis
 	/dis/mkdir.dis
 	/dis/rm.dis
 	/dis/p.dis
