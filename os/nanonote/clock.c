@@ -74,8 +74,8 @@ fastticks(uvlong *hz)
 }
 
 void
-timerset(uvlong next)
-{
+timerset(uvlong /* next */)
+{/*
     uvlong now;
     long period;
 
@@ -84,9 +84,9 @@ timerset(uvlong next)
     if (period < MinPeriod)
         period = MinPeriod;
     else if (period > MaxPeriod)
-        period = MaxPeriod;
+        period = MaxPeriod;*/
 }
 
-void mdelay(uint delay)
+void mdelay(uint /* delay */)
 {
 }
