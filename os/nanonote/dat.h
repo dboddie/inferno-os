@@ -7,8 +7,7 @@ typedef struct I2Cdev I2Cdev;
 typedef struct PhysUart PhysUart;
 typedef struct Mach Mach;
 typedef struct MMMU	MMMU;
-typedef struct FPU FPU;
-typedef ulong  Instr;
+typedef ulong Instr;
 typedef struct Conf Conf;
 typedef u32int PTE;
 typedef struct Soc      Soc;
@@ -33,33 +32,58 @@ struct Label
  */
 enum
 {
+	/* floating point state */
 	FPINIT,
-	FPACTIVE,
-	FPINACTIVE,
-	FPEMU,
+	FPactive,
+	FPinactive,
+	FPemu,
 
-	/* bits or'd with the state */
-	FPILLEGAL= 0x100,
+	/* bit meaning floating point illegal */
+	FPillegal= 0x100,
 };
 
 enum {
         Nfpregs = 32,   /* floats; half as many doubles */
 };
 
-/* In Plan 9 this struct is called FPsave: */
+/*
+ * In Plan 9 this struct is called FPsave:
+ * emulated floating point (mips32r2 with ieee fp regs)
+ * fpstate is separate, kept in Proc
+ */
 struct FPenv
 {
-	ulong	status;
-	ulong   control;
-	ulong   regs[Nfpregs][3];
-	int     fpistate;
-        uintptr pc;
+	/* /dev/proc expects the registers to be first in FPsave */
+	ulong	reg[Nfpregs];		/* the canonical bits */
+	union {
+		ulong	fpstatus;	/* both are fcr31 */
+		ulong	fpcontrol;
+	};
+
+	int	fpdelayexec;		/* executing delay slot of branch */
+	uintptr	fpdelaypc;		/* pc to resume at after */
+	ulong	fpdelaysts;	/* save across user-mode delay-slot execution */
+
+	/* stuck-fault detection */
+	uintptr	fppc;			/* addr of last fault */
+	int	fpcnt;			/* how many consecutive at that addr */
 };
 
-struct FPU
-{
-	FPenv env;
-};
+typedef FPenv FPU;
+
+int fpemudebug;
+
+/* Simplified version of Tos from Plan 9 include/tos.h */
+typedef struct Tos {
+	uvlong	cyclefreq;	/* cycle clock frequency if there is one, 0 otherwise */
+	vlong	kcycles;	/* cycles spent in kernel */
+	vlong	pcycles;	/* cycles spent in process (kernel + user) */
+	ulong	pid;		/* might as well put the pid here */
+	ulong	clock;
+	/* scratch space for kernel use (e.g., mips fp delay-slot execution) */
+	ulong	kscr[4];
+	/* top of stack is here */
+} Tos;
 
 struct Conf
 {

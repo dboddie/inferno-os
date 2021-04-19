@@ -37,6 +37,7 @@ u32int	lcycles(void);
 int	splfhi(void);
 int	tas(void *);
 
+int	fpuemu(Ureg *);
 ulong   getfpexc(void);
 void   setfpexc(ulong);
 ulong   getfpsid(void);
@@ -52,6 +53,9 @@ void	_idlehands(void);
 void	coherence(void);
 void	clockinit(void);
 void    clockintr(Ureg *);
+void	dcflush(void*, ulong);
+void	icflush(void *, ulong);
+ulong	tlbvirt(void);
 void	trapinit(void);
 char *	trapname(int psr);
 int	isvalid_va(void *v);
@@ -76,6 +80,8 @@ void    irqenable(u32int *, u32int, void (*)(Ureg*, void*), void*);
 
 ulong   getstatus(void);
 void    setstatus(ulong);
+void	setwatchhi0(ulong);
+void	setwatchlo0(ulong);
 ulong   getconfig(void);
 ulong   getebase(void);
 

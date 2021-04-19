@@ -9,10 +9,7 @@
  * the FP trap status isn't updated.
  *
  * we emulate the original MIPS FP register model: 32-bits each,
- * F(2n) and F(2n+1) are a double, with lower-order word first;
- * note that this is little-endian order, unlike the rest of the
- * machine, so double-word operations will need to swap the words
- * when transferring between FP registers and memory.
+ * F(2n) and F(2n+1) are a double, with lower-order word first.
  *
  * on some machines, we can convert to an FP internal representation when
  * moving to FPU registers and back (to integer, for example) when moving
@@ -32,7 +29,6 @@
 #include	"fns.h"
 #include	"ureg.h"
 #include	"../port/fpi.h"
-#include	<tos.h>
 
 #ifdef FPEMUDEBUG
 #define DBG(bits) (fpemudebug & (bits))
@@ -112,9 +108,9 @@ enum {
 typedef struct FP1 FP1;
 typedef struct FP2 FP2;
 typedef struct FPcvt FPcvt;
-typedef struct Instr Instr;
 
-struct Instr {	/* a COP1 instruction, broken out and registers converted */
+/* In Plan 9 this is Instr */
+typedef struct COPInstr {	/* a COP1 instruction, broken out and registers converted */
 	int	iw;		/* whole word */
 	uintptr	pc;
 	int	o;		/* opcode or cop1 func code */
@@ -126,9 +122,9 @@ struct Instr {	/* a COP1 instruction, broken out and registers converted */
 	Internal *fm;		/* converted from FREG(ufp, rm) */
 	Internal *fn;
 	char	*dfmt;
-	FPsave	*ufp;		/* fp state, including fp registers */
+	FPenv	*ufp;		/* fp state, including fp registers */
 	Ureg	*ur;		/* user registers */
-};
+} COPInstr;
 
 struct FP2 {
 	char*	name;
@@ -142,7 +138,7 @@ struct FP1 {
 
 struct FPcvt {
 	char*	name;
-	void	(*f)(int, int, int, Ureg *, FPsave *);
+	void	(*f)(int, int, int, Ureg *, FPenv *);
 };
 
 static	int	roff[32] = {
@@ -163,6 +159,7 @@ enum {
 	FZERO = 24,
 	FHALF = 26,
 };
+
 static Internal fpconst[Nfpregs] = {		/* indexed by register no. */
 	/* s, e, l, h */
 [FZERO]	{0, 0x1, 0x00000000, 0x00000000},	/* 0.0 */
@@ -210,10 +207,10 @@ int fpemudebug = 0;			/* settable via /dev/archctl */
 static ulong dummyr0;
 static QLock watchlock;			/* lock for watch-points */
 
-ulong	branch(Ureg*, ulong);
+ulong	fpbranch(Ureg*, ulong);
 int	isbranch(ulong *);
 
-static int	fpimips(ulong, ulong, Ureg *, FPsave *);
+static int	fpimips(ulong, ulong, Ureg *, FPenv *);
 
 char *
 fpemuprint(char *p, char *ep)
@@ -253,12 +250,12 @@ _internsane(Internal *i, Ureg *ur)
 		return;
 	if ((unsigned)i->s > 1) {
 		snprint(buf, sizeof buf,
-			"fpuemu: bogus Internal sign at pc=%#p", ur->pc);
+			"fpuemu: bogus Internal sign at pc=%8.8lux", ur->pc);
 		error(buf);
 	}
 	if ((unsigned)i->e > DoubleExpMax) {
 		snprint(buf, sizeof buf,
-			"fpuemu: bogus Internal exponent at pc=%#p", ur->pc);
+			"fpuemu: bogus Internal exponent at pc=%8.8lux", ur->pc);
 		error(buf);
 	}
 }
@@ -310,7 +307,7 @@ frnd(Internal *m, Internal *d)
 
 /* debugging: print internal representation of an fp reg */
 static void
-_intpr(Internal *i, int reg, int fmt, FPsave *ufp)
+_intpr(Internal *i, int reg, int fmt, FPenv *ufp)
 {
 	USED(i);
 	if (!(DBG(Dbgregs)))
@@ -327,7 +324,7 @@ _intpr(Internal *i, int reg, int fmt, FPsave *ufp)
 }
 
 static void
-dreg2dbl(Double *dp, int reg, FPsave *ufp)
+dreg2dbl(Double *dp, int reg, FPenv *ufp)
 {
 	reg &= ~1;
 	dp->l = FREG(ufp, reg);
@@ -335,7 +332,7 @@ dreg2dbl(Double *dp, int reg, FPsave *ufp)
 }
 
 static void
-dbl2dreg(int reg, Double *dp, FPsave *ufp)
+dbl2dreg(int reg, Double *dp, FPenv *ufp)
 {
 	reg &= ~1;
 	FREG(ufp, reg)   = dp->l;
@@ -343,7 +340,7 @@ dbl2dreg(int reg, Double *dp, FPsave *ufp)
 }
 
 static void
-vreg2dbl(Double *dp, int reg, FPsave *ufp)
+vreg2dbl(Double *dp, int reg, FPenv *ufp)
 {
 	reg &= ~1;
 	dp->l = FREG(ufp, reg+1);
@@ -351,7 +348,7 @@ vreg2dbl(Double *dp, int reg, FPsave *ufp)
 }
 
 static void
-dbl2vreg(int reg, Double *dp, FPsave *ufp)
+dbl2vreg(int reg, Double *dp, FPenv *ufp)
 {
 	reg &= ~1;
 	FREG(ufp, reg+1) = dp->l;
@@ -360,7 +357,7 @@ dbl2vreg(int reg, Double *dp, FPsave *ufp)
 
 /* convert fmt (rm) to double (rd) */
 static void
-fcvtd(int fmt, int rm, int rd, Ureg *ur, FPsave *ufp)
+fcvtd(int fmt, int rm, int rd, Ureg *ur, FPenv *ufp)
 {
 	Double d;
 	Internal intrn;
@@ -393,7 +390,7 @@ fcvtd(int fmt, int rm, int rd, Ureg *ur, FPsave *ufp)
 
 /* convert fmt (rm) to single (rd) */
 static void
-fcvts(int fmt, int rm, int rd, Ureg *ur, FPsave *ufp)
+fcvts(int fmt, int rm, int rd, Ureg *ur, FPenv *ufp)
 {
 	Double d;
 	Internal intrn;
@@ -424,7 +421,7 @@ fcvts(int fmt, int rm, int rd, Ureg *ur, FPsave *ufp)
 
 /* convert fmt (rm) to long (rd) */
 static void
-fcvtw(int fmt, int rm, int rd, Ureg *ur, FPsave *ufp)
+fcvtw(int fmt, int rm, int rd, Ureg *ur, FPenv *ufp)
 {
 	Double d;
 	Internal intrn;
@@ -455,7 +452,7 @@ fcvtw(int fmt, int rm, int rd, Ureg *ur, FPsave *ufp)
 
 /* convert fmt (rm) to vlong (rd) */
 static void
-fcvtv(int fmt, int rm, int rd, Ureg *ur, FPsave *ufp)
+fcvtv(int fmt, int rm, int rd, Ureg *ur, FPenv *ufp)
 {
 	Double d;
 	Internal intrn;
@@ -520,13 +517,23 @@ static	FPcvt	optabcvt[] = {	/* Fd := OP(fmt, Fm) (unary) */
 };
 
 /*
+ * From Plan 9 port/fault.c
+ */
+void
+validaddr(ulong /* addr */, ulong /* len */, int /* write */)
+{
+/*    if (!okaddr(addr, len, write))
+        error(Ebadarg);*/
+}
+
+/*
  * No type conversion is implied and the type of the cpu register is
  * unknown, so copy the bits into reg.
  * Later instructions will have to know the correct type and use the
  * right format specifier to convert to or from Internal FP.
  */
 static void
-fld(int d, ulong ea, int n, FPsave *ufp)
+fld(int d, ulong ea, int n, FPenv *ufp)
 {
 	if(DBG(Dbgmoves))
 		iprint("MOV%c #%lux, F%d\n", n==8? 'D': 'F', ea, d);
@@ -534,15 +541,15 @@ fld(int d, ulong ea, int n, FPsave *ufp)
 		memmove(&FREG(ufp, d), (void *)ea, 4);
 	else if (n == 8){
 		d &= ~1;
-		/* NB: we swap order of the words */
-		memmove(&FREG(ufp, d), (void *)(ea+4), 4);
-		memmove(&FREG(ufp, d+1), (void *)ea, 4);
+		/* NB: we keep order of the words */
+		memmove(&FREG(ufp, d+1), (void *)(ea+4), 4);
+		memmove(&FREG(ufp, d), (void *)ea, 4);
 	} else
 		panic("fld: n (%d) not 4 nor 8", n);
 }
 
 static void
-fst(ulong ea, int s, int n, FPsave *ufp)
+fst(ulong ea, int s, int n, FPenv *ufp)
 {
 	if(DBG(Dbgmoves))
 		iprint("MOV%c	F%d,#%lux\n", n==8? 'D': 'F', s, ea);
@@ -550,9 +557,9 @@ fst(ulong ea, int s, int n, FPsave *ufp)
 		memmove((void *)ea, &FREG(ufp, s), 4);
 	else if (n == 8){
 		s &= ~1;
-		/* NB: we swap order of the words */
-		memmove((void *)(ea+4), &FREG(ufp, s), 4);
-		memmove((void *)ea, &FREG(ufp, s+1), 4);
+		/* NB: we keep order of the words */
+		memmove((void *)(ea+4), &FREG(ufp, s+1), 4);
+		memmove((void *)ea, &FREG(ufp, s), 4);
 	} else
 		panic("fst: n (%d) not 4 nor 8", n);
 }
@@ -586,7 +593,7 @@ isfpop(ulong iw)
 }
 
 static int
-ldst(ulong op, Ureg *ur, FPsave *ufp)
+ldst(ulong op, Ureg *ur, FPenv *ufp)
 {
 	int rn, rd, o, size, wr;
 	short off;
@@ -623,11 +630,11 @@ ldst(ulong op, Ureg *ur, FPsave *ufp)
 }
 
 static int
-cop1mov(Instr *ip)
+cop1mov(COPInstr *ip)
 {
 	int fs, rt;
 	uvlong vl;
-	FPsave *ufp;
+	FPenv *ufp;
 	Ureg *ur;
 
 	fs = ip->rm;		/* F(s) aka rm */
@@ -761,16 +768,16 @@ followbr(Ureg *ur)
 {
 	uintptr npc;
 
-	npc = branch(ur, up->fpsave.fpstatus);
+	npc = fpbranch(ur, up->fpsave.fpstatus);
 	if(npc == 0)
-		panic("fpemu: branch expected but not seen at %#p", ur->pc);
+		panic("fpemu: branch expected but not seen at %8.8lux", ur->pc);
 	ur->pc = npc;
 	return npc;
 }
 
 /* emulate COP1 instruction in branch delay slot */
 static void
-dsemu(Instr *ip, ulong dsinsn, Ureg *ur, FPsave *ufp)
+dsemu(COPInstr *ip, ulong dsinsn, Ureg *ur, FPenv *ufp)
 {
 	uintptr npc;
 
@@ -790,7 +797,7 @@ dsemu(Instr *ip, ulong dsinsn, Ureg *ur, FPsave *ufp)
  * user registers, then trap so we can finish up and take the branch.
  */
 static void
-dsexec(Instr *ip, Ureg *ur, FPsave *ufp)
+dsexec(COPInstr *ip, Ureg *ur, FPenv *ufp)
 {
 	ulong dsaddr, wpaddr;
 	Tos *tos;
@@ -803,7 +810,7 @@ dsexec(Instr *ip, Ureg *ur, FPsave *ufp)
 	 * executed at any address.
 	 */
 	dsaddr = ip->pc + 4;
-	tos = (Tos*)(USTKTOP-sizeof(Tos));
+	tos = (Tos*)(FPSTACKTOP-sizeof(Tos));
 	tos->kscr[0] = *(ulong *)dsaddr;
 	tos->kscr[1] = 0xc0;		/* EHB; we could use some trap instead */
 	tos->kscr[2] = 0xc0;			/* EHB */
@@ -828,7 +835,7 @@ dsexec(Instr *ip, Ureg *ur, FPsave *ufp)
 void
 fpwatch(Ureg *ur)			/* called on watch-point trap */
 {
-	FPsave *ufp;
+	FPenv *ufp;
 
 	ufp = &up->fpsave;
 	if(ufp->fpdelayexec == 0)
@@ -860,11 +867,11 @@ validiw(uintptr pc)
  *	cc = ip->rn >> 2;			// assume cc == 0
  */
 static int
-bremu(Instr *ip)
+bremu(COPInstr *ip)
 {
 	int off, taken;
 	ulong dsinsn;
-	FPsave *ufp;
+	FPenv *ufp;
 	Ureg *ur;
 
 	if (ip->iw & (1<<17))
@@ -914,7 +921,7 @@ static void
 reg2intern(Internal *i, int reg, int fmt, Ureg *ur)
 {
 	Double d;
-	FPsave *ufp;
+	FPenv *ufp;
 
 	/* we may see other fmt types on conversion or unary ops; ignore */
 	ufp = &up->fpsave;
@@ -939,7 +946,7 @@ static void
 intern2reg(int reg, Internal *i, int fmt, Ureg *ur)
 {
 	Double d;
-	FPsave *ufp;
+	FPenv *ufp;
 	Internal tmp;
 
 	ufp = &up->fpsave;
@@ -965,7 +972,7 @@ intern2reg(int reg, Internal *i, int fmt, Ureg *ur)
  *	FC=11 | cond (4)		# FUNC
  */
 static int
-cmpemu(Instr *ip)
+cmpemu(COPInstr *ip)
 {
 	int cc, cond;
 
@@ -989,7 +996,7 @@ cmpemu(Instr *ip)
 }
 
 static int
-binemu(Instr *ip)
+binemu(COPInstr *ip)
 {
 	FP2 *fp;
 	Internal fd, prfd;
@@ -1028,11 +1035,11 @@ binemu(Instr *ip)
 }
 
 static int
-unaryemu(Instr *ip)
+unaryemu(COPInstr *ip)
 {
 	int o;
 	FP1 *fp;
-	FPsave *ufp;
+	FPenv *ufp;
 
 	o = ip->o;
 	fp = &optab1[o];
@@ -1082,7 +1089,7 @@ unaryemu(Instr *ip)
 }
 
 static int
-cvtemu(Instr *ip)
+cvtemu(COPInstr *ip)
 {
 	FPcvt *fp;
 
@@ -1098,7 +1105,7 @@ cvtemu(Instr *ip)
 }
 
 static void
-cop1decode(Instr *ip, ulong iw, ulong pc, Ureg *ur, FPsave *ufp,
+cop1decode(COPInstr *ip, ulong iw, ulong pc, Ureg *ur, FPenv *ufp,
 	Internal *imp, Internal *inp)
 {
 	ip->iw = iw;
@@ -1117,7 +1124,7 @@ cop1decode(Instr *ip, ulong iw, ulong pc, Ureg *ur, FPsave *ufp,
 }
 
 void
-fpstuck(uintptr pc, FPsave *fp)
+fpstuck(uintptr pc, FPenv *fp)
 {
 	USED(pc);
 	if(!(DBG(Dbgbasic)))
@@ -1135,7 +1142,7 @@ fpstuck(uintptr pc, FPsave *fp)
 }
 
 static void
-_dbgstuck(ulong pc, Ureg *ur, FPsave *ufp)
+_dbgstuck(ulong pc, Ureg *ur, FPenv *ufp)
 {
 	fpstuck(pc, ufp);
 	if (DBG(Dbgdelay) && ur->cause & BD)
@@ -1144,11 +1151,11 @@ _dbgstuck(ulong pc, Ureg *ur, FPsave *ufp)
 
 /* decode the opcode and call common emulation code */
 static int
-fpimips(ulong pc, ulong op, Ureg *ur, FPsave *ufp)
+fpimips(ulong pc, ulong op, Ureg *ur, FPenv *ufp)
 {
 	int r, o;
-	Instr insn;
-	Instr *ip;
+	COPInstr insn;
+	COPInstr *ip;
 	Internal im, in;
 
 	/* note: would update fault status here if we noted numeric exceptions */
@@ -1216,12 +1223,12 @@ fpimips(ulong pc, ulong op, Ureg *ur, FPsave *ufp)
 	return Failed;
 }
 
-static FPsave *
+static FPenv *
 fpinit(Ureg *ur)
 {
 	int i, n;
 	Double d;
-	FPsave *ufp;
+	FPenv *ufp;
 	Internal tmp;
 
 	/*
@@ -1233,7 +1240,7 @@ fpinit(Ureg *ur)
 	case FPactive:
 	case FPinactive:
 		error("fpu (in)active but fp is emulated");
-	case FPinit:
+	case FPINIT:
 		up->fpstate = FPemu;
 		ufp->fpcontrol = 0;
 		ufp->fpstatus = 0;
@@ -1271,7 +1278,6 @@ fpuemu(Ureg *ureg)
 	ulong iw, r;
 
 	if(waserror()){
-		postnote(up, 1, up->errstr, NDebug);
 		return -1;
 	}
 
@@ -1390,7 +1396,7 @@ isbranch(ulong *pc)
  * for jump-and-links, set r31.
  */
 ulong
-branch(Ureg *ur, ulong fcr31)
+fpbranch(Ureg *ur, ulong fcr31)
 {
 	ulong iw, npc, rs, rt, rd, offset, targ, next;
 

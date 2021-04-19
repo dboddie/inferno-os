@@ -126,10 +126,7 @@ static uchar fn_keys[8][8] = {
 
 void kbdpoll(void)
 {
-    GPIO *c_func = (GPIO *)(GPIO_PORT_C_FUNC | KSEG1);
-    GPIO *c_sel = (GPIO *)(GPIO_PORT_C_SEL | KSEG1);
     GPIO *c_dir = (GPIO *)(GPIO_PORT_C_DIR | KSEG1);
-    GPIO *c_pin = (GPIO *)(GPIO_PORT_C_PIN | KSEG1);
     GPIO *c_data = (GPIO *)(GPIO_PORT_C_DATA | KSEG1);
     GPIO *d_pin = (GPIO *)(GPIO_PORT_D_PIN | KSEG1);
 

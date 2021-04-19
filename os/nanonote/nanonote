@@ -102,10 +102,11 @@ root
 	/dis/rm.dis
 	/dis/p.dis
 	/dis/ps.dis
-	/dis/lib/readdir.dis
-	/dis/lib/workdir.dis
-	/dis/lib/daytime.dis
+	/dis/lib/arg.dis
 	/dis/lib/auth.dis
-	/dis/lib/ssl.dis
 	/dis/lib/bufio.dis
+	/dis/lib/daytime.dis
+	/dis/lib/readdir.dis
+	/dis/lib/ssl.dis
 	/dis/lib/string.dis
+	/dis/lib/workdir.dis

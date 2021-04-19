@@ -10,7 +10,8 @@ Memory map as described in the mem.h file.
 0x8000804c      KTZERO
 0x80008000      Boot image
 
-0x80004000      Exceptions stack top
-0x80003000      Kernel stack top
+0x80005000      FP exceptions stack top (FPSTACKTOP)
+0x80004000      Exceptions stack top (ESTACKTOP)
+0x80003000      Kernel stack top (STACKTOP)
 0x80002000      MACHADDR (KZERO + 0x2000)
 0x80000000      KZERO KSEG0

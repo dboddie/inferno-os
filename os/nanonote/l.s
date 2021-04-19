@@ -147,6 +147,26 @@ TEXT	setstatus(SB), $0
 	EHB
 	RET
 
+TEXT	setwatchhi0(SB), $0
+	MOVW	R1, M(WATCHHI)
+	EHB
+	RETURN
+
+/*
+ * beware that the register takes a double-word address, so it's not
+ * precise to the individual instruction.
+ */
+TEXT	setwatchlo0(SB), $0
+	MOVW	R1, M(WATCHLO)
+	EHB
+	RETURN
+
+TEXT	tlbvirt(SB), $0
+	EHB
+	MOVW	M(TLBVIRT), R1
+	EHB
+	RETURN
+
 TEXT    getebase(SB), $-8
         MFC0(15, 1, 1)      /* CP0 15.1 -> R1 */
         EHB
@@ -155,6 +175,57 @@ TEXT    getebase(SB), $-8
 TEXT    getprid(SB), $-8
         MOVW    M(PRID), R1
         RETURN
+
+/*
+ *  cache manipulation
+ */
+
+/*
+ *  we avoided using R4, R5, R6, and R7 so gotopc can call us without saving
+ *  them, but gotopc is now gone.
+ */
+TEXT	icflush(SB), $-4			/* icflush(virtaddr, count) */
+	MOVW	4(FP), R9
+	DI(10)				/* intrs off, old status -> R10 */
+	UBARRIERS(7, R7, ichb);		/* return to kseg1 (uncached) */
+	ADDU	R1, R9			/* R9 = last address */
+	MOVW	$(~(CACHELINESZ-1)), R8
+	AND	R1, R8			/* R8 = first address, rounded down */
+	ADDU	$(CACHELINESZ-1), R9
+	AND	$(~(CACHELINESZ-1)), R9	/* round last address up */
+	SUBU	R8, R9			/* R9 = revised count */
+icflush1:
+//	CACHE	PD+HWB, (R8)		/* flush D to ram */
+	CACHE	PI+HINV, (R8)		/* invalidate in I */
+	SUBU	$CACHELINESZ, R9
+	BGTZ	R9, icflush1
+	ADDU	$CACHELINESZ, R8	/* delay slot */
+
+	BARRIERS(7, R7, ic2hb);		/* return to kseg0 (cached) */
+	MOVW	R10, M(STATUS)
+	JRHB(31)			/* return and clear all hazards */
+
+TEXT	dcflush(SB), $-4			/* dcflush(virtaddr, count) */
+	MOVW	4(FP), R9
+	DI(10)				/* intrs off, old status -> R10 */
+	SYNC
+	EHB
+	ADDU	R1, R9			/* R9 = last address */
+	MOVW	$(~(CACHELINESZ-1)), R8
+	AND	R1, R8			/* R8 = first address, rounded down */
+	ADDU	$(CACHELINESZ-1), R9
+	AND	$(~(CACHELINESZ-1)), R9	/* round last address up */
+	SUBU	R8, R9			/* R9 = revised count */
+dcflush1:
+//	CACHE	PI+HINV, (R8)		/* invalidate in I */
+	CACHE	PD+HWBI, (R8)		/* flush & invalidate in D */
+	SUBU	$CACHELINESZ, R9
+	BGTZ	R9, dcflush1
+	ADDU	$CACHELINESZ, R8	/* delay slot */
+	SYNC
+	EHB
+	MOVW	R10, M(STATUS)
+	JRHB(31)			/* return and clear all hazards */
 
 /*
  * access to program counter and stack pointer

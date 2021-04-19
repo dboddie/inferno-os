@@ -208,7 +208,7 @@ userinit(void)
     ready(p);
 }
 
-void    segflush(void *p, ulong n)
+void    segflush(void * /* p */, ulong /* n */)
 {
     //print("segflush: %p %8.8lux\n", p, n);
 }

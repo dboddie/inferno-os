@@ -34,6 +34,7 @@
 #define DCACHESIZE	(16*1024)		/* JZ4720 */
 
 #define MASK(w)		FMASK(0, w)
+#define FMASK(o, w)	(((1<<(w))-1)<<(o))
 
 /*
  * Time
@@ -311,6 +312,7 @@
 #define MEMSIZE	(32*MB)		        /* fixed memory on Nanonote */
 #define STACKTOP (MACHADDR+BY2PG)       /* top of kernel stack */
 #define ESTACKTOP (STACKTOP+BY2PG)      /* top of exception stack */
+#define	FPSTACKTOP (ESTACKTOP+BY2PG)    /* top of floating point exception stack */
 
 /* Memory map - starts at 0x80000000, ends at 0x82000000 (32MB) */
 #define MEMORY_TOP      (KZERO+0x1f00000) /* End of memory Inferno can use */

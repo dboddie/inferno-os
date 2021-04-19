@@ -27,7 +27,9 @@ OBJ=\
 #	intr.$O\
 	peripherals/kbd.$O\
 	main.$O\
-#	fpimips.$O\
+	fpispim.$O\
+	fpi.$O\
+	fpimem.$O\
 	tas.$O\
 	peripherals/power.$O\
 	$IP\

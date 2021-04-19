@@ -308,7 +308,7 @@ int		xmerge(void*, void*);
 void*		xspanalloc(ulong, int, ulong);
 void		xsummary(void);
  
-void		validaddr(void*, ulong, int);
+void		validaddr(ulong, ulong, int);
 void*	vmemchr(void*, int, int);
 void		hnputv(void*, vlong);
 void		hnputl(void*, ulong);
