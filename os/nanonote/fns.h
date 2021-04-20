@@ -111,10 +111,5 @@ uintptr dmaaddr(void *va);
 void 	dmastart(int, int, int, void*, void*, int);
 int 	dmawait(int);
 
-/* Nanonote specific hardware setup */
-void    hwinit(void);
-
 #define PTR2UINT(p)     ((uintptr)(p))
 #define UINT2PTR(i)     ((void*)(i))
-
-void fbprint(unsigned int v, unsigned int l, unsigned int colour);
