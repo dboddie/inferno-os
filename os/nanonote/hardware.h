@@ -123,9 +123,21 @@ typedef struct GPIO GPIO;
 
 #define WATCHDOG_BASE 0x10002000
 
-struct Watchdog {
+typedef struct Watchdog {
     ulong data;         /* TDR */
     ulong enable;       /* TCER */
     ulong counter;      /* TCNT */
     ulong control;      /* TCSR */
+} Watchdog;
+
+enum WatchdogCtl {
+    WD_PrescaleDiv1    = 0x00,
+    WD_PrescaleDiv4    = 0x08,
+    WD_PrescaleDiv16   = 0x10,
+    WD_PrescaleDiv64   = 0x18,
+    WD_PrescaleDiv256  = 0x20,
+    WD_PrescaleDiv1024 = 0x28,
+    WD_ExtEnable       = 4,
+    WD_RTCEnable       = 2,
+    WD_PCLKEnable      = 1
 };
