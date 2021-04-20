@@ -31,7 +31,6 @@ OBJ=\
 	fpi.$O\
 	fpimem.$O\
 	tas.$O\
-	peripherals/power.$O\
 	$IP\
 	$DEVS\
 	$ETHERS\

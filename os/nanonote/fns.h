@@ -89,8 +89,9 @@ void show_cpu_config(void);
 
 void    kbdinit(void);
 void    kbdpoll(void);
-void    powerinit(void);
-void    powerintr(void);
+void    power_init(void);
+int     power_button_pressed(void);
+void    power_check_reset(void);
 void	screeninit(void);
 void	clockcheck(void);
 void	links(void);

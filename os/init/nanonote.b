@@ -1,7 +1,7 @@
 implement Init;
 
 #
-# Ben Nanonote
+# Ben NanoNote
 #
 
 include "sys.m";
@@ -50,7 +50,7 @@ init(context: ref Context, nil: list of string)
 #   bind("#t", "/dev", sys->MAFTER);		# serial port
 #    bind("#B", "/dev", sys->MAFTER);            # backlight
 #    bind("#L", "/dev", sys->MAFTER);            # LEDs
-#    bind("#↓", "/dev", sys->MAFTER);          # power
+    bind("#↓", "/dev", sys->MAFTER);          # power
 #    bind("#S", "/n/sd", sys->MAFTER);           # SDHC card
     bind("#p", "/prog", sys->MREPL);		# prog device
     bind("#d", "/fd", sys->MREPL);

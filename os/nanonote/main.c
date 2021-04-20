@@ -62,7 +62,7 @@ void main(void)
     trapinit();                 /* in trap.c */
 
     screeninit();               /* in screen.c */
-    powerinit();                /* power button handling */
+    power_init();                /* power button handling */
 
     timersinit();               /* in port/portclock.c */
     clockinit();                /* in clock.c */

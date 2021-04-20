@@ -70,9 +70,7 @@ void trapintr(Ureg *ur)
         if (ic->pending & InterruptTCU0) {
             clockintr(ur);
             kbdpoll();
-        }
-        if (ic->pending & InterruptGPIO3) {
-            powerintr();
+            power_check_reset();
         }
     }
 }

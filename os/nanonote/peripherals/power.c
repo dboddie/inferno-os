@@ -6,34 +6,25 @@
 
 #include "../hardware.h"
 
-void powerinit(void)
+void power_init(void)
 {
-    InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
-    ic->mask_clear = InterruptGPIO3;
-
-    GPIO *d_mask = (GPIO *)(GPIO_PORT_D_INTMASK | KSEG1);
-    GPIO *d_trig = (GPIO *)(GPIO_PORT_D_TRIG | KSEG1);
     GPIO *d_func = (GPIO *)(GPIO_PORT_D_FUNC | KSEG1);
     GPIO *d_sel = (GPIO *)(GPIO_PORT_D_SEL | KSEG1);
     GPIO *d_dir = (GPIO *)(GPIO_PORT_D_DIR | KSEG1);
-    GPIO *d_flag = (GPIO *)(GPIO_PORT_D_FLAG | KSEG1);
-    d_mask->set = GPIO_Power;
-    d_trig->clear = GPIO_Power;
+    GPIO *d_pull = (GPIO *)(GPIO_PORT_D_PULL | KSEG1);
+    /* GPIO/interrupt function, GPIO selected, direction in, pull up/down */
     d_func->clear = GPIO_Power;
-    d_sel->set = GPIO_Power;
+    d_sel->clear = GPIO_Power;
     d_dir->clear = GPIO_Power;
-    d_flag->clear = GPIO_Power;
-
-    d_mask->clear = GPIO_Power;
+    d_pull->clear = GPIO_Power;
 }
 
-void powerintr(void)
+int power_button_pressed(void)
 {
-    GPIO *d_flag = (GPIO *)(GPIO_PORT_D_FLAG | KSEG1);
-    static int j = 0;
+    GPIO *d_pin = (GPIO *)(GPIO_PORT_D_PIN | KSEG1);
+    return (d_pin->data & GPIO_Power) ? 0: 1;
+}
 
-    if (d_flag->data & GPIO_Power) {
-        /* Clear all flags */
-        d_flag->clear = GPIO_Power;
-    }
+void power_check_reset(void)
+{
 }

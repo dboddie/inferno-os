@@ -10,6 +10,7 @@ dev
 	uart
 	draw screen
 #	pointer
+	power peripherals/power
 
 lib
 	interp
@@ -88,7 +89,7 @@ root
 	/osinit.dis
 
 # For development work (from cerf1110/cerf):
-	/dis/sh.dis	/dis/tiny/sh.dis
+	/dis/sh.dis
 	/dis/ls.dis
 	/dis/cat.dis
 	/dis/bind.dis
@@ -107,7 +108,10 @@ root
 	/dis/lib/auth.dis
 	/dis/lib/bufio.dis
 	/dis/lib/daytime.dis
+	/dis/lib/env.dis
+	/dis/lib/filepat.dis
 	/dis/lib/readdir.dis
 	/dis/lib/ssl.dis
 	/dis/lib/string.dis
 	/dis/lib/workdir.dis
+	/dis/sh/std.dis
