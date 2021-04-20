@@ -120,3 +120,12 @@ struct GPIO {
     ulong clear;
 };
 typedef struct GPIO GPIO;
+
+#define WATCHDOG_BASE 0x10002000
+
+struct Watchdog {
+    ulong data;         /* TDR */
+    ulong enable;       /* TCER */
+    ulong counter;      /* TCNT */
+    ulong control;      /* TCSR */
+};

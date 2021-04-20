@@ -58,13 +58,13 @@ powerclose(Chan* c)
 static long
 powerread(Chan* c, void* a, long n, vlong offset)
 {
-    char lbuf[23];
+    char lbuf[2];
 
     switch((ulong)c->qid.path){
     case Qdir:
         return devdirread(c, a, n, powertab, nelem(powertab), devgen);
     case Qdata:
-	snprint(lbuf, 23, "%1d", power_button_pressed());
+	snprint(lbuf, 2, "%1d", power_button_pressed());
 	return readstr(offset, a, n, lbuf);
     default:
         n=0;

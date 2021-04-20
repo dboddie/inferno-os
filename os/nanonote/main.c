@@ -68,7 +68,6 @@ void main(void)
     clockinit();                /* in clock.c */
     printinit();                /* in port/devcons.c */
     print("\nInferno OS %s Vita Nuova\n", VERSION);
-    show_cpu_config();
 
     kbdinit();
 
@@ -277,40 +276,4 @@ kprocchild(Proc *p, void (*func)(void*), void *arg)
 
 	p->kpfun = func;
 	p->arg = arg;
-}
-
-/*
- * Show CPU configuration
- */
-void show_cpu_config(void)
-{
-    switch (getprid()) {
-    case 0x0ad0024f:
-        print("CPU: JZ4720\n"); break;
-    default:
-        print("CPU unknown\n"); break;
-    }
-
-    /* 0x80000483 -> MIPS32r2 (1), TLB (1), cacheable noncoherent (3) */
-    ulong v = getconfig();
-
-    switch ((v & CFG_AT) >> 13) {
-    case 0:
-        print("MIPS32"); break;
-    case 1:
-        print("MIPS64 (32-bit addressing)"); break;
-    case 2:
-        print("MIPS64 (64-bit addressing)"); break;
-    default:
-        print("MIPS32/64"); break;
-    }
-
-    switch ((v & CFG_AR) >> 10) {
-    case 0:
-        print(" release 1\n"); break;
-    case 1:
-        print(" release 2\n"); break;
-    default:
-        print("\n"); break;
-    }
 }

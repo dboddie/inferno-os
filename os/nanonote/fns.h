@@ -85,8 +85,6 @@ void	setwatchlo0(ulong);
 ulong   getconfig(void);
 ulong   getebase(void);
 
-void show_cpu_config(void);
-
 void    kbdinit(void);
 void    kbdpoll(void);
 void    power_init(void);

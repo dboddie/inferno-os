@@ -11,6 +11,7 @@ dev
 	draw screen
 #	pointer
 	power peripherals/power
+	sysinfo
 
 lib
 	interp
@@ -101,6 +102,7 @@ root
 	/dis/cp.dis
 	/dis/mc.dis
 	/dis/mkdir.dis
+	/dis/ns.dis
 	/dis/rm.dis
 	/dis/p.dis
 	/dis/ps.dis
