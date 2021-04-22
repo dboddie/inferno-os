@@ -184,22 +184,24 @@ typedef struct {
     /* Indexed - setting the index register to a value from 0 to 15 gives
        access to the bank of registers for the corresponding endpoint */
     ushort in_max_p;        /* 0x10 */
-    union {                 /* 0x12 */
-        uchar csr[2];
-        ushort in_csr;
-    };
+    ushort csr;             /* 0x12 */
     ushort out_max_p;       /* 0x14 */
     ushort out_csr;         /* 0x16 */
-    union {                 /* 0x18 */
-        uchar count[2];
-        ushort out_count;
-    };
+    ushort count;           /* 0x18 */
 
     ushort padding[3];
 
     /* FIFOs */
-    ulong fifo[16];         /* 0x20-0x5f */
+    uchar fifo[16][4];      /* 0x20-0x5f */
 } USBDevice;
+
+/* CSR flags */
+enum {
+    USB_ServicedOutPktRdy = 0x40,
+    USB_DataEnd           = 0x08,
+    USB_InPktRdy          = 0x02,
+    USB_OutPktRdy         = 0x01,
+};
 
 #define USB_DEVICE_CONFIG_BASE 0x13040078
 
