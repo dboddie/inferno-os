@@ -104,11 +104,10 @@ void	drawqunlock(void);
 int	candrawqlock(void);
 void	swcursorinit(void);
 
-int	isaconfig(char *, int, ISAConf *);
+void    usb_init(void);
+void    usb_info(char *buf, int n);
 
-uintptr dmaaddr(void *va);
-void 	dmastart(int, int, int, void*, void*, int);
-int 	dmawait(int);
+int	isaconfig(char *, int, ISAConf *);
 
 #define PTR2UINT(p)     ((uintptr)(p))
 #define UINT2PTR(i)     ((void*)(i))

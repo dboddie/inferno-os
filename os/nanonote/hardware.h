@@ -1,43 +1,47 @@
-#define CGU_CCR   0x10000000
+#define CGU_CPCCR 0x10000000
 #define CGU_CLKGR 0x10000020
+#define CGU_SCR   0x10000024
 
 enum CGUGates {
-    CGU_RTC = 4,
-    CGU_TCU = 2
+    CGU_UDC = 0x800,
+    CGU_RTC = 0x004,
+    CGU_TCU = 0x002
 };
+
+#define CGU_SPENDN 0x40
 
 #define RTC_BASE 0x10003000
 
-struct RTC {
+typedef struct {
     ulong  control;
     ulong  second;
     ulong  second_alarm;
     ulong  regulator;
-};
-typedef struct RTC RTC;
+} RTC;
 
 #define INTERRUPT_BASE 0x10001000
 
-struct InterruptCtr {
+typedef struct {
     ulong source;                   /* ICSR */
     ulong mask;                     /* ICMR */
     ulong mask_set;                 /* ICMSR */
     ulong mask_clear;               /* ICMCR */
     ulong pending;                  /* ICPR */
-};
-typedef struct InterruptCtr InterruptCtr;
+} InterruptCtr;
 
 enum InterruptSource {
     InterruptTCU0  = 0x00800000,
     InterruptGPIO0 = 0x10000000,
     InterruptGPIO1 = 0x08000000,
     InterruptGPIO2 = 0x04000000,
-    InterruptGPIO3 = 0x02000000
+    InterruptGPIO3 = 0x02000000,
+    InterruptUDC   = 0x01000000,
+    InterruptUHC   = 0x00000008
 };
 
 #define TIMER_BASE 0x10002010
 
-struct JZTimer {
+typedef struct {
     ulong counter_enable;           /* TER */
     ulong counter_enable_set;       /* TESR */
     ulong counter_enable_clear;     /* TECR */
@@ -58,8 +62,7 @@ struct JZTimer {
     ulong counter0;                 /* TCNT0 */
     ulong control0;                 /* TCSR0 */
     /* ... until TCSR7 */
-};
-typedef struct JZTimer JZTimer;
+} JZTimer;
 
 enum TimerCounterEnable {
     TimerCounter0 = 0x01,
@@ -114,16 +117,15 @@ enum GPIOPins {
     GPIO_Keyboard_Out_Mask = 0x0003fc00
 };
 
-struct GPIO {
+typedef struct {
     ulong data;
     ulong set;
     ulong clear;
-};
-typedef struct GPIO GPIO;
+} GPIO;
 
 #define WATCHDOG_BASE 0x10002000
 
-typedef struct Watchdog {
+typedef struct {
     ulong data;         /* TDR */
     ulong enable;       /* TCER */
     ulong counter;      /* TCNT */
@@ -141,3 +143,68 @@ enum WatchdogCtl {
     WD_RTCEnable       = 2,
     WD_PCLKEnable      = 1
 };
+
+#define MSC_BASE 0x10021000
+
+typedef struct {
+    ulong clock;            /* STRPCL */
+    ulong status;           /* STAT */
+    ulong clock_rate;       /* CLKRT */
+    ulong control;          /* CMDAT */
+    ulong resp_time_out;    /* RESTO */
+    ulong read_time_out;    /* RDTO */
+    ulong block_length;     /* BLKLEN */
+    ulong number_of_block;  /* NOB */
+    ulong success_blocks;   /* SNOB */
+    ulong mask;             /* IMASK */
+    ulong interrupt;        /* IREG */
+    ulong cmd_index;        /* CMD */
+    ulong cmd_arg;          /* ARG */
+    ulong resp_fifo;        /* RES */
+    ulong rec_data_fifo;    /* RXFIFO */
+    ulong trans_data_fifo;  /* TXFIFO */
+} MMC;
+
+#define USB_DEVICE_BASE 0x13040000
+
+typedef struct {
+    /* Common */
+    uchar faddr;            /* function address */
+    uchar power;
+    ushort intr_in;
+    ushort intr_out;
+    ushort intr_in_enable;
+    ushort intr_out_enable;
+    uchar intr_usb;
+    uchar intr_usb_enable;
+    ushort frame;
+    uchar index;            /* 0-15 to select the bank of registers below */
+    uchar test_mode;
+
+    /* Indexed - setting the index register to a value from 0 to 15 gives
+       access to the bank of registers for the corresponding endpoint */
+    ushort in_max_p;        /* 0x10 */
+    union {                 /* 0x12 */
+        uchar csr[2];
+        ushort in_csr;
+    };
+    ushort out_max_p;       /* 0x14 */
+    ushort out_csr;         /* 0x16 */
+    union {                 /* 0x18 */
+        uchar count[2];
+        ushort out_count;
+    };
+
+    ushort padding[3];
+
+    /* FIFOs */
+    ulong fifo[16];         /* 0x20-0x5f */
+} USBDevice;
+
+#define USB_DEVICE_CONFIG_BASE 0x13040078
+
+typedef struct {
+    /* Configuration */
+    uchar ep_info;
+    uchar ram_info;
+} USBDeviceConfig;

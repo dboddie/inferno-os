@@ -12,6 +12,7 @@ dev
 #	pointer
 	power peripherals/power
 	sysinfo
+	usb peripherals/usb
 
 lib
 	interp

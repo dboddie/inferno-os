@@ -72,6 +72,9 @@ void trapintr(Ureg *ur)
             kbdpoll();
             power_check_reset();
         }
+        if (ic->pending & InterruptUDC) {
+            usb_intr();
+        }
     }
 }
 
