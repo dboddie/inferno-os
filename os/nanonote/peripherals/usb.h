@@ -74,6 +74,11 @@ typedef struct DeviceDescriptor
 }
 DeviceDescriptor;
 
+enum {
+    USB_NoSubclass = 0,
+    USB_NoProtocol = 0
+};
+
 typedef struct ConfigDescriptor
 {
     uchar length;       /* at least 9 bytes */

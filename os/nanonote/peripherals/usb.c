@@ -74,8 +74,8 @@ static uchar _DevDesc[0x12] = {
     0x01,           /* Descriptor (device) */
     0x00, 0x02,     /* USB 2.0 */
     0xff,           /* Class (vendor) */
-    0xff,           /* Subclass */
-    0xff,           /* Protocol */
+    USB_NoSubclass, /* Subclass */
+    USB_NoProtocol, /* Protocol */
     0x20,           /* Max packet size in bytes */
     0x55, 0xf0,     /* Vendor ID */
     0x37, 0x13,     /* Product ID */
