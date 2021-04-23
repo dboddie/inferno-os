@@ -9,6 +9,7 @@
 
 static int req_state;
 static int req_current;
+static int configuration;
 
 void usb_init(void)
 {
@@ -69,7 +70,7 @@ static void usb_read_msg(uchar *fifo, Request *req)
     req->length |= fifo[0] << 8;
 }
 
-static uchar _DevDesc[0x12] = {
+static uchar _DevDesc[] = {
     0x12,           /* Length */
     0x01,           /* Descriptor (device) */
     0x00, 0x02,     /* USB 2.0 */
@@ -80,21 +81,63 @@ static uchar _DevDesc[0x12] = {
     0x55, 0xf0,     /* Vendor ID */
     0x37, 0x13,     /* Product ID */
     0x00, 0x01,     /* Device version (1.0) */
-    0x00,           /* Manufacturer string descriptor index */
-    0x00,           /* Product string descriptor index */
-    0x00,           /* Serial number string descriptor index */
+    0x40,           /* Manufacturer string descriptor index */
+    0x41,           /* Product string descriptor index */
+    0x42,           /* Serial number string descriptor index */
     0x01,           /* Number of configurations */
 };
 
-static uchar _ConfDesc[0x9] = {
+static uchar _ConfDesc[] = {
     0x09,           /* Length */
     0x02,           /* Descriptor (configuration) */
     0x08, 0x00,     /* Total length including other trailing descriptors */
     0x00,           /* Number of interfaces */
-    0x00,           /* Configuration number/value */
+    0x01,           /* Configuration number/value (0 is unconfigured) */
     0x00,           /* Configuration descriptor index */
     0x40,           /* Attributes (self-powered) */
     0x01            /* Maximum power consumption (in 2mA units) */
+};
+
+/* The language string descriptor is needed if other string descriptors are used */
+static uchar _LanguageDesc[] = {
+    0x04,           /* Length */
+    0x03,           /* Descriptor (string) */
+    0x09, 0x04      /* Language code zero (US English) */
+                    /* Other codes can follow... */
+};
+
+static uchar _ManufacturerDesc[] = {
+    0x10,                               /* Length (2 + 14) */
+    0x03,                               /* Descriptor (string) */
+    'I', 0x00,                          /* UTF-16-LE string */
+    'n', 0x00,
+    'f', 0x00,
+    'e', 0x00,
+    'r', 0x00,
+    'n', 0x00,
+    'o', 0x00
+};
+
+static uchar _ProductDesc[] = {
+    0x12,                               /* Length (2 + 16) */
+    0x03,                               /* Descriptor (string) */
+    'N', 0x00,                          /* UTF-16-LE string */
+    'a', 0x00,
+    'n', 0x00,
+    'o', 0x00,
+    'N', 0x00,
+    'o', 0x00,
+    't', 0x00,
+    'e', 0x00
+};
+
+static uchar _SerialDesc[] = {
+    0x0a,                               /* Length (2 + 8) */
+    0x03,                               /* Descriptor (string) */
+    '1', 0x00,                          /* UTF-16-LE string */
+    '2', 0x00,
+    '3', 0x00,
+    '4', 0x00
 };
 
 static void write_descriptor(Request *req, uchar *fifo)
@@ -104,14 +147,40 @@ static void write_descriptor(Request *req, uchar *fifo)
     {
     case DeviceDesc:
     {
-        for (int i = 0; i < 0x12; i++)
+        for (int i = 0; i < _DevDesc[0]; i++)
             fifo[0] = _DevDesc[i];
         break;
     }
     case ConfigurationDesc:
     {
-        for (int i = 0; i < 0x9; i++)
+        for (int i = 0; i < _ConfDesc[0]; i++)
             fifo[0] = _ConfDesc[i];
+        break;
+    }
+    case StringDesc:
+    {
+        switch (req->value & 0xff)
+        {
+            case 0:
+                for (int i = 0; i < _LanguageDesc[0]; i++)
+                    fifo[0] = _LanguageDesc[i];
+                break;
+            case 0x40:
+                for (int i = 0; i < _ManufacturerDesc[0]; i++)
+                    fifo[0] = _ManufacturerDesc[i];
+                break;
+            case 0x41:
+                for (int i = 0; i < _ProductDesc[0]; i++)
+                    fifo[0] = _ProductDesc[i];
+                break;
+            case 0x42:
+                for (int i = 0; i < _SerialDesc[0]; i++)
+                    fifo[0] = _SerialDesc[i];
+                break;
+            default:
+                print("Invalid string descriptor: %2.2ux\n", req->value & 0xff);
+                break;
+        }
         break;
     }
     default:
@@ -143,7 +212,7 @@ void usb_intr(void)
         usb->index = 0;
 
         if (req_state != 0) {
-            print(" OK\n");
+            /* Expecting an interrupt to confirm that a response was sent */
             req_state = 0;
             return;
         }
@@ -156,7 +225,7 @@ void usb_intr(void)
         switch (req.request)
         {
         case GetDescriptor:
-            print(" GetDescriptor\n");
+            print(" GetDescriptor: %d %d\n", req.value >> 8, req.value & 0xff);
             /* Write the appropriate descriptor to the output FIFO */
             write_descriptor(&req, usb->fifo[0]);
             /* Let the host know that an IN packet is ready */
@@ -166,6 +235,11 @@ void usb_intr(void)
         case SetAddress:
             usb->faddr = req.value;
             print(" SetAddress: %4.4ux\n", req.value);
+            req_state++;
+            break;
+        case SetConfiguration:
+            configuration = req.value;
+            print(" SetConfiguration: %4.4ux\n", req.value);
             req_state++;
             break;
         default:
