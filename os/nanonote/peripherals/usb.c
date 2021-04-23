@@ -74,9 +74,9 @@ static uchar _DevDesc[] = {
     0x12,           /* Length */
     DeviceDesc,
     0x00, 0x02,     /* USB 2.0 */
-    USB_Class_CDC,
-    USB_NoSubclass, /* Subclass */
-    USB_NoProtocol, /* Protocol */
+    0x00,           /* Device class */
+    USB_NoSubclass,
+    USB_NoProtocol,
     0x40,           /* Max packet size in bytes */
     0x55, 0xf0,     /* Vendor ID */
     0x37, 0x13,     /* Product ID */
@@ -105,9 +105,9 @@ static uchar _IfaceDesc[] = {
     0x00,           /* Interface number (starting at 0) */
     0x00,           /* Alternate setting */
     0x02,           /* Number of endpoints */
-    USB_Class_CDC,
-    USB_Subclass_ACM,
-    USB_Protocol_ATCmd,
+    0xff,
+    USB_NoSubclass,
+    USB_NoProtocol,
     0x43
 };
 
@@ -116,7 +116,7 @@ static uchar _EndInDesc[] = {
     EndpointDesc,
     0x81,           /* Endpoint 1 (IN) */
     Endpoint_Bulk,
-    0x00, 0x01,     /* Maximum packet size */
+    0x40, 0x00,     /* Maximum packet size */
     0x00            /* Interval */
 };
 
@@ -125,7 +125,7 @@ static uchar _EndOutDesc[] = {
     EndpointDesc,
     0x02,           /* Endpoint 2 (OUT) */
     Endpoint_Bulk,
-    0x00, 0x01,     /* Maximum packet size */
+    0x40, 0x00,     /* Maximum packet size */
     0x00            /* Interval */
 };
 
