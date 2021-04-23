@@ -75,8 +75,13 @@ typedef struct DeviceDescriptor
 DeviceDescriptor;
 
 enum {
-    USB_NoSubclass = 0,
-    USB_NoProtocol = 0
+    USB_Class_CDC       = 0x02,
+
+    USB_NoSubclass      = 0,
+    USB_Subclass_ACM    = 0x02,
+
+    USB_NoProtocol      = 0,
+    USB_Protocol_ATCmd  = 0x01,
 };
 
 typedef struct ConfigDescriptor
@@ -91,3 +96,47 @@ typedef struct ConfigDescriptor
     uchar maxpower;
 }
 ConfigDescriptor;
+
+/* Only accessible via ConfigDescriptor (USB 2.0 p267) */
+typedef struct InterfaceDescriptor
+{
+    uchar length;       /* 9 bytes */
+    uchar type;         /* 4 */
+    uchar number;
+    uchar alternate;
+    uchar endpoints;
+    uchar class;
+    uchar subclass;
+    uchar protocol;
+    uchar index;
+}
+InterfaceDescriptor;
+
+typedef struct EndpointDescriptor
+{
+    uchar length;       /* 7 bytes */
+    uchar type;         /* 5 */
+    uchar endpoint;
+    uchar attributes;
+    uchar max_packet_size_low;
+    uchar max_packet_size_high;
+    uchar interval;
+}
+EndpointDescriptor;
+
+enum {
+    Endpoint_IN     = 0x80,
+    Endpoint_OUT    = 0x00,
+    Endpoint_Ctrl   = 0,
+    Endpoint_Iso    = 1,
+    Endpoint_Bulk   = 2,
+    Endpoint_Intr   = 3
+};
+
+typedef struct StringDescriptor
+{
+    uchar length;       /* at least 2 bytes */
+    uchar type;         /* 3 */
+    ushort string[];    /* UTF-16 */
+}
+StringDescriptor;
