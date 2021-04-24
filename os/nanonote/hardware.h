@@ -195,20 +195,26 @@ typedef struct {
     uchar fifo[16][4];      /* 0x20-0x5f */
 } USBDevice;
 
-/* CSR flags */
 enum {
+    /* Power flags */
+    USB_Power_SoftConn          = 0x40,
+    USB_Power_HighSpeed         = 0x20,
+
+    /* CSR0 flags */
     USB_Ctrl_ServicedOutPktRdy  = 0x40,
     USB_Ctrl_DataEnd            = 0x08,
     USB_Ctrl_InPktRdy           = 0x02,
     USB_Ctrl_OutPktRdy          = 0x01,
 
+    /* INCSR flags */
     USB_InMode                  = 0x2000,
     USB_InClrDataTog            = 0x40,
     USB_InFlushFIFO             = 0x08,
     USB_InPktRdy                = 0x01,
+    /* OUTCSR flags */
     USB_OutClrDataTog           = 0x80,
     USB_OutFlushFIFO            = 0x10,
-    USB_OutPktRdy               = 0x01
+    USB_OutPktRdy               = 0x01,
 };
 
 #define USB_DEVICE_CONFIG_BASE 0x13040078

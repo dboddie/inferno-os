@@ -11,6 +11,8 @@ static int req_state;
 static int req_current;
 static int configuration;
 
+#define USB_MAXP_SIZE 0x40
+
 void usb_init(void)
 {
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
@@ -33,9 +35,9 @@ void usb_init(void)
     /* Enable ep1 output interrupts - the NanoNote supports 1 OUT endpoint  */
     usb->intr_out_enable = USB_Endpoint_OUT1;
     /* Negotiate for high speed */
-    usb->power |= 0x20;
+    usb->power |= USB_Power_HighSpeed;
     /* Enable soft connection to enable the PHY */
-    usb->power |= 0x40;
+    usb->power |= USB_Power_SoftConn;
 }
 
 void usb_info(char *buf, int n)
@@ -76,7 +78,7 @@ static uchar _DevDesc[] = {
     USB_Class_Vendor,
     USB_NoSubclass, /* Subclass */
     USB_NoProtocol, /* Protocol */
-    0x40,           /* Max packet size in bytes */
+    USB_MAXP_SIZE,  /* Max packet size in bytes */
     0x55, 0xf0,     /* Vendor ID */
     0x37, 0x13,     /* Product ID */
     0x00, 0x01,     /* Device version (1.0) */
@@ -115,7 +117,8 @@ static uchar _EndOutDesc[] = {
     EndpointDesc,
     0x01,           /* Endpoint 1 (OUT) */
     Endpoint_Bulk,
-    0x40, 0x00,     /* Maximum packet size */
+    USB_MAXP_SIZE & 0xff,   /* Maximum packet size */
+    USB_MAXP_SIZE >> 8,
     0x00            /* Interval */
 };
 
@@ -124,7 +127,8 @@ static uchar _EndInDesc[] = {
     EndpointDesc,
     0x82,           /* Endpoint 2 (IN) */
     Endpoint_Bulk,
-    0x40, 0x00,     /* Maximum packet size */
+    USB_MAXP_SIZE & 0xff,   /* Maximum packet size */
+    USB_MAXP_SIZE >> 8,
     0x00            /* Interval */
 };
 
@@ -308,11 +312,11 @@ void usb_intr(void)
             req_state++;
 
             usb->index = 1;
-            usb->out_max_p = 0x40;
+            usb->out_max_p = USB_MAXP_SIZE;
             usb->out_csr |= USB_OutClrDataTog;
 
             usb->index = 2;
-            usb->in_max_p = 0x40;
+            usb->in_max_p = USB_MAXP_SIZE;
             usb->csr |= USB_InMode | USB_InClrDataTog;
             print("EP1 OUT EP2 IN\n");
             break;
