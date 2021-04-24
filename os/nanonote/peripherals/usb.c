@@ -20,13 +20,6 @@ void usb_init(void)
     req_state = 0;
     req_current = -1;
 
-    /* Flush FIFOs
-    for (int i = 0; i < 16; i++) {
-        usb->index = i;
-        usb->in_csr |= 0x08;
-        usb->out_csr |= 0x10;
-    } */
-
     /* Propagate the UDC clock by clearing the appropriate bit */
     *(ulong*)(CGU_CLKGR | KSEG1) &= ~CGU_UDC;
     /* Leave UDC suspend mode */
@@ -35,7 +28,10 @@ void usb_init(void)
     ic->mask_clear = InterruptUDC;
 
     usb->intr_usb_enable = 0x4;
-    usb->intr_in_enable = 0x1;
+    /* Enable ep0 and ep1 input interrupts - the NanoNote supports 2 IN endpoints */
+    usb->intr_in_enable = USB_Endpoint_IN0 | USB_Endpoint_IN2;
+    /* Enable ep1 output interrupts - the NanoNote supports 1 OUT endpoint  */
+    usb->intr_out_enable = USB_Endpoint_OUT1;
     /* Negotiate for high speed */
     usb->power |= 0x20;
     /* Enable soft connection to enable the PHY */
@@ -45,11 +41,14 @@ void usb_init(void)
 void usb_info(char *buf, int n)
 {
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
+    USBDeviceConfig *uc = (USBDeviceConfig *)(USB_DEVICE_CONFIG_BASE | KSEG1);
     snprint(buf, n,
             "%2.2ux %2.2ux %1.1ux\n"
-            "%4.4ux %4.4ux %4.4ux %4.4ux",
+            "%4.4ux %4.4ux %4.4ux %4.4ux\n"
+            "%2.2ux %2.2ux",
             usb->faddr, usb->power, usb->index,
-            usb->intr_in_enable, usb->intr_out_enable, usb->intr_in, usb->intr_out);
+            usb->intr_in_enable, usb->intr_out_enable, usb->intr_in, usb->intr_out,
+            uc->ep_info, uc->ram_info);
 }
 
 static void usb_read_fifo(uchar *fifo, uchar req[], ulong count)
@@ -74,9 +73,9 @@ static uchar _DevDesc[] = {
     0x12,           /* Length */
     DeviceDesc,
     0x00, 0x02,     /* USB 2.0 */
-    0x00,           /* Device class */
-    USB_NoSubclass,
-    USB_NoProtocol,
+    USB_Class_Vendor,
+    USB_NoSubclass, /* Subclass */
+    USB_NoProtocol, /* Protocol */
     0x40,           /* Max packet size in bytes */
     0x55, 0xf0,     /* Vendor ID */
     0x37, 0x13,     /* Product ID */
@@ -105,25 +104,25 @@ static uchar _IfaceDesc[] = {
     0x00,           /* Interface number (starting at 0) */
     0x00,           /* Alternate setting */
     0x02,           /* Number of endpoints */
-    0xff,
+    USB_Class_Vendor,
     USB_NoSubclass,
     USB_NoProtocol,
     0x43
 };
 
-static uchar _EndInDesc[] = {
+static uchar _EndOutDesc[] = {
     0x07,           /* Length */
     EndpointDesc,
-    0x81,           /* Endpoint 1 (IN) */
+    0x01,           /* Endpoint 1 (OUT) */
     Endpoint_Bulk,
     0x40, 0x00,     /* Maximum packet size */
     0x00            /* Interval */
 };
 
-static uchar _EndOutDesc[] = {
+static uchar _EndInDesc[] = {
     0x07,           /* Length */
     EndpointDesc,
-    0x02,           /* Endpoint 2 (OUT) */
+    0x82,           /* Endpoint 2 (IN) */
     Endpoint_Bulk,
     0x40, 0x00,     /* Maximum packet size */
     0x00            /* Interval */
@@ -191,7 +190,7 @@ static uchar* StringDescriptors[4] = {
 
 static void write_descriptor(uchar type, uchar index, uchar *fifo, ushort length)
 {
-    print("GetDescriptor: %d %d %d\n", type, index, length);
+    //print("GetDescriptor: %d %d %d\n", type, index, length);
     /* Check the descriptor type */
     switch (type)
     {
@@ -270,10 +269,11 @@ void usb_intr(void)
 
     /* Read the endpoints causing interrupts - this also clears the flags */
     ushort in = usb->intr_in;
+    ushort out = usb->intr_out;
     Request req;
 
     /* Endpoint 0 */
-    if (in & 0x1) {
+    if (in & USB_Endpoint_IN0) {
         /* Read the incoming data */
         usb->index = 0;
 
@@ -286,7 +286,7 @@ void usb_intr(void)
         usb_read_msg(usb->fifo[0], &req);
 
         /* Indicate that the message has been received */
-        usb->csr |= USB_ServicedOutPktRdy;
+        usb->csr |= USB_Ctrl_ServicedOutPktRdy;
 
         switch (req.request)
         {
@@ -294,24 +294,55 @@ void usb_intr(void)
             /* Write the appropriate descriptor to the output FIFO */
             write_descriptor(req.value >> 8, req.value & 0xff, usb->fifo[0], req.length);
             /* Let the host know that an IN packet is ready */
-            usb->csr |= USB_InPktRdy | USB_DataEnd;
+            usb->csr |= USB_Ctrl_InPktRdy | USB_Ctrl_DataEnd;
             req_state++;
             break;
         case SetAddress:
             usb->faddr = req.value;
-            print(" SetAddress: %4.4ux\n", req.value);
+            //print(" SetAddress: %4.4ux\n", req.value);
             req_state++;
             break;
         case SetConfiguration:
             configuration = req.value;
-            print(" SetConfiguration: %4.4ux\n", req.value);
+            //print(" SetConfiguration: %4.4ux\n", req.value);
             req_state++;
+
+            usb->index = 1;
+            usb->out_max_p = 0x40;
+            usb->out_csr |= USB_OutClrDataTog;
+
+            usb->index = 2;
+            usb->in_max_p = 0x40;
+            usb->csr |= USB_InMode | USB_InClrDataTog;
+            print("EP1 OUT EP2 IN\n");
             break;
         default:
             print("%2.2ux %2.2ux %4.4ux %4.4ux %4.4ux\n",
                   req.requesttype, req.request, req.value, req.index, req.length);
             req_state = 0;
             break;
+        }
+    }
+    if (in & USB_Endpoint_IN2) {
+        usb->index = 2;
+        usb->csr |= USB_InPktRdy;
+        print("%8.8ux %8.8ux\n", in, out);
+    }
+
+    if (out & USB_Endpoint_OUT1) {
+        usb->index = 1;
+
+        if (usb->out_csr & USB_OutPktRdy) {
+            ushort count = usb->count;
+            print("%4.4ux bytes received:\n", count);
+
+            for (int i = 0; i < count; i++)
+                print("%2.2ux ", usb->fifo[1][0]);
+
+            print("\n");
+
+            /* Indicate that the message has been received */
+            usb->out_csr &= ~USB_OutPktRdy;
         }
     }
 }

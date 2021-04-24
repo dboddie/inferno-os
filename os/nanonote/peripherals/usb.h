@@ -76,12 +76,15 @@ DeviceDescriptor;
 
 enum {
     USB_Class_CDC       = 0x02,
+    USB_Class_HID       = 0x03,
+    USB_Class_Vendor    = 0xff,
 
     USB_NoSubclass      = 0,
     USB_Subclass_ACM    = 0x02,
 
     USB_NoProtocol      = 0,
     USB_Protocol_ATCmd  = 0x01,
+    USB_Protocol_Vendor = 0xff
 };
 
 typedef struct ConfigDescriptor

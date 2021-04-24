@@ -197,10 +197,18 @@ typedef struct {
 
 /* CSR flags */
 enum {
-    USB_ServicedOutPktRdy = 0x40,
-    USB_DataEnd           = 0x08,
-    USB_InPktRdy          = 0x02,
-    USB_OutPktRdy         = 0x01,
+    USB_Ctrl_ServicedOutPktRdy  = 0x40,
+    USB_Ctrl_DataEnd            = 0x08,
+    USB_Ctrl_InPktRdy           = 0x02,
+    USB_Ctrl_OutPktRdy          = 0x01,
+
+    USB_InMode                  = 0x2000,
+    USB_InClrDataTog            = 0x40,
+    USB_InFlushFIFO             = 0x08,
+    USB_InPktRdy                = 0x01,
+    USB_OutClrDataTog           = 0x80,
+    USB_OutFlushFIFO            = 0x10,
+    USB_OutPktRdy               = 0x01
 };
 
 #define USB_DEVICE_CONFIG_BASE 0x13040078
@@ -210,3 +218,11 @@ typedef struct {
     uchar ep_info;
     uchar ram_info;
 } USBDeviceConfig;
+
+/* intr_in_enable and intr_out_enable mask values */
+enum {
+    USB_Endpoint_IN0 = 1,
+    USB_Endpoint_IN1 = 2,
+    USB_Endpoint_IN2 = 4,
+    USB_Endpoint_OUT1 = 2,
+};

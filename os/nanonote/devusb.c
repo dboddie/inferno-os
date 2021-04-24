@@ -60,7 +60,7 @@ usbclose(Chan* c)
 static long
 usbread(Chan* c, void* a, long n, vlong offset)
 {
-    char lbuf[28];
+    char lbuf[34];
 
     switch((ulong)c->qid.path){
     case Qdir:
@@ -69,7 +69,7 @@ usbread(Chan* c, void* a, long n, vlong offset)
 	snprint(lbuf, 2, "%1d", 0);
 	return readstr(offset, a, n, lbuf);
     case Qinfo:
-	usb_info(lbuf, 28);
+	usb_info(lbuf, 34);
 	return readstr(offset, a, n, lbuf);
     default:
         n=0;
