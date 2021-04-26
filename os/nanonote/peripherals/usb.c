@@ -294,6 +294,7 @@ static void write_descriptor(uchar type, uchar index, uchar *fifo, ushort length
 void usb_intr(void)
 {
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
+    static int amount = 4;
 
     switch (usb->intr_usb)
     {
@@ -367,6 +368,7 @@ void usb_intr(void)
 
             usb->index = 2;
             usb->in_max_p = USB_MAXP_SIZE_HIGH;
+            usb->csr &= ~USB_InISO;
             usb->csr |= USB_InMode | USB_InClrDataTog;
             while (usb->csr & USB_InFIFONotEmpty) {
                 print("Flushing IN FIFO\n");
@@ -386,8 +388,21 @@ void usb_intr(void)
 
     if (in & USB_Endpoint_IN2) {
         usb->index = 2;
+
+        if (usb->csr & USB_InSentStall) {
+            usb->csr &= ~(USB_InSentStall | USB_InSendStall);
+            usb->csr |= USB_InMode | USB_InClrDataTog;
+        }
+
+        if (usb->csr & USB_InUnderRun)
+            usb->csr &= ~USB_InUnderRun;
+
+        while (amount > 0) {
+            usb->fifo[2][0] = 'X';
+            amount--;
+        }
+
         usb->csr |= USB_InPktRdy;
-        print("%8.8ux %8.8ux\n", in, out);
     }
 
     if (out & USB_Endpoint_OUT1) {
@@ -404,6 +419,8 @@ void usb_intr(void)
 
             /* Indicate that the message has been received */
             usb->out_csr &= ~USB_OutPktRdy;
+
+            amount = 10;
         }
     }
 }
