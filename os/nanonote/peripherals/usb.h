@@ -1,3 +1,7 @@
+#define USB_MAXP_SIZE_ENDP 0x40
+#define USB_MAXP_SIZE_FULL 0x40
+#define USB_MAXP_SIZE_HIGH 0x200
+
 /* USB messages */
 
 typedef enum DescriptorType

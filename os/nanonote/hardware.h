@@ -196,12 +196,16 @@ typedef struct {
 } USBDevice;
 
 enum {
+    /* INTRUSBE flags */
+    USB_Reset                   = 0x4,
+
     /* Power flags */
     USB_Power_SoftConn          = 0x40,
     USB_Power_HighSpeed         = 0x20,
 
     /* CSR0 flags */
     USB_Ctrl_ServicedOutPktRdy  = 0x40,
+    USB_Ctrl_SendStall          = 0x20,
     USB_Ctrl_DataEnd            = 0x08,
     USB_Ctrl_InPktRdy           = 0x02,
     USB_Ctrl_OutPktRdy          = 0x01,
@@ -209,7 +213,10 @@ enum {
     /* INCSR flags */
     USB_InMode                  = 0x2000,
     USB_InClrDataTog            = 0x40,
+    USB_InSentStall             = 0x20,
+    USB_InSendStall             = 0x10,
     USB_InFlushFIFO             = 0x08,
+    USB_InFIFONotEmpty          = 0x02,
     USB_InPktRdy                = 0x01,
     /* OUTCSR flags */
     USB_OutClrDataTog           = 0x80,
