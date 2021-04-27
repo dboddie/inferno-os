@@ -375,11 +375,9 @@ void usb_intr(void)
                 print("Flushing IN FIFO\n");
                 usb->csr |= USB_InFlushFIFO;
             }
-            /* Setting InPktRdy on its own will cause an empty response to be
-               returned to an IN request. Using FlushFIFO results in an
-               interrupt being raised for the endpoint where data can be
-               queued before being sent. */
-            usb->csr |= USB_InPktRdy | USB_InFlushFIFO;
+            /* Setting SendStall on its own will cause the first IN request
+               to stall unless data is queued and the stall cleared. */
+            usb->csr |= USB_InSendStall;
 
             print("EP1 OUT EP2 IN\n");
             break;
@@ -436,7 +434,9 @@ void usb_intr(void)
                 amount--;
             }
 
+            /* Clear any stall and indicate that there is data to be sent */
             usb->index = 2;
+            usb->csr &= ~(USB_InSendStall | USB_InSentStall);
             usb->csr |= USB_InPktRdy;
         }
     }
