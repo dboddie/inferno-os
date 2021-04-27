@@ -211,6 +211,7 @@ enum {
     USB_Ctrl_OutPktRdy          = 0x01,
 
     /* INCSR flags */
+    USB_InAutoSet               = 0x8000,
     USB_InISO                   = 0x4000,
     USB_InMode                  = 0x2000,
     USB_InClrDataTog            = 0x40,
