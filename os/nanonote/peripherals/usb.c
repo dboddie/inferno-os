@@ -370,11 +370,12 @@ void usb_intr(void)
             usb->in_max_p = USB_MAXP_SIZE_HIGH;
             usb->csr &= ~USB_InISO;
             usb->csr |= USB_InMode | USB_InClrDataTog;
+
             while (usb->csr & USB_InFIFONotEmpty) {
                 print("Flushing IN FIFO\n");
                 usb->csr |= USB_InFlushFIFO;
             }
-            usb->csr |= USB_InPktRdy;
+            usb->csr |= USB_InSendStall;
 
             print("EP1 OUT EP2 IN\n");
             break;
@@ -397,6 +398,7 @@ void usb_intr(void)
         if (usb->csr & USB_InUnderRun)
             usb->csr &= ~USB_InUnderRun;
 
+        print("amount: %d\n", amount);
         while (amount > 0) {
             usb->fifo[2][0] = 'X';
             amount--;
@@ -420,7 +422,15 @@ void usb_intr(void)
             /* Indicate that the message has been received */
             usb->out_csr &= ~USB_OutPktRdy;
 
+            /* Write some data to the IN endpoint's FIFO */
             amount = 10;
+            while (amount > 0) {
+                usb->fifo[2][0] = 'X';
+                amount--;
+            }
+
+            usb->index = 2;
+            usb->csr |= USB_InPktRdy;
         }
     }
 }
