@@ -375,7 +375,7 @@ void usb_intr(void)
                 print("Flushing IN FIFO\n");
                 usb->csr |= USB_InFlushFIFO;
             }
-            usb->csr |= USB_InSendStall;
+            usb->csr |= USB_InPktRdy | USB_InFlushFIFO;
 
             print("EP1 OUT EP2 IN\n");
             break;
