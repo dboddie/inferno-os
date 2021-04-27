@@ -375,6 +375,10 @@ void usb_intr(void)
                 print("Flushing IN FIFO\n");
                 usb->csr |= USB_InFlushFIFO;
             }
+            /* Setting InPktRdy on its own will cause an empty response to be
+               returned to an IN request. Using FlushFIFO results in an
+               interrupt being raised for the endpoint where data can be
+               queued before being sent. */
             usb->csr |= USB_InPktRdy | USB_InFlushFIFO;
 
             print("EP1 OUT EP2 IN\n");
@@ -388,6 +392,9 @@ void usb_intr(void)
     }
 
     if (in & USB_Endpoint_IN2) {
+        /* This code is executed when there is a request for more data.
+           Initially, this occurs when the endpoint has been configured, then
+           after each reply has been sent. */
         usb->index = 2;
 
         if (usb->csr & USB_InSentStall) {
