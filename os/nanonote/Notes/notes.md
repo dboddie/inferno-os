@@ -41,3 +41,10 @@ When enabling interrupts, unmasking the relevant bits in the interrupt
 controller and enabling them in the peripherals, it is necessary to clear the
 interrupt flags in any peripherals when they occur. If this is not done then
 further interrupts are not delivered.
+
+## USB
+
+Useful for understanding what information is available to host and USB device
+in a bulk transfer:
+
+https://stackoverflow.com/questions/41855995/when-should-a-usb-device-send-a-zlp-on-a-bulk-pipe
