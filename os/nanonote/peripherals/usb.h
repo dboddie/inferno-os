@@ -125,8 +125,7 @@ typedef struct EndpointDescriptor
     uchar type;         /* 5 */
     uchar endpoint;
     uchar attributes;
-    uchar max_packet_size_low;
-    uchar max_packet_size_high;
+    ushort maxpacketsize;
     uchar interval;
 }
 EndpointDescriptor;
