@@ -4,6 +4,7 @@
 
 enum CGUGates {
     CGU_UDC = 0x800,
+    CGU_MSC = 0x080,
     CGU_RTC = 0x004,
     CGU_TCU = 0x002
 };
@@ -36,7 +37,8 @@ enum InterruptSource {
     InterruptGPIO2 = 0x04000000,
     InterruptGPIO3 = 0x02000000,
     InterruptUDC   = 0x01000000,
-    InterruptUHC   = 0x00000008
+    InterruptMSC   = 0x00004000,
+    InterruptUHC   = 0x00000008,
 };
 
 #define TIMER_BASE 0x10002010
@@ -147,10 +149,10 @@ enum WatchdogCtl {
 #define MSC_BASE 0x10021000
 
 typedef struct {
-    ulong clock;            /* STRPCL */
+    ulong clock_control;    /* STRPCL */
     ulong status;           /* STAT */
     ulong clock_rate;       /* CLKRT */
-    ulong control;          /* CMDAT */
+    ulong cmd_control;      /* CMDAT */
     ulong resp_time_out;    /* RESTO */
     ulong read_time_out;    /* RDTO */
     ulong block_length;     /* BLKLEN */
@@ -160,10 +162,32 @@ typedef struct {
     ulong interrupt;        /* IREG */
     ulong cmd_index;        /* CMD */
     ulong cmd_arg;          /* ARG */
-    ulong resp_fifo;        /* RES */
+    ushort resp_fifo;       /* RES */
+    ushort padding;
     ulong rec_data_fifo;    /* RXFIFO */
     ulong trans_data_fifo;  /* TXFIFO */
 } MMC;
+
+enum {
+    MMC_ClockCtrl_Reset         = 0x08,
+    MMC_ClockCtrl_StartOp       = 0x04,
+    MMC_ClockCtrl_StartClock    = 0x02,
+    MMC_ClockCtrl_StopClock     = 0x01,
+    MMC_Status_IsResetting      = 0x8000,
+    MMC_Status_EndCmdRes        = 0x0800,
+    MMC_Status_CRCResError      = 0x0020,
+    MMC_Status_ClockEnabled     = 0x100,
+    MMC_CmdCtrl_BusWidth        = 0x600,
+    MMC_CmdCtrl_BusShift        = 9,
+    MMC_CmdCtrl_OneBit          = 0,
+    MMC_CmdCtrl_FourBit         = 2,
+    MMC_CmdCtrl_Init            = 0x80,
+    MMC_CmdCtrl_Busy            = 0x40,
+    MMC_CmdCtrl_StreamBlock     = 0x20,
+    MMC_CmdCtrl_WriteRead       = 0x10,
+    MMC_CmdCtrl_DataEnabled     = 0x8,
+    MMC_CmdCtrl_ResponseFormat  = 0x7,
+};
 
 #define USB_DEVICE_BASE 0x13040000
 

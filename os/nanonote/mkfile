@@ -51,6 +51,7 @@ HFILES=\
 	dat.h\
 	fns.h\
 	io.h\
+	hardware.h\
 
 CFLAGS=-l -wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp -I$ROOT/Inferno/$OBJTYPE/include -I$ROOT/Inferno/include
 KERNDATE=`{$NDATE}

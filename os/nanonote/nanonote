@@ -13,6 +13,7 @@ dev
 	power peripherals/power
 	sysinfo
 	usb peripherals/usb
+	msc peripherals/msc
 
 lib
 	interp
