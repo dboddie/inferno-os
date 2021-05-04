@@ -48,3 +48,14 @@ Useful for understanding what information is available to host and USB device
 in a bulk transfer:
 
 https://stackoverflow.com/questions/41855995/when-should-a-usb-device-send-a-zlp-on-a-bulk-pipe
+
+## MMC/SD
+
+U-Boot appears to set the MSC registers to these values:
+
+    STRPCL  0
+    STAT    0x140       Clock enabled, CRC write error
+    CLKRT   0           CLK_SRC clock rate
+    CMDAT   0x409       4-bit bus width, current command is a write operation,
+                        response format R1 and R1b
+
