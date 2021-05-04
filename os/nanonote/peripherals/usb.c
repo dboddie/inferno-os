@@ -375,7 +375,7 @@ void usb_intr(void)
                to stall unless data is queued and the stall cleared. */
             usb->csr |= USB_InSendStall;
 
-            print("EP1 OUT EP2 IN\n");
+            //print("EP1 OUT EP2 IN\n");
             break;
 
         default:

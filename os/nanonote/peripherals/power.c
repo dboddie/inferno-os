@@ -18,7 +18,8 @@ void power_init(void)
     d_dir->clear = GPIO_Power;
     d_pull->clear = GPIO_Power;
 
-    /* Set the watchdog clock source, target value and initial counter value */
+    /* Set the watchdog clock source, target value and initial counter value,
+       no clock prescaling */
     Watchdog *wd = (Watchdog *)(WATCHDOG_BASE | KSEG1);
     wd->control = WD_ExtEnable;
     wd->data = 1;
