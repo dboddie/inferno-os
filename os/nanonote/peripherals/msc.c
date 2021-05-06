@@ -192,8 +192,7 @@ ulong msc_response(void)
 
 static ulong resp, voltages, ccs, rca;
 
-static MMC_CID mmc_cid;
-static MMC_CSD mmc_csd;
+static MMC mmc;
 
 void msc_reset(void)
 {
@@ -282,11 +281,11 @@ void msc_reset(void)
 
     print("CMD2:\n");
     msc_send_command(CMD_ALL_SEND_CID, 2, 0);
-    read_cid(buf, &mmc_cid);
+    read_cid(buf, &mmc.cid);
     for (int i = 15; i >= 0; i--)
         print("%2.2ux", buf[i]);
     print("\n");
-    print_cid(&mmc_cid);
+    print_cid(&mmc.cid);
 
     msc_send_command(CMD_SEND_RELATIVE_ADDR, 6, 0);
     resp = msc_response();
@@ -295,18 +294,18 @@ void msc_reset(void)
 
     print("CMD10:\n");
     msc_send_command(CMD_SEND_CID, 2, rca << 16);
-    read_cid(buf, &mmc_cid);
+    read_cid(buf, &mmc.cid);
     print_buf(buf);
-    print_cid(&mmc_cid);
+    print_cid(&mmc.cid);
 
     print("CMD9:\n");
     msc_send_command(CMD_SEND_CSD, 2, rca << 16);
-    if (read_csd(buf, &mmc_csd)) {
+    if (read_csd(buf, &mmc.csd)) {
         print("CSD?\n");
         print_buf(buf);
         return;
     }
-    print_csd(&mmc_csd);
+    print_csd(&mmc.csd);
 
     msc_send_command(CMD_SELECT_CARD, 1, rca << 16);
     resp = msc_response();
