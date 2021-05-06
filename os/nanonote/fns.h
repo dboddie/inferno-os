@@ -108,7 +108,7 @@ void    usb_init(void);
 void    usb_info(char *buf, int n);
 void    usb_intr(void);
 
-void    msc_intr(void);
+void    msc_init(void);
 
 int	isaconfig(char *, int, ISAConf *);
 
