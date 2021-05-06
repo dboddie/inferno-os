@@ -48,12 +48,21 @@ enum {
     SD_OCR_HCS                = 0x40000000
 };
 
+/* CID struct layout does not reflects layout of data from cards */
 typedef struct {
-    uchar manufacturer_id;
-    ushort application_id;
-    char product_name[5];
-    uchar revision;
-    uint serial_number;
-    ushort manufacturing_date;
-    uchar crc;
+    u8int manufacturer_id;
+    u16int application_id;
+    char product_name[6];
+    u8int revision;
+    u32int serial_number;
+    u16int manufacturing_date;
+    u8int crc;
 } MMC_CID;
+
+/* CSD struct is abstract */
+typedef struct {
+    uchar version;
+    uchar speed;
+    ushort block_len;
+    ulong card_size;     /* in blocks */
+} MMC_CSD;
