@@ -166,27 +166,27 @@ typedef struct {
     ushort padding;
     ulong rec_data_fifo;    /* RXFIFO */
     ulong trans_data_fifo;  /* TXFIFO */
-} MMC;
+} MSC;
 
 enum {
-    MMC_ClockCtrl_Reset         = 0x08,
-    MMC_ClockCtrl_StartOp       = 0x04,
-    MMC_ClockCtrl_StartClock    = 0x02,
-    MMC_ClockCtrl_StopClock     = 0x01,
-    MMC_Status_IsResetting      = 0x8000,
-    MMC_Status_EndCmdRes        = 0x0800,
-    MMC_Status_CRCResError      = 0x0020,
-    MMC_Status_ClockEnabled     = 0x100,
-    MMC_CmdCtrl_BusWidth        = 0x600,
-    MMC_CmdCtrl_BusShift        = 9,
-    MMC_CmdCtrl_OneBit          = 0,
-    MMC_CmdCtrl_FourBit         = 2,
-    MMC_CmdCtrl_Init            = 0x80,
-    MMC_CmdCtrl_Busy            = 0x40,
-    MMC_CmdCtrl_StreamBlock     = 0x20,
-    MMC_CmdCtrl_WriteRead       = 0x10,
-    MMC_CmdCtrl_DataEnabled     = 0x8,
-    MMC_CmdCtrl_ResponseFormat  = 0x7,
+    MSC_ClockCtrl_Reset         = 0x08,
+    MSC_ClockCtrl_StartOp       = 0x04,
+    MSC_ClockCtrl_StartClock    = 0x02,
+    MSC_ClockCtrl_StopClock     = 0x01,
+    MSC_Status_IsResetting      = 0x8000,
+    MSC_Status_EndCmdRes        = 0x0800,
+    MSC_Status_CRCResError      = 0x0020,
+    MSC_Status_ClockEnabled     = 0x100,
+    MSC_CmdCtrl_BusWidth        = 0x600,
+    MSC_CmdCtrl_BusShift        = 9,
+    MSC_CmdCtrl_OneBit          = 0,
+    MSC_CmdCtrl_FourBit         = 2,
+    MSC_CmdCtrl_Init            = 0x80,
+    MSC_CmdCtrl_Busy            = 0x40,
+    MSC_CmdCtrl_StreamBlock     = 0x20,
+    MSC_CmdCtrl_WriteRead       = 0x10,
+    MSC_CmdCtrl_DataEnabled     = 0x8,
+    MSC_CmdCtrl_ResponseFormat  = 0x7,
 };
 
 #define USB_DEVICE_BASE 0x13040000

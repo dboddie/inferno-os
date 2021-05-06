@@ -18,11 +18,11 @@ static uchar buf[16];
 
 void msc_dump(void)
 {
-    MMC *mmc = (MMC *)(MSC_BASE | KSEG1);
-    print("%8.8lux\n", mmc->clock_control);
-    print("%8.8lux\n", mmc->status);
-    print("%8.8lux\n", mmc->clock_rate);
-    print("%8.8lux\n", mmc->cmd_control);
+    MSC *msc = (MSC *)(MSC_BASE | KSEG1);
+    print("%8.8lux\n", msc->clock_control);
+    print("%8.8lux\n", msc->status);
+    print("%8.8lux\n", msc->clock_rate);
+    print("%8.8lux\n", msc->cmd_control);
 }
 
 static ulong read_bits(uchar *b, uint shift, ulong mask)
@@ -36,12 +36,12 @@ static ulong read_bits(uchar *b, uint shift, ulong mask)
 
 void read_cxd(uchar *buf)
 {
-    MMC *mmc = (MMC *)(MSC_BASE | KSEG1);
+    MSC *msc = (MSC *)(MSC_BASE | KSEG1);
 
     /* Read the contents of the FIFO into a buffer */
     ushort *sptr = (ushort *)buf;
     for (int i = 0; i < 8; i++)
-        sptr[7 - i] = mmc->resp_fifo;
+        sptr[7 - i] = msc->resp_fifo;
 
     /* It looks like the contents of the FIFO can be shifted down by a byte
        for CID/CSD responses, so shift it back up again, starting with the top
@@ -132,98 +132,98 @@ void print_csd(MMC_CSD *csd)
 
 void msc_enter_spi(void)
 {
-    MMC *mmc = (MMC *)(MSC_BASE | KSEG1);
-    mmc->cmd_index = 0;
-    mmc->cmd_arg = 0;
-    mmc->cmd_control &= ~MMC_CmdCtrl_ResponseFormat;
-    mmc->cmd_control |= 1;
-    mmc->cmd_control &= ~MMC_CmdCtrl_DataEnabled;
-    mmc->cmd_control &= ~MMC_CmdCtrl_Busy;
-    mmc->cmd_control |= MMC_CmdCtrl_Init;
+    MSC *msc = (MSC *)(MSC_BASE | KSEG1);
+    msc->cmd_index = 0;
+    msc->cmd_arg = 0;
+    msc->cmd_control &= ~MSC_CmdCtrl_ResponseFormat;
+    msc->cmd_control |= 1;
+    msc->cmd_control &= ~MSC_CmdCtrl_DataEnabled;
+    msc->cmd_control &= ~MSC_CmdCtrl_Busy;
+    msc->cmd_control |= MSC_CmdCtrl_Init;
 
     /* Start the operation */
-    mmc->clock_control |= MMC_ClockCtrl_StartOp;
+    msc->clock_control |= MSC_ClockCtrl_StartOp;
 
     /* Wait until the command completes */
-    while (!(mmc->status & MMC_Status_EndCmdRes))
+    while (!(msc->status & MSC_Status_EndCmdRes))
         ;
 }
 
 void msc_send_command(ulong cmd, ulong resp_format, ulong arg)
 {
-    MMC *mmc = (MMC *)(MSC_BASE | KSEG1);
+    MSC *msc = (MSC *)(MSC_BASE | KSEG1);
 
     /* Stop the clock - Linux does a stop and start for each command but the
        SoC documentation doesn't suggest this */
-    mmc->clock_control = MMC_ClockCtrl_StopClock;
-    while (mmc->status & MMC_Status_ClockEnabled)
+    msc->clock_control = MSC_ClockCtrl_StopClock;
+    while (msc->status & MSC_Status_ClockEnabled)
         ;
 
-    mmc->cmd_index = cmd;
-    mmc->cmd_arg = arg;
-    mmc->cmd_control &= ~MMC_CmdCtrl_BusWidth;
-    mmc->cmd_control |= MMC_CmdCtrl_FourBit;
-    mmc->cmd_control &= ~MMC_CmdCtrl_ResponseFormat;
-    mmc->cmd_control |= resp_format;
-    mmc->cmd_control &= ~MMC_CmdCtrl_DataEnabled;
-    mmc->cmd_control &= ~MMC_CmdCtrl_Busy;
-    mmc->cmd_control &= ~MMC_CmdCtrl_Init;
+    msc->cmd_index = cmd;
+    msc->cmd_arg = arg;
+    msc->cmd_control &= ~MSC_CmdCtrl_BusWidth;
+    msc->cmd_control |= MSC_CmdCtrl_FourBit;
+    msc->cmd_control &= ~MSC_CmdCtrl_ResponseFormat;
+    msc->cmd_control |= resp_format;
+    msc->cmd_control &= ~MSC_CmdCtrl_DataEnabled;
+    msc->cmd_control &= ~MSC_CmdCtrl_Busy;
+    msc->cmd_control &= ~MSC_CmdCtrl_Init;
 
     /* Start the clock and the operation */
-    mmc->clock_control = MMC_ClockCtrl_StartClock | MMC_ClockCtrl_StartOp;
-    while (!(mmc->status & MMC_Status_ClockEnabled))
+    msc->clock_control = MSC_ClockCtrl_StartClock | MSC_ClockCtrl_StartOp;
+    while (!(msc->status & MSC_Status_ClockEnabled))
         ;
 
     /* Wait until the command completes */
-    while (!(mmc->status & MMC_Status_EndCmdRes))
+    while (!(msc->status & MSC_Status_EndCmdRes))
         ;
 }
 
 ulong msc_response(void)
 {
-    MMC *mmc = (MMC *)(MSC_BASE | KSEG1);
+    MSC *msc = (MSC *)(MSC_BASE | KSEG1);
     /* Bits 32-48 (command number, top 8 reserved bits (0)) */
-    ulong resp = (mmc->resp_fifo & 0xff) << 24;
-    resp |= (mmc->resp_fifo & 0xffff) << 8;
-    ulong t = mmc->resp_fifo;
+    ulong resp = (msc->resp_fifo & 0xff) << 24;
+    resp |= (msc->resp_fifo & 0xffff) << 8;
+    ulong t = msc->resp_fifo;
     //print("%4.4ux\n", t >> 8);
     return resp | (t & 0xff);
 }
 
-static ulong resp, voltages, ccs, cid, rca, csd;
+static ulong resp, voltages, ccs, rca;
 
 static MMC_CID mmc_cid;
 static MMC_CSD mmc_csd;
 
 void msc_reset(void)
 {
-    MMC *mmc = (MMC *)(MSC_BASE | KSEG1);
+    MSC *msc = (MSC *)(MSC_BASE | KSEG1);
 
     /* Stop the clock */
-    mmc->clock_control |= MMC_ClockCtrl_StopClock;
-    while (mmc->status & MMC_Status_ClockEnabled)
+    msc->clock_control |= MSC_ClockCtrl_StopClock;
+    while (msc->status & MSC_Status_ClockEnabled)
         ;
 
     /* Reset the card */
-    mmc->clock_control |= MMC_ClockCtrl_Reset;
-    while (mmc->status & MMC_Status_IsResetting)
+    msc->clock_control |= MSC_ClockCtrl_Reset;
+    while (msc->status & MSC_Status_IsResetting)
         ;
 
-    mmc->clock_rate = 6;
+    msc->clock_rate = 6;
 
     /* Send CMD0 with response type 1 */
     msc_send_command(CMD_GO_IDLE_STATE, 1, 0);
 
     /* Send CMD52
     msc_send_command(CMD_IO_RW_DIRECT, 5, 0x88000c08);
-    print("%4.4ux\n", mmc->resp_fifo % 0xff); */
+    print("%4.4ux\n", msc->resp_fifo % 0xff); */
 
     /* CMD8 (R7) */
     msc_send_command(CMD_SEND_IF_COND, 1, 0x1aa);
     resp = msc_response();
     print("CMD8: %8.8lux\n", resp);
 
-    if ((mmc->status & MMC_Status_CRCResError) || R7_RESP_ERR(resp)) {
+    if ((msc->status & MSC_Status_CRCResError) || R7_RESP_ERR(resp)) {
         print("IF_COND: %8.8lux\n", resp);
         return;
     }

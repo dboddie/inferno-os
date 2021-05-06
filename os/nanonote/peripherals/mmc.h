@@ -66,3 +66,9 @@ typedef struct {
     ushort block_len;
     ulong card_size;     /* in blocks */
 } MMC_CSD;
+
+typedef struct {
+    MMC_CID cid;
+    MMC_CSD csd;
+    ulong rca, voltages, ccs;
+} MMC;
