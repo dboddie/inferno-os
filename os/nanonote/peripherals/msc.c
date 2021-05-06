@@ -34,7 +34,7 @@ static ulong read_bits(uchar *b, uint shift, ulong mask)
     return (*l & mask) >> offset;
 }
 
-void read_cxd(uchar *buf)
+static void read_cxd(uchar *buf)
 {
     MSC *msc = (MSC *)(MSC_BASE | KSEG1);
 
@@ -56,7 +56,7 @@ void read_cxd(uchar *buf)
     }
 }
 
-void read_cid(uchar *buf, MMC_CID *cid)
+static void read_cid(uchar *buf, MMC_CID *cid)
 {
     read_cxd(buf);
 
@@ -71,7 +71,7 @@ void read_cid(uchar *buf, MMC_CID *cid)
     cid->crc = read_bits(buf, 0, 0xff);
 }
 
-int read_csd(uchar *buf, MMC_CSD *csd)
+static int read_csd(uchar *buf, MMC_CSD *csd)
 {
     read_cxd(buf);
 
@@ -109,7 +109,7 @@ int read_csd(uchar *buf, MMC_CSD *csd)
     return 0;
 }
 
-void print_cid(MMC_CID *cid)
+static void print_cid(MMC_CID *cid)
 {
     print("man=%2.2ux app=%4.4ux ", cid->manufacturer_id, cid->application_id);
     print("name=%s\n", cid->product_name);
@@ -117,39 +117,20 @@ void print_cid(MMC_CID *cid)
     print("date=%2.2ux\n", cid->manufacturing_date);
 }
 
-void print_buf(uchar *buf)
+static void print_buf(uchar *buf)
 {
     for (int i = 15; i >= 0; i--)
         print("%2.2ux", buf[i]);
     print("\n");
 }
 
-void print_csd(MMC_CSD *csd)
+static void print_csd(MMC_CSD *csd)
 {
     print("CSD: ver=%d size=%ud bl=%d\n", csd->version, csd->card_size,
                                          csd->block_len);
 }
 
-void msc_enter_spi(void)
-{
-    MSC *msc = (MSC *)(MSC_BASE | KSEG1);
-    msc->cmd_index = 0;
-    msc->cmd_arg = 0;
-    msc->cmd_control &= ~MSC_CmdCtrl_ResponseFormat;
-    msc->cmd_control |= 1;
-    msc->cmd_control &= ~MSC_CmdCtrl_DataEnabled;
-    msc->cmd_control &= ~MSC_CmdCtrl_Busy;
-    msc->cmd_control |= MSC_CmdCtrl_Init;
-
-    /* Start the operation */
-    msc->clock_control |= MSC_ClockCtrl_StartOp;
-
-    /* Wait until the command completes */
-    while (!(msc->status & MSC_Status_EndCmdRes))
-        ;
-}
-
-void msc_send_command(ulong cmd, ulong resp_format, ulong arg)
+static void msc_send_command(ulong cmd, ulong resp_format, ulong arg)
 {
     MSC *msc = (MSC *)(MSC_BASE | KSEG1);
 
@@ -179,7 +160,7 @@ void msc_send_command(ulong cmd, ulong resp_format, ulong arg)
         ;
 }
 
-ulong msc_response(void)
+static ulong msc_response(void)
 {
     MSC *msc = (MSC *)(MSC_BASE | KSEG1);
     /* Bits 32-48 (command number, top 8 reserved bits (0)) */
