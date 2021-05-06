@@ -49,6 +49,26 @@ in a bulk transfer:
 
 https://stackoverflow.com/questions/41855995/when-should-a-usb-device-send-a-zlp-on-a-bulk-pipe
 
+From http://en.qi-hardware.com/wiki/Ingenic_documentation_errata
+
+    22.4.2 Memory Map
+
+    On page 432, it says that the control and status registers of all endpoints
+    should exist non-indexed on address BASE+0x100+ep*0x10+offset. This means
+    CSR0 should be available on address BASE+0x102. Using this address does not
+    work, however. I did not test if the other non-indexed addresses do work,
+    or if they don't exist at all.
+
+    22.8.3 READ REQUESTS
+    On page 459 it tells how to respond to a read request from the host.
+    Following this doesn't work, because one important step is missing: Before
+    filling the fifo, the SETUP packet must be acknoledged. The pm says that
+    upon receiving the request, instead of setting DataEnd you should fill the
+    fifo and set InPktRdy (and DataEnd if it's the last packet). However, it
+    only works when doing this _after_, not _instead of_. This can be fixed by
+    adding "and the DataEnd bit (D3)" after "the ServicedOutPktRdy bit (D6)" in
+    the last sentence of the second paragraph. 
+
 ## MMC/SD
 
 U-Boot appears to set the MSC registers to these values:
