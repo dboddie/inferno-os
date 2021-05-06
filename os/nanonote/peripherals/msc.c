@@ -190,7 +190,7 @@ ulong msc_response(void)
     return resp | (t & 0xff);
 }
 
-static ulong resp, voltages, ccs, rca;
+static ulong resp;
 
 static MMC mmc;
 
@@ -230,9 +230,9 @@ void msc_reset(void)
     ulong sdhc = SD_OCR_HCS;
     if ((resp & 0xff) == 0xaa) {
         if (resp & 0x100)
-            voltages = 0xff8000;
+            mmc.voltages = 0xff8000;
         else
-            voltages = 0;
+            mmc.voltages = 0;
     } else {
         print("Not an SD card\n");
         return;
@@ -253,7 +253,7 @@ void msc_reset(void)
         }
 
         /* Supported voltages must be passed in SD mode */
-        msc_send_command(CMD_SD_APP_OP_COND, 3, sdhc | voltages);
+        msc_send_command(CMD_SD_APP_OP_COND, 3, sdhc | mmc.voltages);
         resp = msc_response();
         //print("ACMD41: %8.8lux\n", resp);
         if ((resp & 0xff8000) != 0x00ff8000) {  // for the NanoNote
@@ -275,9 +275,9 @@ void msc_reset(void)
     resp = msc_response();
     print("CMD58: %8.8lux\n", resp);
 
-    voltages = resp & 0xff8000;
-    ccs = resp & SD_OCR_HCS;
-    print("V: %4.4lux CCS: %d\n", voltages, ccs == SD_OCR_HCS);
+    mmc.voltages = resp & 0xff8000;
+    mmc.ccs = resp & SD_OCR_HCS;
+    print("V: %4.4lux CCS: %d\n", mmc.voltages, mmc.ccs == SD_OCR_HCS);
 
     print("CMD2:\n");
     msc_send_command(CMD_ALL_SEND_CID, 2, 0);
@@ -289,17 +289,17 @@ void msc_reset(void)
 
     msc_send_command(CMD_SEND_RELATIVE_ADDR, 6, 0);
     resp = msc_response();
-    rca = resp >> 16;
+    mmc.rca = resp >> 16;
     print("CMD3: %8.8lux\n", resp);
 
     print("CMD10:\n");
-    msc_send_command(CMD_SEND_CID, 2, rca << 16);
+    msc_send_command(CMD_SEND_CID, 2, mmc.rca << 16);
     read_cid(buf, &mmc.cid);
     print_buf(buf);
     print_cid(&mmc.cid);
 
     print("CMD9:\n");
-    msc_send_command(CMD_SEND_CSD, 2, rca << 16);
+    msc_send_command(CMD_SEND_CSD, 2, mmc.rca << 16);
     if (read_csd(buf, &mmc.csd)) {
         print("CSD?\n");
         print_buf(buf);
@@ -307,7 +307,7 @@ void msc_reset(void)
     }
     print_csd(&mmc.csd);
 
-    msc_send_command(CMD_SELECT_CARD, 1, rca << 16);
+    msc_send_command(CMD_SELECT_CARD, 1, mmc.rca << 16);
     resp = msc_response();
     if (R1_RESP_ERR(resp)) {
         print("CMD7: %8.8lux\n", resp);
