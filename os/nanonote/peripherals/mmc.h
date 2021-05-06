@@ -72,3 +72,5 @@ typedef struct {
     MMC_CSD csd;
     ulong rca, voltages, ccs;
 } MMC;
+
+MMC *mmc_sd;

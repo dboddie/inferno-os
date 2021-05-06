@@ -172,7 +172,6 @@ static ulong msc_response(void)
 }
 
 static ulong resp;
-
 static MMC mmc;
 
 void msc_reset(void)
@@ -306,6 +305,8 @@ void msc_reset(void)
 void msc_init(void)
 {
     //InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
+
+    mmc_sd = &mmc;
 
     /* Propagate the UDC clock by clearing the appropriate bit */
     *(ulong*)(CGU_CLKGR | KSEG1) &= ~CGU_MSC;

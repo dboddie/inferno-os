@@ -7,6 +7,7 @@
 #include    "dat.h"
 #include    "fns.h"
 #include    "../port/error.h"
+#include    "peripherals/mmc.h"
 
 enum{
     Qdir,
@@ -22,6 +23,8 @@ Dirtab msctab[]={
     "data",     {Qdata, 0}, 0, 0666,
     "info",     {Qinfo, 0}, 0, 0444,
 };
+
+extern MMC *mmc_sd;
 
 static void
 sdinit(void)
@@ -68,15 +71,8 @@ sdread(Chan* c, void* a, long n, vlong offset)
     case Qdir:
         return devdirread(c, a, n, msctab, nelem(msctab), devgen);
     case Qinfo:
-/*        snprint(lbuf, 12, "version %ux\n", (unsigned int)sdhc_host_version(&sdhc0) + 0x10);
-        snprint(lbuf + 11, 38, "cid %8.8ux%8.8ux%8.8ux%8.8ux\n",
-            sdhc0.cid[3], sdhc0.cid[2], sdhc0.cid[1], sdhc0.cid[0]);
-        snprint(lbuf + 48, 38, "csd %8.8ux%8.8ux%8.8ux%8.8ux\n",
-            sdhc0.csd[3], sdhc0.csd[2], sdhc0.csd[1], sdhc0.csd[0]);
-        snprint(lbuf + 85, 9, "rca %4.4ux", sdhc0.rca);
-
-        return readstr(offset, a, n, lbuf);*/
-        error(Eperm);
+        snprint(lbuf, 9, "rca %4.4ux", mmc_sd->rca);
+        return readstr(offset, a, n, lbuf);
     case Qctl:
         error(Eperm);
     case Qdata:
