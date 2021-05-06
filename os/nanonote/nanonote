@@ -104,6 +104,7 @@ root
 	/dis/cp.dis
 	/dis/mc.dis
 	/dis/mkdir.dis
+	/dis/mntgen.dis
 	/dis/ns.dis
 	/dis/rm.dis
 	/dis/p.dis
@@ -112,10 +113,14 @@ root
 	/dis/lib/auth.dis
 	/dis/lib/bufio.dis
 	/dis/lib/daytime.dis
+	/dis/lib/dial.dis
 	/dis/lib/env.dis
 	/dis/lib/filepat.dis
+	/dis/lib/nametree.dis
 	/dis/lib/readdir.dis
 	/dis/lib/ssl.dis
 	/dis/lib/string.dis
+	/dis/lib/styx.dis
+	/dis/lib/styxservers.dis
 	/dis/lib/workdir.dis
 	/dis/sh/std.dis

@@ -36,9 +36,9 @@ init(context: ref Context, nil: list of string)
     sh = load Sh Sh->PATH;
 #    bufio = load Bufio Bufio->PATH;
 
-#    sh->system(nil, "mount -c {mntgen} /n");
+    sh->system(nil, "mount -c {mntgen} /n");
 	
-    print("**\n** Inferno\n** Vita Nuova\n**\n");
+#    print("**\n** Inferno\n** Vita Nuova\n**\n");
 
 #    bind("#c", "/dev", sys->MAFTER);
 #    bind("#r", "/dev", sys->MAFTER);		# RTC
@@ -51,7 +51,9 @@ init(context: ref Context, nil: list of string)
 #    bind("#B", "/dev", sys->MAFTER);            # backlight
 #    bind("#L", "/dev", sys->MAFTER);            # LEDs
     bind("#↓", "/dev", sys->MAFTER);          # power
-#    bind("#S", "/n/sd", sys->MAFTER);           # SDHC card
+    bind("#Y", "/dev", sys->MAFTER);             # system information
+    bind("#u", "/dev", sys->MAFTER);             # USB peripheral device
+    bind("#S", "/n/sd", sys->MAFTER);           # microSD card
     bind("#p", "/prog", sys->MREPL);		# prog device
     bind("#d", "/fd", sys->MREPL);
 
@@ -64,14 +66,14 @@ init(context: ref Context, nil: list of string)
 #    }
 
 # Use the Draw module to draw on the screen.
-    draw = load Draw Draw->PATH;
-    display := draw->Display.allocate(nil);
-    for (b := 0; b < 256; b++) {
-        display.image.draw(Rect(Point(b, 0), Point(b + 1, 4)), display.rgb(b, 0, 0), display.opaque, Point(0, 0));
-        display.image.draw(Rect(Point(b, 4), Point(b + 1, 8)), display.rgb(0, b, 0), display.opaque, Point(0, 0));
-        display.image.draw(Rect(Point(b, 8), Point(b + 1, 12)), display.rgb(0, 0, b), display.opaque, Point(0, 0));
-        display.image.draw(Rect(Point(b, 12), Point(b + 1, 16)), display.rgb(b, b, b), display.opaque, Point(0, 0));
-    }
+#    draw = load Draw Draw->PATH;
+#    display := draw->Display.allocate(nil);
+#    for (b := 0; b < 256; b++) {
+#        display.image.draw(Rect(Point(b, 0), Point(b + 1, 4)), display.rgb(b, 0, 0), display.opaque, Point(0, 0));
+#        display.image.draw(Rect(Point(b, 4), Point(b + 1, 8)), display.rgb(0, b, 0), display.opaque, Point(0, 0));
+#        display.image.draw(Rect(Point(b, 8), Point(b + 1, 12)), display.rgb(0, 0, b), display.opaque, Point(0, 0));
+#        display.image.draw(Rect(Point(b, 12), Point(b + 1, 16)), display.rgb(b, b, b), display.opaque, Point(0, 0));
+#    }
 
 #    print("Starting a shell...\n");
     shell := load Sh "/dis/sh.dis";
