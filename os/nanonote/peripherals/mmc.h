@@ -77,4 +77,4 @@ typedef struct {
 MMC *mmc_sd;
 
 void    msc_init(void);
-ulong   msc_read(ulong card_addr, ulong *dest, ulong blocks);
+ulong   msc_read(ulong card_addr, ulong *dest, ushort blocks);

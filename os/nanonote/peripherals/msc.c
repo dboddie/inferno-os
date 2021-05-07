@@ -169,7 +169,6 @@ static ulong msc_response(void)
     ulong resp = (msc->resp_fifo & 0xff) << 24;
     resp |= (msc->resp_fifo & 0xffff) << 8;
     ulong t = msc->resp_fifo;
-    //print("%4.4ux\n", t >> 8);
     return resp | (t & 0xff);
 }
 
@@ -209,7 +208,6 @@ void msc_reset(void)
     /* CMD8 (R7) */
     msc_send_command(CMD_SEND_IF_COND, 1, 0x1aa);
     resp = msc_response();
-    //print("CMD8: %8.8lux\n", resp);
 
     if ((msc->status & MSC_Status_CRCResError) || R7_RESP_ERR(resp)) {
         print("IF_COND: %8.8lux\n", resp);
@@ -235,7 +233,6 @@ void msc_reset(void)
     {
         msc_send_command(CMD_APP_CMD, 1, 0);
         resp = msc_response();
-        //print("CMD55: %8.8lux\n", resp);
         if (resp != 0x120) {
             print("APP_CMD: %8.8lux\n", resp);
             return;
@@ -244,7 +241,6 @@ void msc_reset(void)
         /* Supported voltages must be passed in SD mode */
         msc_send_command(CMD_SD_APP_OP_COND, 3, sdhc | mmc.voltages);
         resp = msc_response();
-        //print("ACMD41: %8.8lux\n", resp);
         if ((resp & 0xff8000) != 0x00ff8000) {  // for the NanoNote
             print("SD_APP_OP_COND: %8.8lux\n", resp);
             return;
@@ -262,39 +258,26 @@ void msc_reset(void)
     /* CMD58 (read OCR) */
     msc_send_command(58, 3, 0);
     resp = msc_response();
-    //print("CMD58: %8.8lux\n", resp);
 
     mmc.voltages = resp & 0xff8000;
     mmc.ccs = resp & SD_OCR_HCS;
-    //print("V: %4.4lux CCS: %d\n", mmc.voltages, mmc.ccs == SD_OCR_HCS);
 
-    //print("CMD2:\n");
     msc_send_command(CMD_ALL_SEND_CID, 2, 0);
     read_cid(buf, &mmc.cid);
-/*    for (int i = 15; i >= 0; i--)
-        print("%2.2ux", buf[i]);
-    print("\n");
-    print_cid(&mmc.cid);*/
 
     msc_send_command(CMD_SEND_RELATIVE_ADDR, 6, 0);
     resp = msc_response();
     mmc.rca = resp >> 16;
-    //print("CMD3: %8.8lux\n", resp);
 
-    //print("CMD10:\n");
     msc_send_command(CMD_SEND_CID, 2, mmc.rca << 16);
     read_cid(buf, &mmc.cid);
-    //print_buf(buf);
-    //print_cid(&mmc.cid);
 
-    //print("CMD9:\n");
     msc_send_command(CMD_SEND_CSD, 2, mmc.rca << 16);
     if (read_csd(buf, &mmc.csd)) {
         print("CSD?\n");
         print_buf(buf);
         return;
     }
-    //print_csd(&mmc.csd);
 
     if (msc_select_card(mmc.rca)) {
         print("CMD7: %8.8lux\n", resp);
@@ -309,7 +292,7 @@ void msc_reset(void)
     }
 }
 
-ulong msc_read(ulong card_addr, ulong *dest, ulong blocks)
+ulong msc_read(ulong card_addr, ulong *dest, ushort blocks)
 {
     MSC *msc = (MSC *)(MSC_BASE | KSEG1);
 
@@ -319,7 +302,7 @@ ulong msc_read(ulong card_addr, ulong *dest, ulong blocks)
     while (msc->status & MSC_Status_ClockEnabled)
         ;
 
-    msc->number_of_blocks = 1;
+    msc->number_of_blocks = blocks;
     msc->block_length = mmc.csd.block_len;
 
     msc->cmd_index = CMD_READ_SINGLE_BLOCK;
@@ -343,21 +326,31 @@ ulong msc_read(ulong card_addr, ulong *dest, ulong blocks)
     while (!(msc->status & MSC_Status_EndCmdRes))
         ;
 
-    /* Read until a whole block has been received */
-    ulong read = 0;
-    ulong words = msc->block_length/4;
+    ulong blocks_left = blocks;
 
-    while ((read < words) && !(msc->status & MSC_Status_CRCReadError))
+    while ((blocks_left > 0) && !(msc->status & MSC_Status_CRCReadError))
     {
-        if (!(msc->status & MSC_Status_DataFIFOEmpty)) {
-            dest[read] = msc->rec_data_fifo;
-            read++;
+        /* Read until a whole block has been received */
+        ulong read = 0;
+        ulong words = msc->block_length/4;
+
+        while ((read < words) && !(msc->status & MSC_Status_CRCReadError))
+        {
+            if (!(msc->status & MSC_Status_DataFIFOEmpty)) {
+                dest[read] = msc->rec_data_fifo;
+                read++;
+            }
         }
+        blocks_left--;
     }
 
     /* Wait until the transaction is complete */
     while (!(msc->status & MSC_Status_DataTranDone))
         ;
+
+    /* Stop transmission after multiple blocks have been received */
+    if (blocks > 1)
+        msc_send_command(CMD_STOP_TRANSMISSION, 1, 0);
 
     return (msc->status & MSC_Status_CRCReadError);
 }

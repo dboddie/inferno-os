@@ -156,7 +156,7 @@ typedef struct {
     ulong resp_time_out;    /* RESTO */
     ulong read_time_out;    /* RDTO */
     ulong block_length;     /* BLKLEN */
-    ulong number_of_block;  /* NOB */
+    ulong number_of_blocks; /* NOB */
     ulong success_blocks;   /* SNOB */
     ulong mask;             /* IMASK */
     ulong interrupt;        /* IREG */
@@ -174,8 +174,11 @@ enum {
     MSC_ClockCtrl_StartClock    = 0x02,
     MSC_ClockCtrl_StopClock     = 0x01,
     MSC_Status_IsResetting      = 0x8000,
+    MSC_Status_DataTranDone     = 0x1000,
     MSC_Status_EndCmdRes        = 0x0800,
+    MSC_Status_DataFIFOEmpty    = 0x0040,
     MSC_Status_CRCResError      = 0x0020,
+    MSC_Status_CRCReadError     = 0x0010,
     MSC_Status_ClockEnabled     = 0x100,
     MSC_CmdCtrl_BusWidth        = 0x600,
     MSC_CmdCtrl_BusShift        = 9,
