@@ -77,6 +77,7 @@ init(context: ref Context, nil: list of string)
 
 #    print("Starting a shell...\n");
     shell := load Sh "/dis/sh.dis";
+    #args := list of {"sh", "-c", "dd -if /n/sd/data -bs 32 -count 1 | xd"};
     args := list of {"sh"};
     spawn shell->init(context, args);
 
