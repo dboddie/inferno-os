@@ -15,6 +15,8 @@
 #define R7_RESP_ERR(v) ((v & 0xfffff000) != 0)
 
 static uchar buf[16];
+static ulong resp;
+static MMC mmc;
 
 void msc_dump(void)
 {
@@ -126,8 +128,8 @@ static void print_buf(uchar *buf)
 
 static void print_csd(MMC_CSD *csd)
 {
-    print("CSD: ver=%d size=%ud bl=%d\n", csd->version, csd->card_size,
-                                         csd->block_len);
+    print("CSD: ver=%d size=%lud bl=%d\n", csd->version, csd->card_size,
+                                           csd->block_len);
 }
 
 static void msc_send_command(ulong cmd, ulong resp_format, ulong arg)
@@ -171,8 +173,15 @@ static ulong msc_response(void)
     return resp | (t & 0xff);
 }
 
-static ulong resp;
-static MMC mmc;
+static int msc_select_card(ulong rca)
+{
+    msc_send_command(CMD_SELECT_CARD, 1, rca << 16);
+    resp = msc_response();
+    if (R1_RESP_ERR(resp))
+        return 1;
+
+    return 0;
+}
 
 void msc_reset(void)
 {
@@ -200,7 +209,7 @@ void msc_reset(void)
     /* CMD8 (R7) */
     msc_send_command(CMD_SEND_IF_COND, 1, 0x1aa);
     resp = msc_response();
-    print("CMD8: %8.8lux\n", resp);
+    //print("CMD8: %8.8lux\n", resp);
 
     if ((msc->status & MSC_Status_CRCResError) || R7_RESP_ERR(resp)) {
         print("IF_COND: %8.8lux\n", resp);
@@ -253,43 +262,41 @@ void msc_reset(void)
     /* CMD58 (read OCR) */
     msc_send_command(58, 3, 0);
     resp = msc_response();
-    print("CMD58: %8.8lux\n", resp);
+    //print("CMD58: %8.8lux\n", resp);
 
     mmc.voltages = resp & 0xff8000;
     mmc.ccs = resp & SD_OCR_HCS;
-    print("V: %4.4lux CCS: %d\n", mmc.voltages, mmc.ccs == SD_OCR_HCS);
+    //print("V: %4.4lux CCS: %d\n", mmc.voltages, mmc.ccs == SD_OCR_HCS);
 
-    print("CMD2:\n");
+    //print("CMD2:\n");
     msc_send_command(CMD_ALL_SEND_CID, 2, 0);
     read_cid(buf, &mmc.cid);
-    for (int i = 15; i >= 0; i--)
+/*    for (int i = 15; i >= 0; i--)
         print("%2.2ux", buf[i]);
     print("\n");
-    print_cid(&mmc.cid);
+    print_cid(&mmc.cid);*/
 
     msc_send_command(CMD_SEND_RELATIVE_ADDR, 6, 0);
     resp = msc_response();
     mmc.rca = resp >> 16;
-    print("CMD3: %8.8lux\n", resp);
+    //print("CMD3: %8.8lux\n", resp);
 
-    print("CMD10:\n");
+    //print("CMD10:\n");
     msc_send_command(CMD_SEND_CID, 2, mmc.rca << 16);
     read_cid(buf, &mmc.cid);
-    print_buf(buf);
-    print_cid(&mmc.cid);
+    //print_buf(buf);
+    //print_cid(&mmc.cid);
 
-    print("CMD9:\n");
+    //print("CMD9:\n");
     msc_send_command(CMD_SEND_CSD, 2, mmc.rca << 16);
     if (read_csd(buf, &mmc.csd)) {
         print("CSD?\n");
         print_buf(buf);
         return;
     }
-    print_csd(&mmc.csd);
+    //print_csd(&mmc.csd);
 
-    msc_send_command(CMD_SELECT_CARD, 1, mmc.rca << 16);
-    resp = msc_response();
-    if (R1_RESP_ERR(resp)) {
+    if (msc_select_card(mmc.rca)) {
         print("CMD7: %8.8lux\n", resp);
         return;
     }
@@ -302,11 +309,65 @@ void msc_reset(void)
     }
 }
 
+ulong msc_read(ulong card_addr, ulong *dest, ulong blocks)
+{
+    MSC *msc = (MSC *)(MSC_BASE | KSEG1);
+
+    /* Stop the clock - Linux does a stop and start for each command but the
+       SoC documentation doesn't suggest this */
+    msc->clock_control = MSC_ClockCtrl_StopClock;
+    while (msc->status & MSC_Status_ClockEnabled)
+        ;
+
+    msc->number_of_blocks = 1;
+    msc->block_length = mmc.csd.block_len;
+
+    msc->cmd_index = CMD_READ_SINGLE_BLOCK;
+    msc->cmd_arg = card_addr;
+    msc->cmd_control &= ~MSC_CmdCtrl_BusWidth;
+    msc->cmd_control |= MSC_CmdCtrl_FourBit;
+    msc->cmd_control &= ~MSC_CmdCtrl_ResponseFormat;
+    msc->cmd_control |= 1;
+    msc->cmd_control |= MSC_CmdCtrl_DataEnabled;
+    msc->cmd_control &= ~MSC_CmdCtrl_WriteRead;
+    msc->cmd_control &= ~MSC_CmdCtrl_StreamBlock;
+    msc->cmd_control &= ~MSC_CmdCtrl_Busy;
+    msc->cmd_control &= ~MSC_CmdCtrl_Init;
+
+    /* Start the clock and the operation */
+    msc->clock_control = MSC_ClockCtrl_StartClock | MSC_ClockCtrl_StartOp;
+    while (!(msc->status & MSC_Status_ClockEnabled))
+        ;
+
+    /* Wait until the command completes */
+    while (!(msc->status & MSC_Status_EndCmdRes))
+        ;
+
+    /* Read until a whole block has been received */
+    ulong read = 0;
+    ulong words = msc->block_length/4;
+
+    while ((read < words) && !(msc->status & MSC_Status_CRCReadError))
+    {
+        if (!(msc->status & MSC_Status_DataFIFOEmpty)) {
+            dest[read] = msc->rec_data_fifo;
+            read++;
+        }
+    }
+
+    /* Wait until the transaction is complete */
+    while (!(msc->status & MSC_Status_DataTranDone))
+        ;
+
+    return (msc->status & MSC_Status_CRCReadError);
+}
+
 void msc_init(void)
 {
     //InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
 
     mmc_sd = &mmc;
+    mmc_sd->rca = 0;
 
     /* Propagate the UDC clock by clearing the appropriate bit */
     *(ulong*)(CGU_CLKGR | KSEG1) &= ~CGU_MSC;

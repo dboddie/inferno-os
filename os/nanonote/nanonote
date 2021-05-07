@@ -100,7 +100,7 @@ root
 	/dis/pwd.dis
 	/dis/echo.dis
 	/dis/cd.dis
-	/dis/xd.dis
+	/dis/dd.dis
 	/dis/cp.dis
 	/dis/mc.dis
 	/dis/mkdir.dis
@@ -109,6 +109,7 @@ root
 	/dis/rm.dis
 	/dis/p.dis
 	/dis/ps.dis
+	/dis/xd.dis
 	/dis/lib/arg.dis
 	/dis/lib/auth.dis
 	/dis/lib/bufio.dis

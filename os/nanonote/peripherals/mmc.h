@@ -70,7 +70,11 @@ typedef struct {
 typedef struct {
     MMC_CID cid;
     MMC_CSD csd;
-    ulong rca, voltages, ccs;
+    ushort rca;
+    ulong voltages, ccs;
 } MMC;
 
 MMC *mmc_sd;
+
+void    msc_init(void);
+ulong   msc_read(ulong card_addr, ulong *dest, ulong blocks);
