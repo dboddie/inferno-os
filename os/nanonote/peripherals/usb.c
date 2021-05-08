@@ -290,7 +290,7 @@ static void write_descriptor(uchar type, uchar index, uchar *fifo, ushort length
 void usb_intr(void)
 {
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
-    static int amount = 4;
+    static int amount = 0;
 
     switch (usb->intr_usb)
     {
@@ -399,13 +399,15 @@ void usb_intr(void)
         if (usb->csr & USB_InUnderRun)
             usb->csr &= ~USB_InUnderRun;
 
-        print("amount: %d\n", amount);
-        while (amount > 0) {
-            usb->fifo[2][0] = 'X';
-            amount--;
-        }
-
-        usb->csr |= USB_InPktRdy;
+        /* Queue more data to be sent to the host */
+        if (amount > 0) {
+            while (amount > 0) {
+                usb->fifo[2][0] = 'X';
+                amount--;
+            }
+            usb->csr |= USB_InPktRdy;
+        } else
+            usb->csr |= USB_InSendStall;
     }
 
     if (out & USB_Endpoint_OUT1) {
@@ -424,11 +426,8 @@ void usb_intr(void)
             usb->out_csr &= ~USB_OutPktRdy;
 
             /* Write some data to the IN endpoint's FIFO */
-            amount = 10;
-            while (amount > 0) {
-                usb->fifo[2][0] = 'X';
-                amount--;
-            }
+            usb->fifo[2][0] = 'O';
+            usb->fifo[2][0] = 'K';
 
             /* Clear any stall and indicate that there is data to be sent */
             usb->index = 2;
