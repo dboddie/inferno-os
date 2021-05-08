@@ -54,14 +54,15 @@ void usb_init(void)
 void usb_info(char *buf, int n)
 {
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
-    USBDeviceConfig *uc = (USBDeviceConfig *)(USB_DEVICE_CONFIG_BASE | KSEG1);
+    usb->index = 1;
+    ulong out_csr = usb->out_csr;
+    usb->index = 2;
+    ulong in_csr = usb->csr;
     snprint(buf, n,
-            "%2.2ux %2.2ux %1.1ux\n"
-            "%4.4ux %4.4ux %4.4ux %4.4ux\n"
-            "%2.2ux %2.2ux",
-            usb->faddr, usb->power, usb->index,
-            usb->intr_in_enable, usb->intr_out_enable, usb->intr_in, usb->intr_out,
-            uc->ep_info, uc->ram_info);
+            "IN:  %8.8lux %3d %3d\n"
+            "OUT: %8.8lux %3d %3d\n",
+            in_csr, inpoint.insertpos, inpoint.removepos,
+            out_csr, outpoint.insertpos, outpoint.removepos);
 }
 
 static void usb_read_msg(uchar *fifo, Request *req)
@@ -466,6 +467,14 @@ long usb_read(void* a, long n, vlong offset)
         b[i++] = outpoint.buf[outpoint.removepos];
         outpoint.removepos = (outpoint.removepos + 1) % 256;
     }
+
+    USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
+    if (usb->out_csr & USB_OutSentStall) {
+        /* Unstall the endpoint now that data has been read from it */
+        usb->out_csr &= ~(USB_OutSentStall | USB_OutSendStall);
+        usb->out_csr |= USB_OutClrDataTog;
+    }
+
     return i;
 }
 
@@ -473,7 +482,6 @@ long usb_write(void* a, long n, vlong offset)
 {
     USED(offset);
 
-    USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
     uchar *b = (uchar *)a;
     long i = 0;
 
