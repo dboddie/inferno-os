@@ -11,6 +11,16 @@ static int req_state;
 static int req_current;
 static int configuration;
 
+typedef struct {
+    uchar buf[256];
+    int insertpos, removepos;
+    /* empty when removepos == insertpos,
+       full when (insertpos + 1) % 256 == removepos */
+} endp_queue;
+
+static endp_queue inpoint;
+static endp_queue outpoint;
+
 void usb_init(void)
 {
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
@@ -19,6 +29,9 @@ void usb_init(void)
     /* Reset the state of request processing */
     req_state = 0;
     req_current = -1;
+
+    inpoint.insertpos = inpoint.removepos = 0;
+    outpoint.insertpos = outpoint.removepos = 0;
 
     /* Propagate the UDC clock by clearing the appropriate bit */
     *(ulong*)(CGU_CLKGR | KSEG1) &= ~CGU_UDC;
@@ -49,12 +62,6 @@ void usb_info(char *buf, int n)
             usb->faddr, usb->power, usb->index,
             usb->intr_in_enable, usb->intr_out_enable, usb->intr_in, usb->intr_out,
             uc->ep_info, uc->ram_info);
-}
-
-static void usb_read_fifo(uchar *fifo, uchar req[], ulong count)
-{
-    for (int i = 0; i < count; i++)
-        req[i] = fifo[0];
 }
 
 static void usb_read_msg(uchar *fifo, Request *req)
@@ -287,6 +294,31 @@ static void write_descriptor(uchar type, uchar index, uchar *fifo, ushort length
     }
 }
 
+void usb_send_data(void)
+{
+    USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
+    usb->index = 2;
+
+    if (usb->csr & USB_InSentStall) {
+        usb->csr &= ~(USB_InSentStall | USB_InSendStall);
+        usb->csr |= USB_InMode | USB_InClrDataTog;
+    }
+
+    if (usb->csr & USB_InUnderRun)
+        usb->csr &= ~USB_InUnderRun;
+
+    /* Queue more data to be sent to the host by reading from the inpoint
+       buffer - we need a way to check whether the FIFO is full */
+    if (inpoint.removepos != inpoint.insertpos) {
+        while ((inpoint.removepos != inpoint.insertpos)) {
+            usb->fifo[2][0] = inpoint.buf[inpoint.removepos];
+            inpoint.removepos = (inpoint.removepos + 1) % 256;
+        }
+    }
+
+    usb->csr |= USB_InPktRdy;
+}
+
 void usb_intr(void)
 {
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
@@ -371,11 +403,7 @@ void usb_intr(void)
                 print("Flushing IN FIFO\n");
                 usb->csr |= USB_InFlushFIFO;
             }
-            /* Setting SendStall on its own will cause the first IN request
-               to stall unless data is queued and the stall cleared. */
-            usb->csr |= USB_InSendStall;
 
-            //print("EP1 OUT EP2 IN\n");
             break;
 
         default:
@@ -385,54 +413,81 @@ void usb_intr(void)
         }
     }
 
-    if (in & USB_Endpoint_IN2) {
+    if (in & USB_Endpoint_IN2)
+    {
         /* This code is executed when there is a request for more data.
            Initially, this occurs when the endpoint has been configured, then
            after each reply has been sent. */
-        usb->index = 2;
 
-        if (usb->csr & USB_InSentStall) {
-            usb->csr &= ~(USB_InSentStall | USB_InSendStall);
-            usb->csr |= USB_InMode | USB_InClrDataTog;
-        }
-
-        if (usb->csr & USB_InUnderRun)
-            usb->csr &= ~USB_InUnderRun;
-
-        /* Queue more data to be sent to the host */
-        if (amount > 0) {
-            while (amount > 0) {
-                usb->fifo[2][0] = 'X';
-                amount--;
-            }
-            usb->csr |= USB_InPktRdy;
-        } else
-            usb->csr |= USB_InSendStall;
+        usb_send_data();
     }
 
     if (out & USB_Endpoint_OUT1) {
         usb->index = 1;
 
-        if (usb->out_csr & USB_OutPktRdy) {
+        if (usb->out_csr & USB_OutPktRdy)
+        {
+            if (usb->out_csr & USB_OutSentStall) {
+                usb->out_csr &= ~(USB_OutSentStall | USB_OutSendStall);
+                usb->out_csr |= USB_OutClrDataTog;
+            }
+
             ushort count = usb->count;
-            print("%4.4ux bytes received:\n", count);
 
             for (int i = 0; i < count; i++)
-                print("%2.2ux ", usb->fifo[1][0]);
-
-            print("\n");
+            {
+                int next = (outpoint.insertpos + 1) % 256;
+                if (next != outpoint.removepos) {
+                    outpoint.buf[outpoint.insertpos] = usb->fifo[1][0];
+                    outpoint.insertpos = next;
+                } else {
+                    /* Stall the endpoint and aim to read the data later */
+                    usb->out_csr |= USB_OutSendStall;
+                }
+            }
 
             /* Indicate that the message has been received */
             usb->out_csr &= ~USB_OutPktRdy;
-
-            /* Write some data to the IN endpoint's FIFO */
-            usb->fifo[2][0] = 'O';
-            usb->fifo[2][0] = 'K';
-
-            /* Clear any stall and indicate that there is data to be sent */
-            usb->index = 2;
-            usb->csr &= ~(USB_InSendStall | USB_InSentStall);
-            usb->csr |= USB_InPktRdy;
         }
     }
+}
+
+/* Functions for integration with the device file */
+
+long usb_read(void* a, long n, vlong offset)
+{
+    USED(offset);
+
+    uchar *b = (uchar *)a;
+    long i = 0;
+
+    while ((i < n) && (outpoint.removepos != outpoint.insertpos))
+    {
+        b[i++] = outpoint.buf[outpoint.removepos];
+        outpoint.removepos = (outpoint.removepos + 1) % 256;
+    }
+    return i;
+}
+
+long usb_write(void* a, long n, vlong offset)
+{
+    USED(offset);
+
+    USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
+    uchar *b = (uchar *)a;
+    long i = 0;
+
+    while (i < n)
+    {
+        int next = (inpoint.insertpos + 1) % 256;
+        if (next != inpoint.removepos) {
+            inpoint.buf[inpoint.insertpos] = b[i++];
+            inpoint.insertpos = next;
+        } else
+            break;
+    }
+
+    usb_send_data();
+
+    return i;
 }

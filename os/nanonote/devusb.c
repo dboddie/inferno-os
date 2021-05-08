@@ -7,18 +7,21 @@
 #include    "dat.h"
 #include    "fns.h"
 #include    "../port/error.h"
+#include    "hardware.h"
 
 enum{
     Qdir,
-    Qdata,
+    Qin,
+    Qout,
     Qinfo
 };
 
 static
 Dirtab usbtab[]={
     ".",        {Qdir, 0, QTDIR}, 0, 0555, /* entry for "." must be first if devgen used */
-    "usb",      {Qdata, 0},       0, 0666,
-    "usbi",     {Qinfo, 0},       0, 0666,
+    "in",       {Qin, 0},         0, 0222,
+    "out",      {Qout, 0},        0, 0444,
+    "info",     {Qinfo, 0},       0, 0444,
 };
 
 static void
@@ -61,13 +64,20 @@ static long
 usbread(Chan* c, void* a, long n, vlong offset)
 {
     char lbuf[34];
+    long bytes_read;
 
     switch((ulong)c->qid.path){
     case Qdir:
         return devdirread(c, a, n, usbtab, nelem(usbtab), devgen);
-    case Qdata:
-	snprint(lbuf, 2, "%1d", 0);
-	return readstr(offset, a, n, lbuf);
+    case Qin:
+        error(Eperm);
+        break;
+    case Qout:
+        /* Data from the host */
+        bytes_read = usb_read(a, n, offset);
+        if (bytes_read == -1)
+            error(Eio);
+        return bytes_read;
     case Qinfo:
 	usb_info(lbuf, 34);
 	return readstr(offset, a, n, lbuf);
@@ -81,9 +91,15 @@ usbread(Chan* c, void* a, long n, vlong offset)
 static long
 usbwrite(Chan* c, void* a, long n, vlong offset)
 {
-    USED(c, a, n, offset);
-    error(Eperm);
-    return 0;
+    switch((ulong)c->qid.path){
+    case Qin:
+        /* Data to the host */
+        return usb_write(a, n, offset);
+    default:
+        error(Eperm);
+        break;
+    }
+    return n;
 }
 
 Dev usbdevtab = {     /* defaults in dev.c */

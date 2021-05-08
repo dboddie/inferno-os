@@ -250,6 +250,8 @@ enum {
     USB_InPktRdy                = 0x01,
     /* OUTCSR flags */
     USB_OutClrDataTog           = 0x80,
+    USB_OutSentStall            = 0x40,
+    USB_OutSendStall            = 0x20,
     USB_OutFlushFIFO            = 0x10,
     USB_OutPktRdy               = 0x01,
 };
@@ -269,3 +271,6 @@ enum {
     USB_Endpoint_IN2 = 4,
     USB_Endpoint_OUT1 = 2,
 };
+
+long usb_read(void* a, long n, vlong offset);
+long usb_write(void* a, long n, vlong offset);
