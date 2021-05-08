@@ -48,7 +48,7 @@ enum {
     SD_OCR_HCS                = 0x40000000
 };
 
-/* CID struct layout does not reflects layout of data from cards */
+/* CID struct layout does not reflect layout of data from cards */
 typedef struct {
     u8int manufacturer_id;
     u16int application_id;
