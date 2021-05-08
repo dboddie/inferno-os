@@ -110,11 +110,15 @@ root
 	/dis/p.dis
 	/dis/ps.dis
 	/dis/xd.dis
+	/dis/disk/fdisk.dis
+	/dis/disk/pedit.dis
+	/dis/disk/calc.tab.dis
 	/dis/lib/arg.dis
 	/dis/lib/auth.dis
 	/dis/lib/bufio.dis
 	/dis/lib/daytime.dis
 	/dis/lib/dial.dis
+	/dis/lib/disks.dis
 	/dis/lib/env.dis
 	/dis/lib/filepat.dis
 	/dis/lib/nametree.dis
@@ -125,3 +129,6 @@ root
 	/dis/lib/styxservers.dis
 	/dis/lib/workdir.dis
 	/dis/sh/std.dis
+
+# partition access
+	/dis/partfs.dis
