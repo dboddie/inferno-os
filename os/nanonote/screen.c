@@ -131,10 +131,6 @@ void blankscreen(int)
 
 static void screenwin(void)
 {
-    char *greet;
-    Point p, q;
-    Rectangle r;
-
     /* Assign predefined images for black and white pixels to the background
        and text colours. */
     back = memblack;
