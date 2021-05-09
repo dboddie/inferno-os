@@ -11,11 +11,13 @@ static int req_state;
 static int req_current;
 static int configuration;
 
+#define BUFLEN 1024
+
 typedef struct {
-    uchar buf[256];
+    uchar buf[BUFLEN];
     int insertpos, removepos;
     /* empty when removepos == insertpos,
-       full when (insertpos + 1) % 256 == removepos */
+       full when (insertpos + 1) % BUFLEN == removepos */
 } endp_queue;
 
 static endp_queue inpoint;
@@ -59,8 +61,8 @@ void usb_info(char *buf, int n)
     usb->index = 2;
     ulong in_csr = usb->csr;
     snprint(buf, n,
-            "IN:  %8.8lux %3d %3d\n"
-            "OUT: %8.8lux %3d %3d\n",
+            "IN:  %8.8lux %4d %4d\n"
+            "OUT: %8.8lux %4d %4d\n",
             in_csr, inpoint.insertpos, inpoint.removepos,
             out_csr, outpoint.insertpos, outpoint.removepos);
 }
@@ -295,10 +297,11 @@ static void write_descriptor(uchar type, uchar index, uchar *fifo, ushort length
     }
 }
 
-void usb_send_data(void)
+ulong usb_send_data(void)
 {
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
     usb->index = 2;
+    ulong sent = 0;
 
     if (usb->csr & USB_InSentStall) {
         usb->csr &= ~(USB_InSentStall | USB_InSendStall);
@@ -313,11 +316,13 @@ void usb_send_data(void)
     if (inpoint.removepos != inpoint.insertpos) {
         while ((inpoint.removepos != inpoint.insertpos)) {
             usb->fifo[2][0] = inpoint.buf[inpoint.removepos];
-            inpoint.removepos = (inpoint.removepos + 1) % 256;
+            inpoint.removepos = (inpoint.removepos + 1) % BUFLEN;
+            sent++;
         }
     }
 
     usb->csr |= USB_InPktRdy;
+    return sent;
 }
 
 void usb_intr(void)
@@ -420,7 +425,10 @@ void usb_intr(void)
            Initially, this occurs when the endpoint has been configured, then
            after each reply has been sent. */
 
-        usb_send_data();
+        if (usb_send_data() == 0) {
+            usb->index = 2;
+            usb->csr |= USB_InFlushFIFO;
+        }
     }
 
     if (out & USB_Endpoint_OUT1) {
@@ -435,15 +443,16 @@ void usb_intr(void)
 
             ushort count = usb->count;
 
-            for (int i = 0; i < count; i++)
+            for (ushort i = 0; i < count; i++)
             {
-                int next = (outpoint.insertpos + 1) % 256;
+                int next = (outpoint.insertpos + 1) % BUFLEN;
                 if (next != outpoint.removepos) {
                     outpoint.buf[outpoint.insertpos] = usb->fifo[1][0];
                     outpoint.insertpos = next;
                 } else {
-                    /* Stall the endpoint and aim to read the data later */
+                    /* Stall the endpoint until more space becomes available */
                     usb->out_csr |= USB_OutSendStall;
+                    break;
                 }
             }
 
@@ -465,7 +474,7 @@ long usb_read(void* a, long n, vlong offset)
     while ((i < n) && (outpoint.removepos != outpoint.insertpos))
     {
         b[i++] = outpoint.buf[outpoint.removepos];
-        outpoint.removepos = (outpoint.removepos + 1) % 256;
+        outpoint.removepos = (outpoint.removepos + 1) % BUFLEN;
     }
 
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
@@ -487,7 +496,7 @@ long usb_write(void* a, long n, vlong offset)
 
     while (i < n)
     {
-        int next = (inpoint.insertpos + 1) % 256;
+        int next = (inpoint.insertpos + 1) % BUFLEN;
         if (next != inpoint.removepos) {
             inpoint.buf[inpoint.insertpos] = b[i++];
             inpoint.insertpos = next;

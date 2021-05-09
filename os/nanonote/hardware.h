@@ -253,6 +253,7 @@ enum {
     USB_OutSentStall            = 0x40,
     USB_OutSendStall            = 0x20,
     USB_OutFlushFIFO            = 0x10,
+    USB_OutFIFOFull             = 0x02,
     USB_OutPktRdy               = 0x01,
 };
 
