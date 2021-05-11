@@ -93,6 +93,7 @@ root
 
 # For development work (from cerf1110/cerf):
 	/dis/sh.dis
+	/dis/lc
 	/dis/ls.dis
 	/dis/cat.dis
 	/dis/bind.dis
@@ -106,6 +107,7 @@ root
 	/dis/mkdir.dis
 	/dis/mntgen.dis
 	/dis/ns.dis
+	/dis/ramfile.dis
 	/dis/rm.dis
 	/dis/p.dis
 	/dis/ps.dis
@@ -132,3 +134,6 @@ root
 
 # partition access
 	/dis/partfs.dis
+
+	/uin /usr/inferno/tests/uin
+	/txt /README.md
