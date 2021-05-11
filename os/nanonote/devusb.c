@@ -63,7 +63,7 @@ usbclose(Chan* c)
 static long
 usbread(Chan* c, void* a, long n, vlong offset)
 {
-    char lbuf[49];
+    char lbuf[44];
     long bytes_read;
 
     switch((ulong)c->qid.path){
@@ -79,7 +79,7 @@ usbread(Chan* c, void* a, long n, vlong offset)
             error(Eio);
         return bytes_read;
     case Qinfo:
-	usb_info(lbuf, 49);
+	usb_info(lbuf, 44);
 	return readstr(offset, a, n, lbuf);
     default:
         n=0;

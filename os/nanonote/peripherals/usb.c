@@ -20,8 +20,15 @@ typedef struct {
        full when (insertpos + 1) % BUFLEN == removepos */
 } endp_queue;
 
-static endp_queue inpoint;
 static endp_queue outpoint;
+
+typedef struct {
+    uchar* a;
+    long i, n;
+    Lock lock;
+} transfer;
+
+static transfer in_transfer;
 
 void usb_init(void)
 {
@@ -31,8 +38,8 @@ void usb_init(void)
     /* Reset the state of request processing */
     req_state = 0;
     req_current = -1;
+    in_transfer.n = 0;
 
-    inpoint.insertpos = inpoint.removepos = 0;
     outpoint.insertpos = outpoint.removepos = 0;
 
     /* Propagate the UDC clock by clearing the appropriate bit */
@@ -58,12 +65,10 @@ void usb_info(char *buf, int n)
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
     usb->index = 1;
     ulong out_csr = usb->out_csr;
-    usb->index = 2;
-    ulong in_csr = usb->csr;
     snprint(buf, n,
-            "IN:  %8.8lux %4d %4d\n"
+            "IN:  %6d %6d\n"
             "OUT: %8.8lux %4d %4d\n",
-            in_csr, inpoint.insertpos, inpoint.removepos,
+            in_transfer.i, in_transfer.n,
             out_csr, outpoint.insertpos, outpoint.removepos);
 }
 
@@ -77,41 +82,6 @@ static void usb_read_msg(uchar *fifo, Request *req)
     req->index |= fifo[0] << 8;
     req->length = fifo[0];
     req->length |= fifo[0] << 8;
-}
-
-static char* usb_request_type[4] = {
-    "Standard", "Class", "Endpoint", "Reserved"
-};
-
-static char* usb_request_dest[4] = {
-    "Device", "Interface", "Endpoint", "Other"
-};
-
-static char* usb_request_names[] = {
-    "GET_STATUS",        "CLEAR_FEATURE",     "?",              "SET_FEATURE",
-    "?",                 "SET_ADDRESS",       "GET_DESCRIPTOR", "SET_DESCRIPTOR",
-    "GET_CONFIGURATION", "SET_CONFIGURATION", "GET_INTERFACE",  "?",
-    "?",                 "SET_INTERFACE",     "SYNCH_FRAME"
-};
-
-static void print_request(Request *req)
-{
-/*
-    int type = (req->requesttype >> 5) & 0x3;
-    print("%s ", usb_request_type[type]);
-    int dest = req->requesttype & 0x1f;
-    if (dest < 4)
-        print("%s ", usb_request_dest[dest]);
-    else
-        print("Reserved ");
-
-    if (req->request < 0x13)
-        print("%s ", usb_request_names[req->request]);
-    else
-        print("? ");
-*/
-    print("%2.2ux %2.2ux %4.4ux %4.4ux %4.4ux\n",
-          req->requesttype, req->request, req->value, req->index, req->length);
 }
 
 static DeviceDescriptor _DevDesc = {
@@ -297,7 +267,7 @@ static void write_descriptor(uchar type, uchar index, uchar *fifo, ushort length
     }
 }
 
-ulong usb_send_data(void)
+void usb_send_data(void)
 {
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
     usb->index = 2;
@@ -312,17 +282,15 @@ ulong usb_send_data(void)
         usb->csr &= ~USB_InUnderRun;
 
     /* Queue more data to be sent to the host by reading from the inpoint
-       buffer - we need a way to check whether the FIFO is full */
-    if (inpoint.removepos != inpoint.insertpos) {
-        while ((inpoint.removepos != inpoint.insertpos)) {
-            usb->fifo[2][0] = inpoint.buf[inpoint.removepos];
-            inpoint.removepos = (inpoint.removepos + 1) % BUFLEN;
-            sent++;
-        }
+       buffer - we may need a way to check whether the FIFO is full */
+
+    while (in_transfer.i < in_transfer.n && sent < USB_MAXP_SIZE_ENDP)
+    {
+        usb->fifo[2][0] = in_transfer.a[in_transfer.i++];
+        sent++;
     }
 
     usb->csr |= USB_InPktRdy;
-    return sent;
 }
 
 void usb_intr(void)
@@ -413,7 +381,8 @@ void usb_intr(void)
             break;
 
         default:
-            print_request(&req);
+            print("%2.2ux %2.2ux %4.4ux %4.4ux %4.4ux\n",
+                  req.requesttype, req.request, req.value, req.index, req.length);
             req_state = 0;
             break;
         }
@@ -421,14 +390,9 @@ void usb_intr(void)
 
     if (in & USB_Endpoint_IN2)
     {
-        /* This code is executed when there is a request for more data.
-           Initially, this occurs when the endpoint has been configured, then
-           after each reply has been sent. */
+        /* This code is executed when there is a request for more data. */
 
-        if (usb_send_data() == 0) {
-            usb->index = 2;
-            usb->csr |= USB_InFlushFIFO;
-        }
+        usb_send_data();
     }
 
     if (out & USB_Endpoint_OUT1) {
@@ -464,6 +428,7 @@ void usb_intr(void)
 
 /* Functions for integration with the device file */
 
+/* Read data from an OUT endpoint */
 long usb_read(void* a, long n, vlong offset)
 {
     USED(offset);
@@ -487,24 +452,29 @@ long usb_read(void* a, long n, vlong offset)
     return i;
 }
 
+/* Write data to an IN endpoint */
 long usb_write(void* a, long n, vlong offset)
 {
     USED(offset);
 
-    uchar *b = (uchar *)a;
     long i = 0;
 
-    while (i < n)
-    {
-        int next = (inpoint.insertpos + 1) % BUFLEN;
-        if (next != inpoint.removepos) {
-            inpoint.buf[inpoint.insertpos] = b[i++];
-            inpoint.insertpos = next;
-        } else
-            break;
-    }
+    /* Stop other writes from accessing the transfer structure but allow
+       interrupts to occur (unlike ilock) */
+    lock(&in_transfer.lock);
+
+    in_transfer.a = (uchar *)a;
+    in_transfer.n = n;
+    in_transfer.i = 0;
 
     usb_send_data();
+
+    /* Wait until the whole block of data has been transferred - the interrupt
+       handlers will take care of all blocks after the first */
+    while (in_transfer.i < in_transfer.n);
+
+    /* Allow other calls to write to access the transfer structure again */
+    unlock(&in_transfer.lock);
 
     return i;
 }
