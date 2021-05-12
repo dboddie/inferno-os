@@ -11,36 +11,28 @@ static int req_state;
 static int req_current;
 static int configuration;
 
-#define BUFLEN 1024
-
-typedef struct {
-    uchar buf[BUFLEN];
-    int insertpos, removepos;
-    /* empty when removepos == insertpos,
-       full when (insertpos + 1) % BUFLEN == removepos */
-} endp_queue;
-
-static endp_queue outpoint;
-
 typedef struct {
     uchar* a;
     long i, n;
     Lock lock;
+    int complete;
 } transfer;
 
 static transfer in_transfer;
+static transfer out_transfer;
 
 void usb_init(void)
 {
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
     InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
 
-    /* Reset the state of request processing */
+    /* Initialise the state of request processing */
     req_state = 0;
     req_current = -1;
+    /* Initialise transfers */
     in_transfer.n = 0;
-
-    outpoint.insertpos = outpoint.removepos = 0;
+    out_transfer.n = 0;
+    out_transfer.complete = 0;
 
     /* Propagate the UDC clock by clearing the appropriate bit */
     *(ulong*)(CGU_CLKGR | KSEG1) &= ~CGU_UDC;
@@ -62,14 +54,11 @@ void usb_init(void)
 
 void usb_info(char *buf, int n)
 {
-    USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
-    usb->index = 1;
-    ulong out_csr = usb->out_csr;
     snprint(buf, n,
-            "IN:  %6d %6d\n"
-            "OUT: %8.8lux %4d %4d\n",
+            "IN:  %6ld %6ld\n"
+            "OUT: %6ld %6ld\n",
             in_transfer.i, in_transfer.n,
-            out_csr, outpoint.insertpos, outpoint.removepos);
+            out_transfer.i, out_transfer.n);
 }
 
 static void usb_read_msg(uchar *fifo, Request *req)
@@ -391,7 +380,6 @@ void usb_intr(void)
     if (in & USB_Endpoint_IN2)
     {
         /* This code is executed when there is a request for more data. */
-
         usb_send_data();
     }
 
@@ -405,23 +393,26 @@ void usb_intr(void)
                 usb->out_csr |= USB_OutClrDataTog;
             }
 
-            ushort count = usb->count;
-
-            for (ushort i = 0; i < count; i++)
+            /* Only write to memory if the transfer is set up */
+            if (out_transfer.n != 0)
             {
-                int next = (outpoint.insertpos + 1) % BUFLEN;
-                if (next != outpoint.removepos) {
-                    outpoint.buf[outpoint.insertpos] = usb->fifo[1][0];
-                    outpoint.insertpos = next;
-                } else {
-                    /* Stall the endpoint until more space becomes available */
+                if (usb->count == 0) {
+                    /* Terminate the transfer, potentially early */
+                    out_transfer.n = out_transfer.i;
+                    out_transfer.complete = 1;
                     usb->out_csr |= USB_OutSendStall;
-                    break;
+                } else {
+                    /* Copy the contents of the packet into the buffer */
+                    while ((usb->count > 0) && (out_transfer.i < out_transfer.n))
+                        out_transfer.a[out_transfer.i++] = usb->fifo[1][0];
                 }
-            }
+                /* Indicate that the message has been received */
+                usb->out_csr &= ~USB_OutPktRdy;
 
-            /* Indicate that the message has been received */
-            usb->out_csr &= ~USB_OutPktRdy;
+            } else {
+                /* Stall the endpoint until a transfer is expected */
+                usb->out_csr |= USB_OutSendStall;
+            }
         }
     }
 }
@@ -433,23 +424,37 @@ long usb_read(void* a, long n, vlong offset)
 {
     USED(offset);
 
-    uchar *b = (uchar *)a;
-    long i = 0;
-
-    while ((i < n) && (outpoint.removepos != outpoint.insertpos))
-    {
-        b[i++] = outpoint.buf[outpoint.removepos];
-        outpoint.removepos = (outpoint.removepos + 1) % BUFLEN;
+    if (out_transfer.complete) {
+        out_transfer.complete = 0;
+        return 0;
     }
 
+    /* Stop other reads from accessing the transfer structure but allow
+       interrupts to occur (unlike ilock) */
+    lock(&out_transfer.lock);
+
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
+
+    /* Set up a transfer */
+    out_transfer.a = (uchar *)a;
+    out_transfer.n = n;
+    out_transfer.i = 0;
+
     if (usb->out_csr & USB_OutSentStall) {
-        /* Unstall the endpoint now that data has been read from it */
+        /* Unstall a stalled endpoint but do not allow any data to be transferred */
         usb->out_csr &= ~(USB_OutSentStall | USB_OutSendStall);
         usb->out_csr |= USB_OutClrDataTog;
     }
 
-    return i;
+    /* Wait while the interrupt handler transfers the data */
+    while (out_transfer.i < out_transfer.n);
+
+    out_transfer.n = 0;
+
+    /* Allow other calls to write to access the transfer structure again */
+    unlock(&out_transfer.lock);
+
+    return out_transfer.i;
 }
 
 /* Write data to an IN endpoint */
@@ -476,5 +481,5 @@ long usb_write(void* a, long n, vlong offset)
     /* Allow other calls to write to access the transfer structure again */
     unlock(&in_transfer.lock);
 
-    return i;
+    return n;
 }

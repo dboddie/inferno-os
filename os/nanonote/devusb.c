@@ -21,7 +21,7 @@ Dirtab usbtab[]={
     ".",        {Qdir, 0, QTDIR}, 0, 0555, /* entry for "." must be first if devgen used */
     "in",       {Qin, 0},         0, 0222,
     "out",      {Qout, 0},        0, 0444,
-    "info",     {Qinfo, 0},       0, 0444,
+    "info",     {Qinfo, 0},      38, 0444,
 };
 
 static void
@@ -63,7 +63,7 @@ usbclose(Chan* c)
 static long
 usbread(Chan* c, void* a, long n, vlong offset)
 {
-    char lbuf[44];
+    char lbuf[39];
     long bytes_read;
 
     switch((ulong)c->qid.path){
@@ -79,7 +79,7 @@ usbread(Chan* c, void* a, long n, vlong offset)
             error(Eio);
         return bytes_read;
     case Qinfo:
-	usb_info(lbuf, 44);
+	usb_info(lbuf, 39);
 	return readstr(offset, a, n, lbuf);
     default:
         n=0;
