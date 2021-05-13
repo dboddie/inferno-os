@@ -388,31 +388,26 @@ void usb_intr(void)
 
         if (usb->out_csr & USB_OutPktRdy)
         {
-            if (usb->out_csr & USB_OutSentStall) {
-                usb->out_csr &= ~(USB_OutSentStall | USB_OutSendStall);
-                usb->out_csr |= USB_OutClrDataTog;
-            }
-
+            //print("%8.8ux %ld %ud ", usb->out_csr, out_transfer.n, usb->count);
             /* Only write to memory if the transfer is set up */
             if (out_transfer.n != 0)
             {
                 if (usb->count == 0) {
                     /* Terminate the transfer, potentially early */
-                    out_transfer.n = out_transfer.i;
                     out_transfer.complete = 1;
-                    usb->out_csr |= USB_OutSendStall;
                 } else {
                     /* Copy the contents of the packet into the buffer */
                     while ((usb->count > 0) && (out_transfer.i < out_transfer.n))
                         out_transfer.a[out_transfer.i++] = usb->fifo[1][0];
                 }
-                /* Indicate that the message has been received */
-                usb->out_csr &= ~USB_OutPktRdy;
-
             } else {
                 /* Stall the endpoint until a transfer is expected */
                 usb->out_csr |= USB_OutSendStall;
             }
+
+            /* Indicate that the message has been received */
+            usb->out_csr &= ~USB_OutPktRdy;
+            //print("%8.8ux\n", usb->out_csr);
         }
     }
 }
@@ -424,14 +419,17 @@ long usb_read(void* a, long n, vlong offset)
 {
     USED(offset);
 
-    if (out_transfer.complete) {
-        out_transfer.complete = 0;
-        return 0;
-    }
-
     /* Stop other reads from accessing the transfer structure but allow
        interrupts to occur (unlike ilock) */
     lock(&out_transfer.lock);
+
+    /* If the last read caused a transfer to complete and was not itself a
+       zero length transfer then return zero bytes immediately */
+    if (out_transfer.complete && (out_transfer.i != 0)) {
+        out_transfer.complete = 0;
+        unlock(&out_transfer.lock);
+        return 0;
+    }
 
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
 
@@ -439,21 +437,27 @@ long usb_read(void* a, long n, vlong offset)
     out_transfer.a = (uchar *)a;
     out_transfer.n = n;
     out_transfer.i = 0;
+    out_transfer.complete = 0;
 
-    if (usb->out_csr & USB_OutSentStall) {
-        /* Unstall a stalled endpoint but do not allow any data to be transferred */
+    if (usb->out_csr & (USB_OutSentStall | USB_OutSendStall)) {
+        /* Unstall a stalled endpoint */
         usb->out_csr &= ~(USB_OutSentStall | USB_OutSendStall);
         usb->out_csr |= USB_OutClrDataTog;
     }
 
     /* Wait while the interrupt handler transfers the data */
-    while (out_transfer.i < out_transfer.n);
+    while ((out_transfer.i < out_transfer.n) && !out_transfer.complete);
 
+    /* Prevent the interrupt handler from processing any more data */
     out_transfer.n = 0;
 
     /* Allow other calls to write to access the transfer structure again */
     unlock(&out_transfer.lock);
 
+    /* Stall the endpoint until the next read */
+    usb->out_csr |= USB_OutSendStall;
+
+    //print("> %ld %ld\n", n, out_transfer.i);
     return out_transfer.i;
 }
 
