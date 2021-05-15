@@ -75,6 +75,9 @@ void trapintr(Ureg *ur)
         if (ic->pending & InterruptUDC) {
             usb_intr();
         }
+/*        if (ic->pending & InterruptMSC) {
+            msc_intr();
+        }*/
     }
 }
 

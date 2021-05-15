@@ -285,7 +285,6 @@ void usb_send_data(void)
 void usb_intr(void)
 {
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
-    static int amount = 0;
 
     switch (usb->intr_usb)
     {
@@ -335,6 +334,7 @@ void usb_intr(void)
             usb->csr |= USB_Ctrl_InPktRdy | USB_Ctrl_DataEnd;
             req_state++;
             break;
+
         case SetAddress:
             /* Indicate that the message has been received */
             usb->csr |= USB_Ctrl_ServicedOutPktRdy;
@@ -344,6 +344,7 @@ void usb_intr(void)
             //print(" SetAddress: %4.4ux\n", req.value);
             req_state++;
             break;
+
         case SetConfiguration:
             /* Indicate that the message has been received */
             usb->csr |= USB_Ctrl_ServicedOutPktRdy;
@@ -357,6 +358,11 @@ void usb_intr(void)
             usb->out_max_p = USB_MAXP_SIZE_HIGH;
             usb->out_csr |= USB_OutClrDataTog;
 
+            if (usb->out_csr & USB_OutPktRdy) {
+                usb->out_csr |= USB_OutFlushFIFO;
+                usb->out_csr |= USB_OutFlushFIFO;
+            }
+
             usb->index = 2;
             usb->in_max_p = USB_MAXP_SIZE_HIGH;
             usb->csr &= ~USB_InISO;
@@ -367,6 +373,38 @@ void usb_intr(void)
                 usb->csr |= USB_InFlushFIFO;
             }
 
+            break;
+
+        case GetStatus:
+            /* Indicate that the message has been received */
+            usb->csr |= USB_Ctrl_ServicedOutPktRdy;
+
+            if (req.value == 0 && req.index == 1) {
+                usb->index = 1;
+                /* Write the status to the endpoint's FIFO */
+                usb->fifo[0][0] = (usb->out_csr & (USB_OutSentStall | USB_OutSendStall)) ? 1 : 0;
+                usb->index = 0;
+            } else
+                usb->fifo[0][0] = 0;
+
+            usb->fifo[0][0] = 0;
+
+            /* Let the host know that an IN packet is ready */
+            usb->csr |= USB_Ctrl_InPktRdy | USB_Ctrl_DataEnd;
+            req_state++;
+            break;
+
+        case ClearFeature:
+            usb->csr |= USB_Ctrl_ServicedOutPktRdy;
+            usb->csr |= USB_Ctrl_DataEnd;
+
+            if (req.index == 1 && req.value == 0) {
+                usb->index = 1;
+                usb->out_csr &= ~(USB_OutSendStall | USB_OutSentStall);
+                usb->out_csr |= USB_OutClrDataTog;
+            }
+
+            req_state = 0;
             break;
 
         default:
@@ -386,9 +424,10 @@ void usb_intr(void)
     if (out & USB_Endpoint_OUT1) {
         usb->index = 1;
 
-        if (usb->out_csr & USB_OutPktRdy)
+        if (usb->out_csr & USB_OutSentStall)
+            usb->out_csr |= USB_OutSentStall;
+        else if (usb->out_csr & USB_OutPktRdy)
         {
-            print("%8.8ux %ud %ld\n", usb->out_csr, usb->count, out_transfer.complete);
             /* Only write to memory if the transfer is set up and not complete */
             if (!out_transfer.complete)
             {
@@ -397,10 +436,10 @@ void usb_intr(void)
                     out_transfer.a[out_transfer.i++] = usb->fifo[1][0];
 
                 out_transfer.complete = 1;
-            } else {
-                /* Stall the endpoint until a new read is begun */
-                usb->out_csr |= USB_OutSendStall;
             }
+
+            /* Stall the endpoint until a new read has begun */
+            usb->out_csr |= USB_OutSendStall;
 
             /* Indicate that the message has been received */
             usb->out_csr &= ~USB_OutPktRdy;
@@ -419,15 +458,6 @@ long usb_read(void* a, long n, vlong offset)
     /* Stop other reads from accessing the transfer structure but allow
        interrupts to occur (unlike ilock) */
     lock(&out_transfer.lock);
-
-    USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
-
-    if (usb->out_csr & (USB_OutSentStall | USB_OutSendStall)) {
-        /* Unstall a stalled endpoint */
-        print("unstall\n");
-        usb->out_csr &= ~(USB_OutSentStall | USB_OutSendStall);
-        usb->out_csr |= USB_OutClrDataTog;
-    }
 
     /* Set up a transfer */
     out_transfer.a = (uchar *)a;
