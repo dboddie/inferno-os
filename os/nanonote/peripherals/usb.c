@@ -16,10 +16,18 @@ typedef struct {
     long i, n;
     Lock lock;
     int complete;
-} transfer;
+} in_transfer;
 
-static transfer in_transfer;
-static transfer out_transfer;
+static in_transfer in_tr;
+
+typedef struct {
+    uchar buf[USB_MAXP_SIZE_HIGH];
+    long i;
+    int full;
+    Lock lock;
+} out_transfer;
+
+static out_transfer out_tr;
 
 void usb_init(void)
 {
@@ -30,9 +38,9 @@ void usb_init(void)
     req_state = 0;
     req_current = -1;
     /* Initialise transfers */
-    in_transfer.n = 0;
-    out_transfer.n = 0;
-    out_transfer.complete = 1;
+    in_tr.n = 0;
+    out_tr.i = 0;
+    out_tr.full = 0;
 
     /* Propagate the UDC clock by clearing the appropriate bit */
     *(ulong*)(CGU_CLKGR | KSEG1) &= ~CGU_UDC;
@@ -56,9 +64,9 @@ void usb_info(char *buf, int n)
 {
     snprint(buf, n,
             "IN:  %6ld %6ld %1d\n"
-            "OUT: %6ld %6ld %1d\n",
-            in_transfer.i, in_transfer.n, in_transfer.complete,
-            out_transfer.i, out_transfer.n, out_transfer.complete);
+            "OUT: %1d\n",
+            in_tr.i, in_tr.n, in_tr.complete,
+            out_tr.full);
 }
 
 static void usb_read_msg(uchar *fifo, Request *req)
@@ -273,9 +281,9 @@ void usb_send_data(void)
     /* Queue more data to be sent to the host by reading from the inpoint
        buffer - we may need a way to check whether the FIFO is full */
 
-    while (in_transfer.i < in_transfer.n && sent < USB_MAXP_SIZE_ENDP)
+    while (in_tr.i < in_tr.n && sent < USB_MAXP_SIZE_ENDP)
     {
-        usb->fifo[2][0] = in_transfer.a[in_transfer.i++];
+        usb->fifo[2][0] = in_tr.a[in_tr.i++];
         sent++;
     }
 
@@ -376,24 +384,39 @@ void usb_intr(void)
             break;
 
         case GetStatus:
+        {
+            uchar status = 0;
             /* Indicate that the message has been received */
             usb->csr |= USB_Ctrl_ServicedOutPktRdy;
 
-            if (req.value == 0 && req.index == 1) {
-                usb->index = 1;
-                /* Write the status to the endpoint's FIFO */
-                usb->fifo[0][0] = (usb->out_csr & (USB_OutSentStall | USB_OutSendStall)) ? 1 : 0;
-                usb->index = 0;
-            } else
-                usb->fifo[0][0] = 0;
+            if (req.index == 1)
+            {
+                switch (req.value) {
+                case 0:
+                    /* Halt on endpoint 1? */
+                    usb->index = 1;
+                    /* Write the status to the endpoint's FIFO */
+                    status = (usb->out_csr & (USB_OutSentStall | USB_OutSendStall)) ? 1 : 0;
+                    usb->index = 0;
+                    break;
+                case 1:
+                    /* Custom status - return the out buffer's full flag */
+                    status = out_tr.full;
+                    break;
+                default:
+                    ;
+                }
+            }
 
+            /* Write the low and high bytes */
+            usb->fifo[0][0] = status;
             usb->fifo[0][0] = 0;
 
             /* Let the host know that an IN packet is ready */
             usb->csr |= USB_Ctrl_InPktRdy | USB_Ctrl_DataEnd;
             req_state++;
             break;
-
+        }
         case ClearFeature:
             usb->csr |= USB_Ctrl_ServicedOutPktRdy;
             usb->csr |= USB_Ctrl_DataEnd;
@@ -424,26 +447,23 @@ void usb_intr(void)
     if (out & USB_Endpoint_OUT1) {
         usb->index = 1;
 
-        if (usb->out_csr & USB_OutSentStall)
-            usb->out_csr |= USB_OutSentStall;
-        else if (usb->out_csr & USB_OutPktRdy)
+        if (usb->out_csr & USB_OutPktRdy)
         {
             /* Only write to memory if the transfer is set up and not complete */
-            if (!out_transfer.complete)
+            if (out_tr.full == 0)
             {
                 /* Copy the contents of the packet into the buffer */
-                while ((usb->count > 0) && (out_transfer.i < out_transfer.n))
-                    out_transfer.a[out_transfer.i++] = usb->fifo[1][0];
+                while ((usb->count > 0) && (out_tr.i < USB_MAXP_SIZE_HIGH))
+                    out_tr.buf[out_tr.i++] = usb->fifo[1][0];
 
-                out_transfer.complete = 1;
+                out_tr.full = 1;
             }
-
-            /* Stall the endpoint until a new read has begun */
-            usb->out_csr |= USB_OutSendStall;
 
             /* Indicate that the message has been received */
             usb->out_csr &= ~USB_OutPktRdy;
         }
+        else if (usb->out_csr & USB_OutSentStall)
+            usb->out_csr |= USB_OutSentStall;
     }
 }
 
@@ -453,25 +473,25 @@ void usb_intr(void)
 long usb_read(void* a, long n, vlong offset)
 {
     USED(offset);
-    print("read %ld\n", n);
 
-    /* Stop other reads from accessing the transfer structure but allow
-       interrupts to occur (unlike ilock) */
-    lock(&out_transfer.lock);
-
-    /* Set up a transfer */
-    out_transfer.a = (uchar *)a;
-    out_transfer.n = (n < USB_MAXP_SIZE_HIGH) ? n : USB_MAXP_SIZE_HIGH;
-    out_transfer.i = 0;
-    out_transfer.complete = 0;
+    lock(&out_tr.lock);
 
     /* Wait while the interrupt handler transfers the data */
-    while (!out_transfer.complete);
+    while (out_tr.full == 0);
 
-    /* Allow other calls to write to access the transfer structure again */
-    unlock(&out_transfer.lock);
+    /* Return buffered data */
+    n = (out_tr.i < USB_MAXP_SIZE_HIGH) ? out_tr.i : USB_MAXP_SIZE_HIGH;
+    uchar *b = (uchar *)a;
 
-    return out_transfer.i;
+    for (int i = 0; i < n; i++)
+        b[i] = out_tr.buf[i];
+
+    out_tr.i = 0;
+    out_tr.full = 0;
+
+    unlock(&out_tr.lock);
+
+    return n;
 }
 
 /* Write data to an IN endpoint */
@@ -483,20 +503,20 @@ long usb_write(void* a, long n, vlong offset)
 
     /* Stop other writes from accessing the transfer structure but allow
        interrupts to occur (unlike ilock) */
-    lock(&in_transfer.lock);
+    lock(&in_tr.lock);
 
-    in_transfer.a = (uchar *)a;
-    in_transfer.n = n;
-    in_transfer.i = 0;
+    in_tr.a = (uchar *)a;
+    in_tr.n = n;
+    in_tr.i = 0;
 
     usb_send_data();
 
     /* Wait until the whole block of data has been transferred - the interrupt
        handlers will take care of all blocks after the first */
-    while (in_transfer.i < in_transfer.n);
+    while (in_tr.i < in_tr.n);
 
     /* Allow other calls to write to access the transfer structure again */
-    unlock(&in_transfer.lock);
+    unlock(&in_tr.lock);
 
     return n;
 }
