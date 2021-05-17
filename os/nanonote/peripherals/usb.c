@@ -15,7 +15,7 @@ typedef struct {
     uchar* a;
     long i, n;
     Lock lock;
-    int complete;
+    ushort ready;
 } in_transfer;
 
 static in_transfer in_tr;
@@ -39,6 +39,7 @@ void usb_init(void)
     req_current = -1;
     /* Initialise transfers */
     in_tr.n = 0;
+    in_tr.ready = 0;
     out_tr.i = 0;
     out_tr.full = 0;
 
@@ -51,7 +52,7 @@ void usb_init(void)
 
     usb->intr_usb_enable = USB_Reset;
     /* Enable ep0 and ep1 input interrupts - the NanoNote supports 2 IN endpoints */
-    usb->intr_in_enable = USB_Endpoint_IN0 | USB_Endpoint_IN2;
+    usb->intr_in_enable = USB_Endpoint_IN0 | USB_Endpoint_IN1;
     /* Enable ep1 output interrupts - the NanoNote supports 1 OUT endpoint  */
     usb->intr_out_enable = USB_Endpoint_OUT1;
     /* Negotiate for high speed */
@@ -65,7 +66,7 @@ void usb_info(char *buf, int n)
     snprint(buf, n,
             "IN:  %6ld %6ld %1d\n"
             "OUT: %1d\n",
-            in_tr.i, in_tr.n, in_tr.complete,
+            in_tr.i, in_tr.n, in_tr.ready,
             out_tr.full);
 }
 
@@ -134,7 +135,7 @@ static EndpointDescriptor _EndOutDesc = {
 static EndpointDescriptor _EndInDesc = {
     .length = 0x07,
     .type = EndpointDesc,
-    .endpoint = 0x82,
+    .endpoint = 0x81,
     .attributes = Endpoint_Bulk,
     .maxpacketsize = USB_MAXP_SIZE_HIGH,
     .interval = 0
@@ -267,7 +268,7 @@ static void write_descriptor(uchar type, uchar index, uchar *fifo, ushort length
 void usb_send_data(void)
 {
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
-    usb->index = 2;
+    usb->index = 1;
 
     if (usb->csr & USB_InSentStall) {
         usb->csr &= ~(USB_InSentStall | USB_InSendStall);
@@ -279,11 +280,11 @@ void usb_send_data(void)
 
     /* Queue more data to be sent to the host by reading from the inpoint
        buffer - we may need a way to check whether the FIFO is full */
-    ulong sent = 0;
+    ushort sent = 0;
 
-    while (in_tr.i < in_tr.n && sent < USB_MAXP_SIZE_ENDP)
+    while (in_tr.i < in_tr.n && sent < USB_MAXP_SIZE_HIGH)
     {
-        usb->fifo[2][0] = in_tr.a[in_tr.i++];
+        usb->fifo[1][0] = in_tr.a[in_tr.i++];
         sent++;
     }
 
@@ -375,7 +376,7 @@ void usb_intr(void)
                 usb->out_csr |= USB_OutFlushFIFO;
             }
 
-            usb->index = 2;
+            usb->index = 1;
             usb->in_max_p = USB_MAXP_SIZE_HIGH;
             usb->csr &= ~USB_InISO;
             usb->csr |= USB_InMode | USB_InClrDataTog;
@@ -389,7 +390,7 @@ void usb_intr(void)
 
         case GetStatus:
         {
-            uchar status = 0;
+            ushort status = 0;
             /* Indicate that the message has been received */
             usb->csr |= USB_Ctrl_ServicedOutPktRdy;
 
@@ -410,11 +411,14 @@ void usb_intr(void)
                 default:
                     ;
                 }
+            } else if (req.index == 2 && req.value == 2) {
+                /* Custom status (2), endpoint 2 */
+                status = in_tr.ready;
             }
 
             /* Write the low and high bytes */
-            usb->fifo[0][0] = status;
-            usb->fifo[0][0] = 0;
+            usb->fifo[0][0] = status & 0xff;
+            usb->fifo[0][0] = status >> 8;
 
             /* Let the host know that an IN packet is ready */
             usb->csr |= USB_Ctrl_InPktRdy | USB_Ctrl_DataEnd;
@@ -442,7 +446,7 @@ void usb_intr(void)
         }
     }
 
-    if (in & USB_Endpoint_IN2)
+    if (in & USB_Endpoint_IN1)
     {
         /* This code is executed when there is a request for more data. */
         usb_send_data();
@@ -512,14 +516,19 @@ long usb_write(void* a, long n, vlong offset)
     in_tr.a = (uchar *)a;
     in_tr.n = n;
     in_tr.i = 0;
+    in_tr.ready = 0;
 
     splhi();
     usb_send_data();
     spllo();
 
+    in_tr.ready = 1;
+
     /* Wait until the whole block of data has been transferred - the interrupt
        handlers will take care of all blocks after the first */
     while (in_tr.i < in_tr.n);
+
+    in_tr.ready = 0;
 
     /* Allow other calls to write to access the transfer structure again */
     unlock(&in_tr.lock);
