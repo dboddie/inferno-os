@@ -268,7 +268,6 @@ void usb_send_data(void)
 {
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
     usb->index = 2;
-    ulong sent = 0;
 
     if (usb->csr & USB_InSentStall) {
         usb->csr &= ~(USB_InSentStall | USB_InSendStall);
@@ -280,6 +279,7 @@ void usb_send_data(void)
 
     /* Queue more data to be sent to the host by reading from the inpoint
        buffer - we may need a way to check whether the FIFO is full */
+    ulong sent = 0;
 
     while (in_tr.i < in_tr.n && sent < USB_MAXP_SIZE_ENDP)
     {
@@ -293,6 +293,8 @@ void usb_send_data(void)
 void usb_intr(void)
 {
     USBDevice *usb = (USBDevice *)(USB_DEVICE_BASE | KSEG1);
+    /* Record the current index so it can be restored when returning */
+    uchar index = usb->index;
 
     switch (usb->intr_usb)
     {
@@ -320,11 +322,13 @@ void usb_intr(void)
         if (req_state != 0) {
             /* Expecting an interrupt to confirm that a response was sent */
             req_state = 0;
+            usb->index = index; /* Restore the original index */
             return;
         }
 
         /* Ignore spurious requests, perhaps from the controller */
         if (!(usb->csr & USB_Ctrl_OutPktRdy)) {
+            usb->index = index; /* Restore the original index */
             return;
         }
 
@@ -465,6 +469,8 @@ void usb_intr(void)
         else if (usb->out_csr & USB_OutSentStall)
             usb->out_csr |= USB_OutSentStall;
     }
+
+    usb->index = index; /* Restore the original index */
 }
 
 /* Functions for integration with the device file */
@@ -499,8 +505,6 @@ long usb_write(void* a, long n, vlong offset)
 {
     USED(offset);
 
-    long i = 0;
-
     /* Stop other writes from accessing the transfer structure but allow
        interrupts to occur (unlike ilock) */
     lock(&in_tr.lock);
@@ -509,7 +513,9 @@ long usb_write(void* a, long n, vlong offset)
     in_tr.n = n;
     in_tr.i = 0;
 
+    splhi();
     usb_send_data();
+    spllo();
 
     /* Wait until the whole block of data has been transferred - the interrupt
        handlers will take care of all blocks after the first */
