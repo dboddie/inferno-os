@@ -394,7 +394,7 @@ void usb_intr(void)
             /* Indicate that the message has been received */
             usb->csr |= USB_Ctrl_ServicedOutPktRdy;
 
-            if (req.index == 1)
+            if (req.index == 1) /* endpoint 1 */
             {
                 switch (req.value) {
                 case 0:
@@ -408,12 +408,13 @@ void usb_intr(void)
                     /* Custom status - return the out buffer's full flag */
                     status = out_tr.full;
                     break;
+                case 2:
+                    /* Custom status (2) */
+                    status = in_tr.ready;
+                    break;
                 default:
                     ;
                 }
-            } else if (req.index == 2 && req.value == 2) {
-                /* Custom status (2), endpoint 2 */
-                status = in_tr.ready;
             }
 
             /* Write the low and high bytes */
