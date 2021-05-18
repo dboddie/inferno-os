@@ -289,6 +289,7 @@ void usb_send_data(void)
     }
 
     usb->csr |= USB_InPktRdy;
+    in_tr.ready = (sent > 0) ? 1 : 0;
 }
 
 void usb_intr(void)
@@ -519,17 +520,13 @@ long usb_write(void* a, long n, vlong offset)
     in_tr.i = 0;
     in_tr.ready = 0;
 
-    splhi();
     usb_send_data();
-    spllo();
 
     in_tr.ready = 1;
 
     /* Wait until the whole block of data has been transferred - the interrupt
        handlers will take care of all blocks after the first */
     while (in_tr.i < in_tr.n);
-
-    in_tr.ready = 0;
 
     /* Allow other calls to write to access the transfer structure again */
     unlock(&in_tr.lock);
