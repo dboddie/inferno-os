@@ -13,7 +13,7 @@ static int configuration;
 
 typedef struct {
     uchar* a;
-    long i, n;
+    long i, n, pkt;
     Lock lock;
     ushort ready;
 } in_transfer;
@@ -289,7 +289,12 @@ void usb_send_data(void)
     }
 
     usb->csr |= USB_InPktRdy;
-    in_tr.ready = (sent > 0) ? 1 : 0;
+    if (in_tr.pkt > 0)
+        in_tr.ready = (sent > 0) ? 1 : 0;
+    else
+        in_tr.ready = 1;
+
+    in_tr.pkt++;
 }
 
 void usb_intr(void)
@@ -518,6 +523,7 @@ long usb_write(void* a, long n, vlong offset)
     in_tr.a = (uchar *)a;
     in_tr.n = n;
     in_tr.i = 0;
+    in_tr.pkt = 0;
     in_tr.ready = 0;
 
     usb_send_data();
