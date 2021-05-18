@@ -137,4 +137,5 @@ root
 
 	/uin /usr/inferno/tests/uin
 	/uo /usr/inferno/tests/uout
+	/cmds /usr/inferno/tests/cmds
 	/txt /README.md
