@@ -112,9 +112,10 @@ root
 	/dis/p.dis
 	/dis/ps.dis
 	/dis/xd.dis
-	/dis/disk/fdisk.dis
-	/dis/disk/pedit.dis
 	/dis/disk/calc.tab.dis
+	/dis/disk/fdisk.dis
+	/dis/disk/kfs.dis
+	/dis/disk/pedit.dis
 	/dis/lib/arg.dis
 	/dis/lib/auth.dis
 	/dis/lib/bufio.dis
@@ -134,8 +135,3 @@ root
 
 # partition access
 	/dis/partfs.dis
-
-	/uin /usr/inferno/tests/uin
-	/uo /usr/inferno/tests/uout
-	/cmds /usr/inferno/tests/cmds
-	/txt /README.md
