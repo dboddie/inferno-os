@@ -66,12 +66,13 @@ static long sdread_blocks(void* a, long n, vlong offset)
         blocks++;
 
     /* Copy a whole number of blocks. */
-    if (blocks > 0) {
-        if (msc_read(first_block, a, blocks) != 0)
+    while (blocks > 0) {
+        if (msc_read(first_block++, a, 1) != 0)
             return -1;
-        a = (void *)((uint)a + (blocks * blocklen));
-        n -= blocks * blocklen;
-        bytes_read += blocks * blocklen;
+        a = (void *)((uint)a + blocklen);
+        n -= blocklen;
+        bytes_read += blocklen;
+        blocks--;
     }
 
     if (n > 0) {
