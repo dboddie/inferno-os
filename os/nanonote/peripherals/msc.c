@@ -92,6 +92,7 @@ static int read_csd(uchar *buf, MMC_CSD *csd)
 
         csd->block_len = (ushort)(1 << blocklen);
         csd->card_size = csd->block_len * (1 << (csize_mult + 2)) * (_csize + 1);
+        csd->speed = read_bits(buf, 96, 0xff);
         break;
 
     case 1: /* CSD version 2 */
@@ -102,6 +103,7 @@ static int read_csd(uchar *buf, MMC_CSD *csd)
 
         csd->card_size = (_csize + 1) * 1024;
         csd->block_len = (ushort)(1 << blocklen);
+        csd->speed = read_bits(buf, 96, 0xff);
         break;
 
     default:
@@ -279,6 +281,9 @@ void msc_reset(void)
         return;
     }
 
+    if (mmc.csd.speed == 0x32 || mmc.csd.speed == 0x5a)
+        msc->clock_rate = 0;
+
     if (msc_select_card(mmc.rca)) {
         print("CMD7: %8.8lux\n", resp);
         return;
@@ -295,6 +300,9 @@ void msc_reset(void)
 ulong msc_read(ulong card_addr, ulong *dest, ushort blocks)
 {
     MSC *msc = (MSC *)(MSC_BASE | KSEG1);
+
+    if (!mmc.ccs)
+        card_addr = card_addr * mmc.csd.block_len;
 
     /* Stop the clock - Linux does a stop and start for each command but the
        SoC documentation doesn't suggest this */
