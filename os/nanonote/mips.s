@@ -23,8 +23,17 @@
 #define	SC(base, rt)	WORD	$((070<<26)|((base)<<21)|((rt)<<16))
 
 /* new instructions in mips 24k (mips32r2) */
-#define DI(rt)	WORD $(0x41606000|((rt)<<16))	/* interrupts off */
-#define EI(rt)	WORD $(0x41606020|((rt)<<16))	/* interrupts on */
+//#define DI(rt)	WORD $(0x41606000|((rt)<<16))	/* interrupts off */
+//#define EI(rt)	WORD $(0x41606020|((rt)<<16))	/* interrupts on */
+#define DI(Rt)	                \
+	EHB;                    \
+	AND     $~IE, Rt, Rt;   \
+	MOVW    Rt, M(STATUS)
+#define EI(Rt)                  \
+	EHB;                    \
+	OR      $IE, Rt, Rt;    \
+	MOVW    Rt, M(STATUS)
+
 #define EHB	WORD $0xc0
 /* jalr with hazard barrier, link in R22 */
 #define JALRHB(r) WORD $(((r)<<21)|(22<<11)|(1<<10)|9); NOP

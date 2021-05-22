@@ -186,7 +186,7 @@ TEXT    getprid(SB), $-8
  */
 TEXT	icflush(SB), $-4			/* icflush(virtaddr, count) */
 	MOVW	4(FP), R9
-	DI(10)				/* intrs off, old status -> R10 */
+	DI(R10)				/* intrs off, old status -> R10 */
 	UBARRIERS(7, R7, ichb);		/* return to kseg1 (uncached) */
 	ADDU	R1, R9			/* R9 = last address */
 	MOVW	$(~(CACHELINESZ-1)), R8
@@ -207,7 +207,7 @@ icflush1:
 
 TEXT	dcflush(SB), $-4			/* dcflush(virtaddr, count) */
 	MOVW	4(FP), R9
-	DI(10)				/* intrs off, old status -> R10 */
+	DI(R10)				/* intrs off, old status -> R10 */
 	SYNC
 	EHB
 	ADDU	R1, R9			/* R9 = last address */
@@ -438,7 +438,7 @@ TEXT    exception(SB), $-4      /* Don't generate save and restore PC instructio
 	MOVW	R2, Ureg_lo(SP)
 
         MOVW    SP, R1
-        JAL     trapexc(SB)
+        JAL     trap(SB)
         SUBU    $Notuoffset, SP
 
         ADDU    $Notuoffset, SP
