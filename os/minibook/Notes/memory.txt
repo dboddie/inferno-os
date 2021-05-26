@@ -1,0 +1,17 @@
+Memory map as described in the mem.h file.
+
+0x82000000      Screen memory end and top of 32 MB from KSEG0
+0x81fb5000      Screen memory start
+0x81f00000      MEMORY_TOP (top of useable memory in KSEG0)
+
+0x80600000      U-Boot load address
+
+0x800f0000      ~End of boot image
+0x8000804c      KTZERO
+0x80008000      Boot image
+
+0x80005000      FP exceptions stack top (FPSTACKTOP)
+0x80004000      Exceptions stack top (ESTACKTOP)
+0x80003000      Kernel stack top (STACKTOP)
+0x80002000      MACHADDR (KZERO + 0x2000)
+0x80000000      KZERO KSEG0

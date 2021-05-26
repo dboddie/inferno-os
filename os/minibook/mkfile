@@ -1,0 +1,69 @@
+<../../mkconfig
+
+CONF=minibook
+CONFLIST=minibook
+
+SYSTARG=$OSTARG
+OBJTYPE=spim
+INSTALLDIR=$ROOT/Inferno/$OBJTYPE/bin
+
+loadaddr=0x80010000
+
+# must match mem.h
+BY2PG=4096
+KTZERO=0x8001004c
+
+<$ROOT/mkfiles/mkfile-$SYSTARG-$OBJTYPE
+
+<| $SHELLNAME ../port/mkdevlist $CONF
+
+# Define the objects to be built with the loader being the first.
+
+OBJ=\
+	l.$O\
+	clock.$O\
+#	dump.$O\
+	trap.$O\
+#	intr.$O\
+#	peripherals/kbd.$O\
+	main.$O\
+	fpispim.$O\
+	fpi.$O\
+	fpimem.$O\
+	tas.$O\
+	$IP\
+	$DEVS\
+	$ETHERS\
+	$LINKS\
+	$PORT\
+	$MISC\
+	$OTHERS\
+	$CONF.root.$O\
+
+LIBNAMES=${LIBS:%=lib%.a}
+LIBDIRS=$LIBS
+
+# Strip off the peripherals prefix of any object paths.
+NOPREFIXOBJ=${OBJ:peripherals/%=%}
+
+HFILES=\
+	mem.h\
+	dat.h\
+	fns.h\
+	io.h\
+	hardware.h\
+
+CFLAGS=-l -wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp -I$ROOT/Inferno/$OBJTYPE/include -I$ROOT/Inferno/include
+KERNDATE=`{$NDATE}
+
+default:V: i$CONF
+
+i$CONF: $OBJ $CONF.c $CONF.root.h $LIBNAMES
+	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
+	$LD $LDFLAGS -H0 -l -s -o $target -R$BY2PG -T$KTZERO $NOPREFIXOBJ $CONF.$O $LIBFILES
+	mkimage -A mips -O linux -T kernel -C none -a $loadaddr -e $KTZERO -n Inferno -d iminibook uImage
+
+# Read standard build rules for ports.
+<../port/portmkfile
+
+main.$O:	include/ureg.h

@@ -35,6 +35,8 @@ typedef unsigned long long u64int;
 #define	FPPSGL	0
 #define	FPPDBL	0
 #define	FPPMASK	0
+#define FPCOND	(1<<23)
+
 /* FSR */
 #define	FPAINEX	(1<<2)
 #define	FPAOVFL	(1<<4)

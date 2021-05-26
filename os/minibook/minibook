@@ -1,0 +1,137 @@
+dev
+	root
+	cons
+	env
+	mnt
+	pipe
+	prog
+	srv
+	dup
+	uart
+	draw screen
+#	pointer
+#	power peripherals/power
+	sysinfo
+#	usb peripherals/usb
+#	msc peripherals/msc
+
+lib
+	interp
+#	tk
+	draw
+	keyring
+	memlayer
+	memdraw
+	math
+#	mp
+	kern
+	sec
+
+mod
+	math
+	sys
+	draw
+#	tk
+
+port
+	alarm
+	alloc
+	allocb
+	chan
+	dev
+	devcons
+	dial
+	dis
+	discall
+	exception
+	exportfs
+	inferno
+	latin1
+	mul64fract
+	nocache
+	nodynld
+	parse
+	pgrp
+	portclock
+	print
+	proc
+	qio
+	qlock
+	random
+	sysfile
+	taslock
+	tod
+	xalloc
+
+code
+	int kernel_pool_pcnt = 10;
+	int main_pool_pcnt = 10;
+	int heap_pool_pcnt = 10;
+	int image_pool_pcnt = 10;
+	int cflag = 0;
+
+	int consoleprint = 1;
+	int redirectconsole = 1;
+	char debug_keys = 0;
+	int panicreset = 0;
+
+init
+	nanonote
+
+root
+	/chan	/
+	/dev	/
+	/dis	/
+	/env	/
+	/fd	/
+	/n	/
+	/net	/
+	/prog	/
+	/dis/lib
+	/dis/disk
+	/osinit.dis
+
+# For development work (from cerf1110/cerf):
+	/dis/sh.dis
+	/dis/lc
+	/dis/ls.dis
+	/dis/cat.dis
+	/dis/bind.dis
+	/dis/mount.dis
+	/dis/pwd.dis
+	/dis/echo.dis
+	/dis/cd.dis
+	/dis/dd.dis
+	/dis/cp.dis
+	/dis/mc.dis
+	/dis/mkdir.dis
+	/dis/mntgen.dis
+	/dis/ns.dis
+	/dis/ramfile.dis
+	/dis/rm.dis
+	/dis/p.dis
+	/dis/ps.dis
+	/dis/xd.dis
+	/dis/disk/calc.tab.dis
+	/dis/disk/fdisk.dis
+	/dis/disk/kfs.dis
+	/dis/disk/pedit.dis
+	/dis/lib/arg.dis
+	/dis/lib/auth.dis
+	/dis/lib/bufio.dis
+	/dis/lib/daytime.dis
+	/dis/lib/dial.dis
+	/dis/lib/disks.dis
+	/dis/lib/env.dis
+	/dis/lib/filepat.dis
+	/dis/lib/nametree.dis
+	/dis/lib/readdir.dis
+	/dis/lib/ssl.dis
+	/dis/lib/string.dis
+	/dis/lib/styx.dis
+	/dis/lib/styxservers.dis
+	/dis/lib/workdir.dis
+	/dis/sh/std.dis
+
+# partition access
+#	/dis/partfs.dis
