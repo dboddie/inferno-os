@@ -23,3 +23,10 @@ show the following:
  * Scroll Lock LED is on port 0/A pin 9
 
 These appear to be active low.
+
+The Linux kernel uses the GPIO_GPAUR(n) macro
+(defined in include/asm-mips/mach-jz4730/regs.h) in the __gpio_as_pwn() macro
+(defined in include/asm-mips/mach-jz4730/ops.h) to set the flags in the
+high selection register of port 2/C at 0x10010060 + 0x14, clearing bits 28-31
+and setting bits 28 and 30 so that the SEL31 and SEL30 pairs of bits both
+contain a value of 1. This sets pins 30 and 31 of port 2/C to have function 1.

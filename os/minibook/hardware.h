@@ -110,6 +110,7 @@ enum GPIOPins {
     GPIO_A_TouchRight         = 0x00002000,   /* port A/0 bit 13 */
     GPIO_A_ScrollLED          = 0x00000200,   /* port A/0 bit 9 */
     GPIO_A_Keyboard_In_Mask   = 0x000000ff,   /* port A/0 */
+    GPIO_C_PWM0               = 0x40000000,   /* port C/2 bit 30 */
     GPIO_C_NumLED             = 0x00400000,   /* port C/2 bit 22 */
     GPIO_D_Keyboard_Out_Mask  = 0x2000ffff    /* port D/3 */
 };
@@ -117,6 +118,7 @@ enum GPIOPins {
 typedef struct {
     ulong data;
     ulong dir;
+    ulong _padding;
     ulong pull;
     ulong sel_low;
     ulong sel_high;

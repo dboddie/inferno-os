@@ -51,15 +51,24 @@ void main(void)
 {
     GPIO *gpioa = (GPIO *)(GPIO_PORT_A_BASE | KSEG1);
     gpioa->dir &= ~GPIO_A_TouchLeft;
-    gpioa->dir |= (GPIO_A_CapsLED | GPIO_A_ScrollLED);
+    gpioa->dir |= GPIO_A_CapsLED;
     GPIO *gpioc = (GPIO *)(GPIO_PORT_C_BASE | KSEG1);
-    gpioc->dir |= GPIO_C_NumLED;
+    gpioc->dir |= GPIO_C_NumLED | GPIO_C_PWM0;
+    gpioc->sel_high &= 0x0fffffff;
+    gpioc->sel_high |= 0x50000000;
+
+    PWM *pwm = (PWM *)(PWM0_BASE | KSEG1);
+    pwm->control = 0;
+    pwm->duty = PWM_FullDuty;
 
     for (;;) {
-        if (gpioa->data & GPIO_A_TouchLeft)
+        if (gpioa->data & GPIO_A_TouchLeft) {
             gpioa->data &= ~GPIO_A_CapsLED;
-        else
+            pwm->control |= 0x80;
+        } else {
             gpioa->data |= GPIO_A_CapsLED;
+            pwm->control &= ~0x80;
+        }
     }
 
     /* Mach is defined in dat.h, edata and end are in port/lib.h */
