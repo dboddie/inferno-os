@@ -105,11 +105,11 @@ enum TimerSource {
 #define GPIO_PORT_D_BASE    0x10010090
 
 enum GPIOPins {
-    GPIO_CapsLED            = 0x08000000,   /* port A/0 bit 27 */
-    GPIO_NumLED             = 0x00400000,   /* port C/2 bit 22 */
-    GPIO_NetworkLED         = 0x00000200,   /* port A/0 bit 9 */
-    GPIO_Keyboard_In_Mask   = 0x000000ff, /* port A/0 */
-    GPIO_Keyboard_Out_Mask  = 0x2000ffff /* port D/3 */
+    GPIO_A_CapsLED            = 0x08000000,   /* port A/0 bit 27 */
+    GPIO_C_NumLED             = 0x00400000,   /* port C/2 bit 22 */
+    GPIO_A_ScrollLED          = 0x00000200,   /* port A/0 bit 9 */
+    GPIO_A_Keyboard_In_Mask   = 0x000000ff,   /* port A/0 */
+    GPIO_D_Keyboard_Out_Mask  = 0x2000ffff    /* port D/3 */
 };
 
 typedef struct {
@@ -124,6 +124,24 @@ typedef struct {
     ulong int_mask;
     ulong int_flag;
 } GPIO;
+
+#define PWM0_BASE 0x10050000
+#define PWM1_BASE 0x10051000
+
+typedef struct {
+    ulong control;  /* CTR0/1 lowest 8 bits */
+    ulong period;   /* PER0/1 bits 0-9 */
+    ulong duty'     /* DUT0/1 bits 0-10 */
+} PWM;
+
+enum PWMBits {
+    PWM_CtrEn           = 0x80,
+    PWM_CtrShutdown     = 0x40,
+    PWM_CtrPrescaleMask = 0x3f,
+    PWM_PeriodMask      = 0x1ff,
+    PWM_FullDuty        = 0x200,
+    PWM_DutyMask        = 0x1ff
+}
 
 #define MSC_BASE 0x10021000
 

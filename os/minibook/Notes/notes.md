@@ -20,4 +20,6 @@ show the following:
 
  * Caps Lock LED is on port 0/A pin 27
  * Num Lock LED is on port 2/C pin 22
- * Network LED is on port 0/A pin 9 (listed as Scroll Lock in the kwaak list)
+ * Scroll Lock LED is on port 0/A pin 9
+
+These appear to be active low.
