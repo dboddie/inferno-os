@@ -50,21 +50,16 @@ static void poolsizeinit(void)
 void main(void)
 {
     GPIO *gpioa = (GPIO *)(GPIO_PORT_A_BASE | KSEG1);
-    GPIO *gpioc = (GPIO *)(GPIO_PORT_C_BASE | KSEG1);
+    gpioa->dir &= ~GPIO_A_TouchLeft;
     gpioa->dir |= (GPIO_A_CapsLED | GPIO_A_ScrollLED);
+    GPIO *gpioc = (GPIO *)(GPIO_PORT_C_BASE | KSEG1);
     gpioc->dir |= GPIO_C_NumLED;
 
-    int val = 0, count = 0;
     for (;;) {
-        if (val) {
-            gpioa->data &= ~(GPIO_A_CapsLED | GPIO_A_ScrollLED);
-            gpioc->data |= GPIO_C_NumLED;
-        } else {
-            gpioa->data |= (GPIO_A_CapsLED | GPIO_A_ScrollLED);
-            gpioc->data &= ~GPIO_C_NumLED;
-        }
-        count++;
-        if ((count % 0x100000) == 0) val = ~val;
+        if (gpioa->data & GPIO_A_TouchLeft)
+            gpioa->data &= ~GPIO_A_CapsLED;
+        else
+            gpioa->data |= GPIO_A_CapsLED;
     }
 
     /* Mach is defined in dat.h, edata and end are in port/lib.h */
