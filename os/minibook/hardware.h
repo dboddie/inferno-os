@@ -1,25 +1,21 @@
 #define CGU_CFCR    0x10000000
 #define CGU_PLCR    0x10000010
 #define CGU_OCR     0x1000001c
+#define CGU_MSCR    0x10000020
 #define CGU_CFCR2   0x10000060
 
-enum CGUGates {
-    CGU_UDC = 0x800,
-    CGU_MSC = 0x080,
-    CGU_RTC = 0x004,
-    CGU_TCU = 0x002
+enum CGU_CFCR_Gates {
+    CGU_LCS     = 0x40000000,
+    CGU_MCS     = 0x01000000
 };
 
-#define CGU_SPENDN 0x40
-
-#define RTC_BASE 0x10003000
-
-typedef struct {
-    ulong  control;
-    ulong  second;
-    ulong  second_alarm;
-    ulong  regulator;
-} RTC;
+enum CGU_MCR_Gates {
+    CGU_UDC     = 0x01000000,
+    CGU_MSC     = 0x00002000,
+    CGU_PWM0    = 0x00000400,
+    CGU_LCD     = 0x00000080,
+    CGU_OST     = 0x00000008
+};
 
 #define INTERRUPT_BASE 0x10001000
 
@@ -45,51 +41,35 @@ enum InterruptSource {
     InterruptUDC   = 0x00001000,
 };
 
-#define TIMER_OTER 0x10002000
-#define TIMER_BASE 0x10002010
+#define TIMER_OTER  0x10002000
+#define TIMER_BASE0 0x10002010
+#define TIMER_BASE1 0x10002030
+#define TIMER_BASE2 0x10002050
 
 typedef struct {
-    ulong counter_enable;           /* TER */
-    ulong counter_enable_set;       /* TESR */
-    ulong counter_enable_clear;     /* TECR */
-    ulong stop;                     /* TSR */
-
-    ulong flag;                     /* TFR */
-    ulong flag_set;                 /* TFSR */
-    ulong flag_clear;               /* TFCR */
-    ulong stop_set;                 /* TSSR */
-
-    ulong mask;                     /* TMR */
-    ulong mask_set;                 /* TMSR */
-    ulong mask_clear;               /* TMCR */
-    ulong stop_clear;               /* TSCR */
-
-    ulong data_full0;               /* TDFR0 */
-    ulong data_half0;               /* TDHR0 */
-    ulong counter0;                 /* TCNT0 */
-    ulong control0;                 /* TCSR0 */
-    /* ... until TCSR7 */
+    ulong data;     /* OTDR - contains the reload value*/
+    ulong counter;  /* OTCNT */
+    ulong control;  /* OTCSR */
+    ulong read;     /* OTCRD */
 } JZTimer;
 
-enum TimerCounterEnable {
-    TimerCounter0 = 0x01,
-    TimerCounter1 = 0x02,
-    TimerCounter2 = 0x04,
-    TimerCounter3 = 0x08,
-    TimerCounter4 = 0x10,
-    TimerCounter5 = 0x20,
-    TimerCounter6 = 0x40,
-    TimerCounter7 = 0x80,
-    TimerCounterAll = 0xff
+enum TimerEnable {
+    Timer0 = 0x01,
+    Timer1 = 0x02,
+    Timer2 = 0x04,
+    TimerAll = 0x07
 };
 
-enum TimerPrescale {
-    TimerPrescale1 = 0,
-    TimerPrescale4 = 0x08,
-    TimerPrescale16 = 0x10,
-    TimerPrescale64 = 0x18,
-    TimerPrescale256 = 0x20,
-    TimerPrescale1024 = 0x28
+enum TimerControl {
+    TimerSwitch     = 0x80,
+    TimerUnder      = 0x40,
+    TimerUnderIntEn = 0x20,
+    TimerPCLK4   = 0,
+    TimerPCLK16  = 1,
+    TimerPCLK64  = 2,
+    TimerPCLK256 = 3,
+    TimerRTCCLK  = 4,
+    TimerEXCLK   = 5
 };
 
 enum TimerSource {

@@ -49,26 +49,46 @@ static void poolsizeinit(void)
 
 void main(void)
 {
+    /* Set up touch pad button input and an LED */
     GPIO *gpioa = (GPIO *)(GPIO_PORT_A_BASE | KSEG1);
     gpioa->dir &= ~GPIO_A_TouchLeft;
     gpioa->dir |= GPIO_A_CapsLED;
+
+    /* Set up LCD pins */
+/*    GPIO *gpiob = (GPIO *)(GPIO_PORT_B_BASE | KSEG1);
+    gpiob->sel_low &= 0x0000ffff;
+    gpiob->sel_low |= 0x55550000;
+    gpiob->sel_high &= 0x00000000;
+    gpiob->sel_high |= 0x556a5555;
+*/
+    /* Set up backlight pin functions and PWM */
     GPIO *gpioc = (GPIO *)(GPIO_PORT_C_BASE | KSEG1);
     gpioc->dir |= GPIO_C_NumLED | GPIO_C_PWM0;
     gpioc->sel_high &= 0x0fffffff;
     gpioc->sel_high |= 0x50000000;
 
+    // Perhaps also ensure that the PWM0 clock is running
     PWM *pwm = (PWM *)(PWM0_BASE | KSEG1);
     pwm->control = 0;
     pwm->duty = PWM_FullDuty;
 
+    /* Set up the OST */
+    *(ulong *)(TIMER_OTER | KSEG1) = 0;
+    JZTimer *timer = (JZTimer *)(TIMER_BASE0 | KSEG1);
+    timer->control = TimerRTCCLK;
+    timer->data = timer->counter = 32768;
+    *(ulong *)(TIMER_OTER | KSEG1) = Timer0;
+
     for (;;) {
-        if (gpioa->data & GPIO_A_TouchLeft) {
-            gpioa->data &= ~GPIO_A_CapsLED;
-            pwm->control |= 0x80;
-        } else {
-            gpioa->data |= GPIO_A_CapsLED;
-            pwm->control &= ~0x80;
+        if (timer->control & TimerUnder) {
+            gpioa->data ^= GPIO_A_CapsLED;
+            timer->control &= ~TimerUnder;
         }
+
+        if (gpioa->data & GPIO_A_TouchLeft)
+            gpioc->data &= ~GPIO_C_NumLED;
+        else
+            gpioc->data |= GPIO_C_NumLED;
     }
 
     /* Mach is defined in dat.h, edata and end are in port/lib.h */

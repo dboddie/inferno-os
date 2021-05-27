@@ -13,15 +13,17 @@ enum {
     MinPeriod       = SystimerFreq/(100*HZ)
 };
 
+extern void hzclock(Ureg *);
+
 void
 clockintr(Ureg *ureg)
 {
-    JZTimer *tm = (JZTimer *)(TIMER_BASE | KSEG1);
+    JZTimer *timer = (JZTimer *)(TIMER_BASE0 | KSEG1);
     static int i = 0;
     static int j = 0;
 
-    if (tm->flag & TimerCounter0) {
-        tm->flag_clear = TimerCounter0;
+    if (timer->control & TimerUnder) {
+        timer->control &= ~TimerUnder;
         hzclock(ureg);
     }
 }
@@ -29,33 +31,22 @@ clockintr(Ureg *ureg)
 void
 clockinit(void)
 {
-    /* Propagate the TCU clock by clearing the appropriate bit */
-//    *(ulong*)(CGU_CLKGR | KSEG1) &= ~CGU_TCU;
+    /* Propagate the OST clock by clearing the appropriate bit */
+    *(ulong*)(CGU_MSCR | KSEG1) &= ~CGU_OST;
 
-    JZTimer *tm = (JZTimer *)(TIMER_BASE | KSEG1);
+    /* Disable all timers */
+    *(ulong *)TIMER_OTER = 0;
 
-    /* Disable all timers, set their stop and mask bits, clear their flag bits */
-    tm->counter_enable_clear = TimerCounterAll;
-    tm->stop_set = TimerCounterAll;
-    tm->mask_set = TimerCounterAll;
-    tm->flag_clear = TimerCounterAll;
+    JZTimer *timer = (JZTimer *)(TIMER_BASE0 | KSEG1);
+    timer->control = TimerRTCCLK;
+    timer->data = timer->counter = 32768;
 
-    /* Clear timer0 stop bit, scale the clock speed down and use external source,
-       set the half and full registers. */
-    tm->stop_clear = TimerCounter0;
-    tm->control0 = TimerPrescale256 | TimerSourceExt;
-    tm->data_half0 = 0;
-    tm->data_full0 = MaxPeriod;
+    /* Enable timer 0 */
+    *(ulong *)TIMER_OTER = Timer0;
 
-    /* Reset counter0, clear its full match flag, unmask its interrupt to
-       enable it, then enable the counter itself */
-    tm->counter0 = 0;
-    tm->flag_clear = TimerCounter0;
-    tm->mask_clear = TimerCounter0;
-    tm->counter_enable_set = TimerCounter0;
-
+    /* Enable interrupts for the OST0 timer */
     InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
-//    ic->mask_clear = InterruptTCU0;
+    ic->mask_clear = InterruptOST0;
     intron(INTMASK);
 }
 
