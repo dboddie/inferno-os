@@ -105,6 +105,25 @@ It also recommends not setting the raw PLL output to less than 100 MHz.
     PLL_freq_raw = EXCLK * M/N
     PLL_freq = PLL_freq_raw / [1,2,2,4]
 
+Reading the value of the PLCR register on a running system results in a value
+of 0x5a000520 being obtained. This is decoded to
+
+    PLLFD = 180     multiply by 182
+    PLLRD = 0       divide by 2
+    PLLOD = 0       divide by 1
+    PLLS  = 1       PLL is on and stable
+    PLLBP = 0       no bypass
+    PLLEN = 1       PLL is enabled
+    PLLST = 32      stabilize time
+
+Calculating the PLL output frequency
+
+    PLL_freq = (EXCLK * (PLLFD + 2) / (PLLRD + 2)) / od[PLLOD]
+             = (3686400 * 182 / 2)
+             = 335462400 Hz
+             = 335.4624 MHz
+
+This frequency can be divided by 7 to obtain a USB frequency of 47.9232 MHz.
 
 The LCD device clock is derived from this via the LFR bits in the CFCR register.
 The LCD pixel clock is derived from this via the PXFR bits in the CFCR register.
@@ -115,12 +134,34 @@ In pkg/devices/lcd/src/jz4740/lcd-jz4740-device.cc the set_timing() function
 stops the LCD clock, sets the frequencies using a 3/1 ratio for the device to
 pixel clocks:
 
-  cpm_device->set_lcd_frequencies(pclk, 3);
-  cpm_device->update_output_frequency();
-  cpm_device->start_lcd();
+    cpm_device->set_lcd_frequencies(pclk, 3);
+    cpm_device->update_output_frequency();
+    cpm_device->start_lcd();
 
 Later, in the enable() function, it sets up the DMA descriptors:
 
-  chip->config((struct Jz4740_lcd_descriptor *) desc_vaddr,
-               (struct Jz4740_lcd_descriptor *) desc_paddr,
-               fb_paddr);
+    chip->config((struct Jz4740_lcd_descriptor *) desc_vaddr,
+                 (struct Jz4740_lcd_descriptor *) desc_paddr,
+                 fb_paddr);
+
+The set_lcd_frequencies(pclk, 3) call refers to a function in the
+pkg/devices/lib/cpm/src/jz4730.cc file:
+
+    uint32_t out = get_output_frequency(),
+             lcd = pclk * ratio;
+
+    set_lcd_pixel_divider(out / pclk);
+
+    // Limit the device frequency to 150MHz.
+
+    if (lcd > 150000000) lcd = 150000000;
+
+    set_lcd_device_divider(out / lcd);
+
+This calculates the LCD device clock (lcd) from the pixel clock (pclk), then
+finds the appropriate divider for the PLL output frequency to produce the pixel
+clock frequency.
+
+For the PLL_freq value we have obtained (335462400), plus the pixel clock value
+(26400000), the LCD pixel divider will be 12.7069... which truncates to 12 for
+a faster than necessary clock. The LCD device clock divider will be 4.

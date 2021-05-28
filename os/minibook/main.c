@@ -79,21 +79,21 @@ void main(void)
     timer->data = timer->counter = 32768;
     *(ulong *)(TIMER_OTER | KSEG1) = Timer0;
 
-    ulong plcr = *(ulong *)(CGU_PLCR | KSEG1); // 0x5a000520
-    ulong bit = 0x80000000;
-    gpioc->data &= ~GPIO_C_NumLED;
+    ulong *mscr = (ulong *)(CGU_MSCR | KSEG1);
+    ulong *plcr = (ulong *)(CGU_PLCR | KSEG1);
+    /* Stop propagating clock signals to the LCD unit */
+    *mscr |= CGU_LCD;
+    /* Change the LCD pixel and device clocks, using the dividers 12 and 4 */
+    *(ulong *)(CGU_CFCR2 | KSEG1) = 11; // pixel clock divider
+    *plcr &= ~CGU_LFR_Mask;
+    *plcr |= (3 << CGU_LFR_Shift);      // device clock divider
+    /* Enable signals to the LCD again */
+    *mscr &= ~CGU_LCD;
 
     for (;;) {
-        if (plcr & bit) {
-            gpioa->data &= ~GPIO_A_CapsLED;
-        } else {
-            gpioa->data |= GPIO_A_CapsLED;
-        }
         if (timer->control & TimerUnder) {
             timer->control &= ~TimerUnder;
             gpioc->data ^= GPIO_C_NumLED;
-            bit = bit >> 1;
-            if (bit == 0) bit = 0x80000000;
         }
     }
 

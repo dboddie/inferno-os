@@ -6,12 +6,14 @@
 
 #define EXTAL_RATE 3686400
 
-enum CGU_CFCR_Gates {
-    CGU_LCS     = 0x40000000,
-    CGU_MCS     = 0x01000000
+enum CGU_CFCR_Fields {
+    CGU_LCS         = 0x40000000,   /* LCD clock source (0=PLL, 1=LCD_PCLK) */
+    CGU_MCS         = 0x01000000,   /* MSC clock selection (0 = 16 MHz, 1 = 24 MHz) */
+    CGU_LFR_Mask    = 0x0000f000,
+    CGU_LFR_Shift   = 12,
 };
 
-enum CGU_PLCR_Flags {
+enum CGU_PLCR_Fields {
     CGU_PLLFD_Mask  = 0xff800000,   /* feedback divider */
     CGU_PLLRD_Mask  = 0x007c0000,   /* input divider */
     CGU_PLLOD_Mask  = 0x00030000,   /* divider [1, 2, 2, 4] */
@@ -21,7 +23,7 @@ enum CGU_PLCR_Flags {
     CGU_PLLST_Mask  = 0x000000ff    /* stabilize time */
 };
 
-enum CGU_OCR_Flags {
+enum CGU_OCR_Fields {
     CGU_OCR_O1ST_Mask   = 0x00ff0000,   /* stabilize time */
     CGU_OCR_O2SE        = 0x00000100,   /* select (0=EXCLK/128, 1=32768Hz clock) */
     CGU_OCR_SPEND1      = 0x00000080,   /* USB port 1 suspend */
@@ -34,6 +36,10 @@ enum CGU_MCR_Gates {
     CGU_PWM0    = 0x00000400,
     CGU_LCD     = 0x00000080,
     CGU_OST     = 0x00000008
+};
+
+enum CGU_CFCR2_Fields {
+    CGU_PXFR = 0x1ff     /* LCD pixel clock divider (= 1+PXFR) */
 };
 
 #define INTERRUPT_BASE 0x10001000
