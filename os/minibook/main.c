@@ -79,16 +79,22 @@ void main(void)
     timer->data = timer->counter = 32768;
     *(ulong *)(TIMER_OTER | KSEG1) = Timer0;
 
-    for (;;) {
-        if (timer->control & TimerUnder) {
-            gpioa->data ^= GPIO_A_CapsLED;
-            timer->control &= ~TimerUnder;
-        }
+    ulong plcr = *(ulong *)(CGU_PLCR | KSEG1); // 0x5a000520
+    ulong bit = 0x80000000;
+    gpioc->data &= ~GPIO_C_NumLED;
 
-        if (gpioa->data & GPIO_A_TouchLeft)
-            gpioc->data &= ~GPIO_C_NumLED;
-        else
-            gpioc->data |= GPIO_C_NumLED;
+    for (;;) {
+        if (plcr & bit) {
+            gpioa->data &= ~GPIO_A_CapsLED;
+        } else {
+            gpioa->data |= GPIO_A_CapsLED;
+        }
+        if (timer->control & TimerUnder) {
+            timer->control &= ~TimerUnder;
+            gpioc->data ^= GPIO_C_NumLED;
+            bit = bit >> 1;
+            if (bit == 0) bit = 0x80000000;
+        }
     }
 
     /* Mach is defined in dat.h, edata and end are in port/lib.h */

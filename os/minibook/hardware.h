@@ -4,9 +4,28 @@
 #define CGU_MSCR    0x10000020
 #define CGU_CFCR2   0x10000060
 
+#define EXTAL_RATE 3686400
+
 enum CGU_CFCR_Gates {
     CGU_LCS     = 0x40000000,
     CGU_MCS     = 0x01000000
+};
+
+enum CGU_PLCR_Flags {
+    CGU_PLLFD_Mask  = 0xff800000,   /* feedback divider */
+    CGU_PLLRD_Mask  = 0x007c0000,   /* input divider */
+    CGU_PLLOD_Mask  = 0x00030000,   /* divider [1, 2, 2, 4] */
+    CGU_PLLS        = 0x00000400,   /* status */
+    CGU_PLLBP       = 0x00000200,   /* bypass */
+    CGU_PLLEN       = 0x00000100,   /* enable */
+    CGU_PLLST_Mask  = 0x000000ff    /* stabilize time */
+};
+
+enum CGU_OCR_Flags {
+    CGU_OCR_O1ST_Mask   = 0x00ff0000,   /* stabilize time */
+    CGU_OCR_O2SE        = 0x00000100,   /* select (0=EXCLK/128, 1=32768Hz clock) */
+    CGU_OCR_SPEND1      = 0x00000080,   /* USB port 1 suspend */
+    CGU_OCR_SPEND0      = 0x00000040    /* USB port 0 suspend */
 };
 
 enum CGU_MCR_Gates {
