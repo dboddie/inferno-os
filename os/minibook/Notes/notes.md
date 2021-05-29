@@ -128,6 +128,19 @@ This frequency can be divided by 7 to obtain a USB frequency of 47.9232 MHz.
 The LCD device clock is derived from this via the LFR bits in the CFCR register.
 The LCD pixel clock is derived from this via the PXFR bits in the CFCR register.
 
+The CFCR register appears to contain a value of 0x0d522220. This is decoded to
+
+    SCS = LCS = I2CS = UCS = 0
+    UFR = 6                     (USB divider = 7)
+    MCS = 1                     (support 24 MHz MSC clock)
+    SCKLOOE = 1
+    UPE = 1                     (update division ratios immediately)
+    MFR = 2                     (memory clock divider = 3)
+    LFR = 2                     (LCD device clock divider = 3)
+    PFR = 2                     (peripheral clock divider = 3)
+    HFR = 2                     (system clock divider = 3)
+    CFR = 0                     (CPU clock divider = 2)
+
 ### Pixel and device clock ratio
 
 In pkg/devices/lcd/src/jz4740/lcd-jz4740-device.cc the set_timing() function
@@ -165,3 +178,7 @@ clock frequency.
 For the PLL_freq value we have obtained (335462400), plus the pixel clock value
 (26400000), the LCD pixel divider will be 12.7069... which truncates to 12 for
 a faster than necessary clock. The LCD device clock divider will be 4.
+
+The LCD device clock divider is not specified using a linear scale (see
+https://projects.goldelico.com/p/letux400/page/Clocks/ for details) but a value
+of 4 is encoded as 3 in any case.

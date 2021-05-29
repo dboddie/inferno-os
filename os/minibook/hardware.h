@@ -9,7 +9,8 @@
 enum CGU_CFCR_Fields {
     CGU_LCS         = 0x40000000,   /* LCD clock source (0=PLL, 1=LCD_PCLK) */
     CGU_MCS         = 0x01000000,   /* MSC clock selection (0 = 16 MHz, 1 = 24 MHz) */
-    CGU_LFR_Mask    = 0x0000f000,
+    CGU_UPE         = 0x00100000,   /* Enable change (update output frequency) */
+    CGU_LFR_Mask    = 0x0000f000,   /* LCD device clock divider bits */
     CGU_LFR_Shift   = 12,
 };
 
@@ -116,6 +117,8 @@ enum GPIOPins {
     GPIO_A_ScrollLED          = 0x00000200,   /* port A/0 bit 9 */
     GPIO_A_Keyboard_In_Mask   = 0x000000ff,   /* port A/0 */
     GPIO_C_PWM0               = 0x40000000,   /* port C/2 bit 30 */
+    GPIO_C_LCDPanel           = 0x20000000,   /* port C/2 bit 29 */
+    GPIO_C_Backlight          = 0x10000000,   /* port C/2 bit 28 */
     GPIO_C_NumLED             = 0x00400000,   /* port C/2 bit 22 */
     GPIO_D_Keyboard_Out_Mask  = 0x2000ffff    /* port D/3 */
 };
@@ -282,10 +285,67 @@ enum {
 long usb_read(void* a, long n, vlong offset);
 long usb_write(void* a, long n, vlong offset);
 
-#define LCD_BASE 0x13050000
+#define LCD_CONFIG_BASE 0x13050000
 
 typedef struct {
-    ulong config;
-    ulong vsync;
-    ulong hsync;
-} LCD;
+    ulong config;       /* LCDCFG */
+    ulong vsync;        /* LCDVSYNC */
+    ulong hsync;        /* LCDHSYNC */
+    ulong virtarea;     /* LCDVAT */
+    ulong hextent;      /* LCDDAH */
+    ulong vextent;      /* LCDDAV */
+} LCDConfig;
+
+enum LCDConfig_Fields {
+    LCDConfig_HSyncNeg      = 0x800,    /* HSP */
+    LCDConfig_PClockNeg     = 0x400,    /* PCP */
+    LCDConfig_DataEnPos     = 0x000,    /* DEP (bit 9 = 0) */
+    LCDConfig_VSyncNeg      = 0x100,    /* VSP */
+    LCDConfig_ModeMask      = 0xf,      /* MODE */
+    LCDConfig_GenericTFT    = 0
+};
+
+/* The descriptor must be aligned with a 4 word boundary */
+#define LCD_DESC_BASE 0x07f00000
+/* The framebuffer must be aligned with a 16 word boundary if LCDCtrl_Burst16
+   is used */
+#define LCD_MEM_START 0x07f00100
+
+typedef struct LCDDescriptor {
+    ulong next;
+    ulong source;
+    ulong id;
+    ulong cmd;
+} LCDDescriptor;
+
+#define LCD_CTRL_BASE   0x13050030
+
+typedef struct {
+    ulong control;      /* LCDCTRL */
+    ulong state;        /* LCDSTATE */
+    ulong iid;          /* LCDIID */
+    ulong _padding;
+    ulong da0;          /* LCDDA0 */
+} LCDCtrl;
+
+enum LCDCtrl_Fields {
+    LCDCtrl_BurstMask   = 0x30000000,
+    LCDCtrl_Burst16     = 0x20000000,
+    LCDCtrl_RGB         = 0x08000000,
+    LCDCtrl_EOFInt      = 0x00002000,   /* EOFM */
+    LCDCtrl_SOFInt      = 0x00001000,   /* SOFM */
+    LCDCtrl_Disable     = 0x10,
+    LCDCtrl_Enable      = 0x08,
+    LCDCtrl_BPP16       = 4
+};
+
+enum PanelData {
+    Panel_HSync      = 80,
+    Panel_VSync      = 20,
+    Panel_Width      = 800,
+    Panel_Height     = 480,
+    Panel_LineStart  = 0,
+    Panel_LineEnd    = 0,
+    Panel_FrameStart = 0,
+    Panel_FrameEnd   = 0,
+};
