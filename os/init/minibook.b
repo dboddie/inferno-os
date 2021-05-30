@@ -38,7 +38,7 @@ init(context: ref Context, nil: list of string)
 
     sh->system(nil, "mount -c {mntgen} /n");
 	
-#    print("**\n** Inferno\n** Vita Nuova\n**\n");
+    print("Ported to the Letux 400 Minibook by David Boddie\n\n");
 
 #    bind("#c", "/dev", sys->MAFTER);
 #    bind("#r", "/dev", sys->MAFTER);		# RTC
@@ -50,10 +50,10 @@ init(context: ref Context, nil: list of string)
 #   bind("#t", "/dev", sys->MAFTER);		# serial port
 #    bind("#B", "/dev", sys->MAFTER);            # backlight
 #    bind("#L", "/dev", sys->MAFTER);            # LEDs
-    bind("#↓", "/dev", sys->MAFTER);          # power
+#    bind("#↓", "/dev", sys->MAFTER);          # power
     bind("#Y", "/dev", sys->MAFTER);            # system information
-    bind("#u", "/n/usb", sys->MAFTER);          # USB peripheral device
-    bind("#S", "/n/sd", sys->MAFTER);           # microSD card
+#    bind("#u", "/n/usb", sys->MAFTER);          # USB peripheral device
+#    bind("#S", "/n/sd", sys->MAFTER);           # microSD card
     bind("#p", "/prog", sys->MREPL);		# prog device
     bind("#d", "/fd", sys->MREPL);
 
