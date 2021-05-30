@@ -67,14 +67,11 @@ void trapintr(Ureg *ur)
 {
     if (ur->cause & 0x400) {
         InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
-/*        if (ic->pending & InterruptTCU0) {
+        if (ic->pending & InterruptOST0) {
             clockintr(ur);
-            kbdpoll();
-            power_check_reset();
+//            kbdpoll();
+//            power_check_reset();
         }
-        if (ic->pending & InterruptUDC) {
-            usb_intr();
-        }*/
 /*        if (ic->pending & InterruptMSC) {
             msc_intr();
         }*/
@@ -88,7 +85,7 @@ void trapexc(Ureg *ur)
         if (fpuemu(ur) >= 0)
             return;
     }
-    print("ca=%8.8lux\n", ur->cause);
+    dumpregs(ur);
     for (;;) {}
 }
 

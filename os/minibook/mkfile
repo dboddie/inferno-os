@@ -22,9 +22,7 @@ KTZERO=0x8001004c
 OBJ=\
 	l.$O\
 	clock.$O\
-#	dump.$O\
 	trap.$O\
-#	intr.$O\
 #	peripherals/kbd.$O\
 	main.$O\
 	fpispim.$O\

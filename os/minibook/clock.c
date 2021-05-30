@@ -34,15 +34,14 @@ clockinit(void)
     /* Propagate the OST clock by clearing the appropriate bit */
     *(ulong*)(CGU_MSCR | KSEG1) &= ~CGU_OST;
 
-    /* Disable all timers */
-    *(ulong *)TIMER_OTER = 0;
-
+    /* Set up the OST */
+    *(ulong *)(TIMER_OTER | KSEG1) = 0;
     JZTimer *timer = (JZTimer *)(TIMER_BASE0 | KSEG1);
     timer->control = TimerRTCCLK;
     timer->data = timer->counter = 32768;
 
     /* Enable timer 0 */
-    *(ulong *)TIMER_OTER = Timer0;
+    *(ulong *)(TIMER_OTER | KSEG1) = Timer0;
 
     /* Enable interrupts for the OST0 timer */
     InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);

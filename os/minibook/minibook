@@ -76,7 +76,7 @@ code
 	int panicreset = 0;
 
 init
-	nanonote
+	minibook
 
 root
 	/chan	/
