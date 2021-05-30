@@ -182,3 +182,12 @@ a faster than necessary clock. The LCD device clock divider will be 4.
 The LCD device clock divider is not specified using a linear scale (see
 https://projects.goldelico.com/p/letux400/page/Clocks/ for details) but a value
 of 4 is encoded as 3 in any case.
+
+## Exception after starting the shell
+
+It looks like an `ll` instruction is issued which operates on a value of 0x40
+as an address, which causes a TLB exception. This happens in the _tas code.
+Initialising the keyboard queue in main as a temporary measure appears to fix
+this:
+
+    kbdq = qopen(4*1024, 0, 0, 0);
