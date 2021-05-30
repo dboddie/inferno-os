@@ -116,6 +116,8 @@ void get_cpu_config(char *lbuf, int n)
     switch (getprid()) {
     case 0x0ad0024f:
         snprint(cpu, 7, "JZ4720"); break;
+    case 0x02d0024f:
+        snprint(cpu, 7, "JZ4730"); break;
     default:
         snprint(cpu, 7, "?     "); break;
     }
