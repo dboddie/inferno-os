@@ -48,7 +48,7 @@ init(context: ref Context, nil: list of string)
     #
     bind("#c", "/dev", sys->MREPL);		# console
 #   bind("#t", "/dev", sys->MAFTER);		# serial port
-#    bind("#B", "/dev", sys->MAFTER);            # backlight
+    bind("#B", "/dev", sys->MAFTER);            # backlight
 #    bind("#L", "/dev", sys->MAFTER);            # LEDs
 #    bind("#↓", "/dev", sys->MAFTER);          # power
     bind("#Y", "/dev", sys->MAFTER);            # system information
@@ -66,20 +66,21 @@ init(context: ref Context, nil: list of string)
 #    }
 
 # Use the Draw module to draw on the screen.
-#    draw = load Draw Draw->PATH;
-#    display := draw->Display.allocate(nil);
-#    for (b := 0; b < 256; b++) {
-#        display.image.draw(Rect(Point(b, 0), Point(b + 1, 4)), display.rgb(b, 0, 0), display.opaque, Point(0, 0));
-#        display.image.draw(Rect(Point(b, 4), Point(b + 1, 8)), display.rgb(0, b, 0), display.opaque, Point(0, 0));
-#        display.image.draw(Rect(Point(b, 8), Point(b + 1, 12)), display.rgb(0, 0, b), display.opaque, Point(0, 0));
-#        display.image.draw(Rect(Point(b, 12), Point(b + 1, 16)), display.rgb(b, b, b), display.opaque, Point(0, 0));
-#    }
+    draw = load Draw Draw->PATH;
+    display := draw->Display.allocate(nil);
+    for (b := 0; b < 256; b++) {
+        display.image.draw(Rect(Point(b*2, 0), Point(b*2 + 2, 4)), display.rgb(b, 0, 0), display.opaque, Point(0, 0));
+        display.image.draw(Rect(Point(b*2, 4), Point(b*2 + 2, 8)), display.rgb(0, b, 0), display.opaque, Point(0, 0));
+        display.image.draw(Rect(Point(b*2, 8), Point(b*2 + 2, 12)), display.rgb(0, 0, b), display.opaque, Point(0, 0));
+        display.image.draw(Rect(Point(b*2, 12), Point(b*2 + 2, 16)), display.rgb(b, b, b), display.opaque, Point(0, 0));
+    }
 
 #    print("Starting a shell...\n");
     shell := load Sh "/dis/sh.dis";
     #args := list of {"sh", "-c", "dd -if /n/sd/data -bs 32 -count 1 | xd"};
     args := list of {"sh"};
     spawn shell->init(context, args);
+#    for (;;) {}
 
 # Spawn a background process and collect its output.
 #    c := chan of int;

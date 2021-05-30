@@ -10,6 +10,7 @@ dev
 	uart
 	draw screen
 #	pointer
+	backlight peripherals/backlight
 #	power peripherals/power
 	sysinfo
 #	usb peripherals/usb

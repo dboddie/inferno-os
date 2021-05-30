@@ -49,11 +49,6 @@ static void poolsizeinit(void)
 
 void main(void)
 {
-    /* Set up touch pad button input and an LED */
-    GPIO *gpioa = (GPIO *)(GPIO_PORT_A_BASE | KSEG1);
-    gpioa->dir &= ~GPIO_A_TouchLeft;
-    gpioa->dir |= GPIO_A_CapsLED;
-
     /* Mach is defined in dat.h, edata and end are in port/lib.h */
     memset(m, 0, sizeof(Mach));
     memset(edata, 0, end-edata);

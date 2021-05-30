@@ -101,12 +101,6 @@ void lcdinit(void)
     gpioc->sel_high |= 0x50000000;
     gpioc->data |= GPIO_C_LCDPanel | GPIO_C_Backlight;
 
-    /* Enable PWM0 */
-    // Perhaps also ensure that the PWM0 clock is running
-    PWM *pwm = (PWM *)(PWM0_BASE | KSEG1);
-    pwm->control = PWM_CtrEn;
-    pwm->duty = PWM_FullDuty;
-
     /* Assume that the PLCR has been set up appropriately to 0x5a000520 */
 
     ulong *mscr = (ulong *)(CGU_MSCR | KSEG1);
