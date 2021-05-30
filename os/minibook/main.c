@@ -77,6 +77,7 @@ void main(void)
     print("\nInferno OS %s Vita Nuova\n", VERSION);
 
 //    kbdinit();
+    kbdq = qopen(4*1024, 0, 0, 0);
 
     procinit();                 /* in port/proc.c */
     links();                    /* in the generated nanonote.c file */
