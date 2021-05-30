@@ -316,7 +316,4 @@
 
 /* Memory map - starts at 0x80000000, ends at 0x88000000 (128MB) */
 #define MEMORY_TOP      (KZERO+0x7f00000) /* End of memory Inferno can use */
-/* Framebuffer is created by U-Boot above this at ... */
-
-/* Peripherals */
-#define LCD_SA0 0x13050044
+/* Framebuffer is created in screen.c with the value of LCD_MEM_START (see hardware.h) */

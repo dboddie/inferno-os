@@ -16,12 +16,6 @@
 
 #define RETURN	RET; NOP
 
-/*
- *  R4000 instructions
- */
-#define	LL(base, rt)	WORD	$((060<<26)|((base)<<21)|((rt)<<16))
-#define	SC(base, rt)	WORD	$((070<<26)|((base)<<21)|((rt)<<16))
-
 /* new instructions in mips 24k (mips32r2) */
 //#define DI(rt)	WORD $(0x41606000|((rt)<<16))	/* interrupts off */
 //#define EI(rt)	WORD $(0x41606020|((rt)<<16))	/* interrupts on */
