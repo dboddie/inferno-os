@@ -38,6 +38,8 @@ int	splfhi(void);
 int	tas(void *);
 
 int	fpuemu(Ureg *);
+void    fpwatch(Ureg *);
+
 ulong   getfpexc(void);
 void   setfpexc(ulong);
 ulong   getfpsid(void);

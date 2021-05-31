@@ -9,8 +9,6 @@
 #include "../port/uart.h"
 PhysUart* physuart[1];
 
-#include "hardware.h"
-
 Conf conf;
 Mach *m = (Mach*)MACHADDR;
 Proc *up = 0;
@@ -203,79 +201,4 @@ void setpanic(void)
 {
 }
 
-#include "ureg.h"
-
-static void
-getpcsp(ulong *pc, ulong *sp)
-{
-	*pc = getcallerpc(&pc);
-	*sp = (ulong)&pc-4;
-}
-
-void
-callwithureg(void (*fn)(Ureg*))
-{
-	Ureg ureg;
-
-	memset(&ureg, 0, sizeof ureg);
-	getpcsp((ulong*)&ureg.pc, (ulong*)&ureg.sp);
-	ureg.r31 = getcallerpc(&fn);
-	fn(&ureg);
-}
-
-static void
-_dumpstack(Ureg *ureg)
-{
-	ulong l, v, top, i;
-	extern ulong etext;
-
-for (;;) {}
-
-	if(up == 0)
-		return;
-
-	print("ktrace /kernel/path %.8lux %.8lux %.8lux\n",
-		ureg->pc, ureg->sp, ureg->r31);
-	top = (ulong)up->kstack + KSTACK;
-	i = 0;
-	for(l=ureg->sp; l < top; l += BY2WD) {
-		v = *(ulong*)l;
-		if(KTZERO < v && v < (ulong)&etext) {
-			print("%.8lux=%.8lux ", l, v);
-			if((++i%4) == 0){
-				print("\n");
-				delay(200);
-			}
-		}
-	}
-	print("\n");
-}
-
-void
-dumpstack(void)
-{
-	callwithureg(_dumpstack);
-}
-
 void    reboot(void) { return; }
-
-static void
-linkproc(void)
-{
-	spllo();
-	if (waserror())
-		print("error() underflow: %r\n");
-	else
-		(*up->kpfun)(up->arg);
-	pexit("end proc", 1);
-}
-
-void
-kprocchild(Proc *p, void (*func)(void*), void *arg)
-{
-	p->sched.pc = (ulong)linkproc;
-	p->sched.sp = (ulong)p->kstack+KSTACK;
-
-	p->kpfun = func;
-	p->arg = arg;
-}

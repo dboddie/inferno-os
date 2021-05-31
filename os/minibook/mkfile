@@ -58,7 +58,7 @@ default:V: i$CONF
 
 i$CONF: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
-	$LD $LDFLAGS -H0 -l -s -o $target -R$BY2PG -T$KTZERO $NOPREFIXOBJ $CONF.$O $LIBFILES
+	$LD -a $LDFLAGS -H0 -l -s -o $target -R$BY2PG -T$KTZERO $NOPREFIXOBJ $CONF.$O $LIBFILES
 	mkimage -A mips -O linux -T kernel -C none -a $loadaddr -e $KTZERO -n Inferno -d iminibook uImage
 
 # Read standard build rules for ports.

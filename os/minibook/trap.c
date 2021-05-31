@@ -51,6 +51,79 @@ struct {
 	"R1",	Ureg_r1,
 };
 
+char *excname[] =
+{
+	"trap: external interrupt",
+	"trap: TLB modification (store to unwritable)",
+	"trap: TLB miss (load or fetch)",
+	"trap: TLB miss (store)",
+	"trap: address error (load or fetch)",
+	"trap: address error (store)",
+	"trap: bus error (fetch)",
+	"trap: bus error (data load or store)",
+	"trap: system call",
+	"breakpoint",
+	"trap: reserved instruction",
+	"trap: coprocessor unusable",
+	"trap: arithmetic overflow",
+	"trap: TRAP exception",
+	"trap: VCE (instruction)",
+	"trap: floating-point exception",
+	"trap: coprocessor 2 implementation-specific", /* used as sys call for debugger */
+	"trap: corextend unusable",
+	"trap: precise coprocessor 2 exception",
+	"trap: TLB read-inhibit",
+	"trap: TLB execute-inhibit",
+	"trap: undefined 21",
+	"trap: undefined 22",
+	"trap: WATCH exception",
+	"trap: machine checkcore",
+	"trap: undefined 25",
+	"trap: undefined 26",
+	"trap: undefined 27",
+	"trap: undefined 28",
+	"trap: undefined 29",
+	"trap: cache error",
+	"trap: VCE (data)",
+};
+
+char *fpcause[] =
+{
+	"inexact operation",
+	"underflow",
+	"overflow",
+	"division by zero",
+	"invalid operation",
+};
+
+char*
+fpexcname(Ureg *ur, ulong fcr31, char *buf, uint size)
+{
+	int i;
+	char *s;
+	ulong fppc;
+
+	fppc = ur->pc;
+	if(ur->cause & BD)	/* branch delay */
+		fppc += 4;
+	s = 0;
+	if(fcr31 & (1<<17))
+		s = "unimplemented operation";
+	else{
+		fcr31 >>= 7;		/* trap enable bits */
+		fcr31 &= (fcr31>>5);	/* anded with exceptions */
+		for(i=0; i<5; i++)
+			if(fcr31 & (1<<i))
+				s = fpcause[i];
+	}
+
+	if(s == 0)
+		return "no floating point exception";
+
+	snprint(buf, size, "%s fppc=%#lux", s, fppc);
+	return buf;
+}
+
 void
 trapinit(void)
 {
@@ -72,10 +145,93 @@ void trapintr(Ureg *ur)
             kbdpoll();
 //            power_check_reset();
         }
+        else {
+            print("pending=%8.8lux\n\n", ic->pending);
+            for (;;) {}
+        }
 /*        if (ic->pending & InterruptMSC) {
             msc_intr();
         }*/
     }
+}
+
+void
+trap(Ureg *ur)
+{
+	int ecode, user, cop, fpchk, fpures;
+	ulong fpfcr31;
+	char buf[2*ERRMAX], buf1[ERRMAX], *fpexcep;
+	static int dumps;
+
+	ecode = (ur->cause>>2)&EXCMASK;
+	user = ur->status&KUSER;
+
+	fpchk = 0;
+
+	/* clear EXL in status
+	setstatus(getstatus() & ~EXL); */
+
+/*	clockintr = 0;*/
+	switch(ecode){
+	case CINT:
+		trapintr(ur);
+		break;
+
+	case CFPE:
+		panic("FP exception but no FPU");
+		break;
+
+	case CWATCH:
+		fpwatch(ur);
+		break;
+
+	case CCPU:
+		cop = (ur->cause>>28)&3;
+
+		if (up && cop == 1) {
+			/* no fpu, so we can only emulate fp ins'ns */
+                        fpures = fpuemu(ur);
+			if (fpures >= 0)
+				fpchk = 1;
+			break;
+		}
+		/* Fallthrough */
+
+	default:
+		if (ecode == CADREL || ecode == CADRES)
+			print("kernel addr exception for va %#p pid %#ld %s\n",
+				ur->badvaddr, (up? up->pid: 0),
+				(up? up->text: ""));
+		print("cpu%d: kernel %s pc=%#lux\n",
+			m->machno, excname[ecode], ur->pc);
+
+		dumpregs(ur);
+		dumpstack();
+		if(m->machno == 0)
+			spllo();
+		exit(1);
+	}
+
+//        print("%d %8.8lux\n", fpchk, fpures);
+	if(fpchk) {
+		fpfcr31 = up->fpsave.fpstatus;
+		if((fpfcr31>>12) & ((fpfcr31>>7)|0x20) & 0x3f) {
+			spllo();
+			fpexcep	= fpexcname(ur, fpfcr31, buf1, sizeof buf1);
+			snprint(buf, sizeof buf, "sys: fp: %s", fpexcep);
+		}
+	}
+
+	splhi();
+
+	/* delaysched set because we held a lock or because our quantum ended */
+/*	if(up && up->delaysched && clockintr){
+		sched();
+		splhi();
+	}
+*/
+	/* restore EXL in status */
+	setstatus(getstatus() | EXL);
 }
 
 void trapexc(Ureg *ur)
@@ -87,6 +243,58 @@ void trapexc(Ureg *ur)
     }
     dumpregs(ur);
     for (;;) {}
+}
+
+static void
+getpcsp(ulong *pc, ulong *sp)
+{
+	*pc = getcallerpc(&pc);
+	*sp = (ulong)&pc-4;
+}
+
+void
+callwithureg(void (*fn)(Ureg*))
+{
+	Ureg ureg;
+
+	memset(&ureg, 0, sizeof ureg);
+	getpcsp((ulong*)&ureg.pc, (ulong*)&ureg.sp);
+	ureg.r31 = getcallerpc(&fn);
+	fn(&ureg);
+}
+
+static void
+_dumpstack(Ureg *ureg)
+{
+	ulong l, v, top, i;
+	extern ulong etext;
+
+for (;;) {}
+
+	if(up == 0)
+		return;
+
+	print("ktrace /kernel/path %.8lux %.8lux %.8lux\n",
+		ureg->pc, ureg->sp, ureg->r31);
+	top = (ulong)up->kstack + KSTACK;
+	i = 0;
+	for(l=ureg->sp; l < top; l += BY2WD) {
+		v = *(ulong*)l;
+		if(KTZERO < v && v < (ulong)&etext) {
+			print("%.8lux=%.8lux ", l, v);
+			if((++i%4) == 0){
+				print("\n");
+				delay(200);
+			}
+		}
+	}
+	print("\n");
+}
+
+void
+dumpstack(void)
+{
+	callwithureg(_dumpstack);
 }
 
 static ulong
@@ -112,4 +320,25 @@ dumpregs(Ureg *ur)
 		print("%s\t%#.8lux\t%s\t%#.8lux\n",
 			regname[i].name,   R(ur, i),
 			regname[i+1].name, R(ur, i+1));
+}
+
+static void
+linkproc(void)
+{
+	spllo();
+	if (waserror())
+		print("error() underflow: %r\n");
+	else
+		(*up->kpfun)(up->arg);
+	pexit("end proc", 1);
+}
+
+void
+kprocchild(Proc *p, void (*func)(void*), void *arg)
+{
+	p->sched.pc = (ulong)linkproc;
+	p->sched.sp = (ulong)p->kstack+KSTACK;
+
+	p->kpfun = func;
+	p->arg = arg;
 }
