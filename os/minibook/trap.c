@@ -69,7 +69,7 @@ void trapintr(Ureg *ur)
         InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
         if (ic->pending & InterruptOST0) {
             clockintr(ur);
-//            kbdpoll();
+            kbdpoll();
 //            power_check_reset();
         }
 /*        if (ic->pending & InterruptMSC) {

@@ -19,8 +19,6 @@ void
 clockintr(Ureg *ureg)
 {
     JZTimer *timer = (JZTimer *)(TIMER_BASE0 | KSEG1);
-    static int i = 0;
-    static int j = 0;
 
     if (timer->control & TimerUnder) {
         timer->control &= ~TimerUnder;
@@ -34,11 +32,11 @@ clockinit(void)
     /* Propagate the OST clock by clearing the appropriate bit */
     *(ulong*)(CGU_MSCR | KSEG1) &= ~CGU_OST;
 
-    /* Set up the OST */
+    /* Set up the OST to use the RTC and enable underflow interrupts */
     *(ulong *)(TIMER_OTER | KSEG1) = 0;
     JZTimer *timer = (JZTimer *)(TIMER_BASE0 | KSEG1);
-    timer->control = TimerRTCCLK;
-    timer->data = timer->counter = 32768;
+    timer->control = TimerUnderIntEn | TimerRTCCLK;
+    timer->data = timer->counter = 32;
 
     /* Enable timer 0 */
     *(ulong *)(TIMER_OTER | KSEG1) = Timer0;

@@ -23,7 +23,7 @@ OBJ=\
 	l.$O\
 	clock.$O\
 	trap.$O\
-#	peripherals/kbd.$O\
+	peripherals/kbd.$O\
 	main.$O\
 	fpispim.$O\
 	fpi.$O\
