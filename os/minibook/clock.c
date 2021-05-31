@@ -18,10 +18,10 @@ extern void hzclock(Ureg *);
 void
 clockintr(Ureg *ureg)
 {
-    JZTimer *timer = (JZTimer *)(TIMER_BASE0 | KSEG1);
+    JZTimer *timer0 = (JZTimer *)(TIMER_BASE0 | KSEG1);
 
-    if (timer->control & TimerUnder) {
-        timer->control &= ~TimerUnder;
+    if (timer0->control & TimerUnder) {
+        timer0->control &= ~TimerUnder;
         hzclock(ureg);
     }
 }
@@ -34,16 +34,21 @@ clockinit(void)
 
     /* Set up the OST to use the RTC and enable underflow interrupts */
     *(ulong *)(TIMER_OTER | KSEG1) = 0;
-    JZTimer *timer = (JZTimer *)(TIMER_BASE0 | KSEG1);
-    timer->control = TimerUnderIntEn | TimerRTCCLK;
-    timer->data = timer->counter = 32;
 
-    /* Enable timer 0 */
-    *(ulong *)(TIMER_OTER | KSEG1) = Timer0;
+    JZTimer *timer0 = (JZTimer *)(TIMER_BASE0 | KSEG1);
+    timer0->control = TimerUnderIntEn | TimerRTCCLK;
+    timer0->data = timer0->counter = 327;
 
-    /* Enable interrupts for the OST0 timer */
+    JZTimer *timer1 = (JZTimer *)(TIMER_BASE1 | KSEG1);
+    timer1->control = TimerUnderIntEn | TimerRTCCLK;
+    timer1->data = timer1->counter = 32;
+
+    /* Enable timers 0 and 1 */
+    *(ulong *)(TIMER_OTER | KSEG1) = Timer0 | Timer1;
+
+    /* Enable interrupts for the OST0 and OST1 timers */
     InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
-    ic->mask_clear = InterruptOST0;
+    ic->mask_clear = InterruptOST0 | InterruptOST1;
     intron(INTMASK);
 }
 

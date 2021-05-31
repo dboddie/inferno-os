@@ -98,12 +98,6 @@ enum TimerControl {
     TimerEXCLK   = 5
 };
 
-enum TimerSource {
-    TimerSourceExt = 4,
-    TimerSourceRTC = 2,
-    TimerSourcePCLK = 1
-};
-
 /* Ports A to D are sometimes referred to as ports 0 to 3 */
 #define GPIO_PORT_A_BASE    0x10010000
 #define GPIO_PORT_B_BASE    0x10010030

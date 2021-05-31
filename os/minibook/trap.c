@@ -142,8 +142,14 @@ void trapintr(Ureg *ur)
         InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
         if (ic->pending & InterruptOST0) {
             clockintr(ur);
-            kbdpoll();
 //            power_check_reset();
+        }
+        else if (ic->pending & InterruptOST1) {
+            JZTimer *timer1 = (JZTimer *)(TIMER_BASE1 | KSEG1);
+            if (timer1->control & TimerUnder) {
+                timer1->control &= ~TimerUnder;
+                kbdpoll();
+            }
         }
         else {
             print("pending=%8.8lux\n\n", ic->pending);
