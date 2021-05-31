@@ -5,7 +5,7 @@ Memory map as described in the mem.h file.
 0x87f00000      LCD descriptor
 0x87f00000      MEMORY_TOP (top of useable memory in KSEG0)
 
-0x800f0000      ~End of boot image
+0x800ab000      ~End of boot image
 0x8001004c      KTZERO
 0x80010000      Boot image
 
