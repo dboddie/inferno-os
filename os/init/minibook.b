@@ -53,7 +53,7 @@ init(context: ref Context, nil: list of string)
 #    bind("#↓", "/dev", sys->MAFTER);          # power
     bind("#Y", "/dev", sys->MAFTER);            # system information
 #    bind("#u", "/n/usb", sys->MAFTER);          # USB peripheral device
-#    bind("#S", "/n/sd", sys->MAFTER);           # microSD card
+    bind("#S", "/n/sd", sys->MAFTER);           # microSD card
     bind("#p", "/prog", sys->MREPL);		# prog device
     bind("#d", "/fd", sys->MREPL);
 

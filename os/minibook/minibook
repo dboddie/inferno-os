@@ -14,7 +14,7 @@ dev
 #	power peripherals/power
 	sysinfo
 #	usb peripherals/usb
-#	msc peripherals/msc
+	msc peripherals/msc
 
 lib
 	interp
@@ -135,4 +135,4 @@ root
 	/dis/sh/std.dis
 
 # partition access
-#	/dis/partfs.dis
+	/dis/partfs.dis
