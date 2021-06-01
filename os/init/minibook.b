@@ -1,7 +1,7 @@
 implement Init;
 
 #
-# Ben NanoNote
+# Letux 400 Minibook
 #
 
 include "sys.m";
@@ -14,6 +14,14 @@ include "sh.m";
 include "draw.m";
     draw: Draw;
     Context, Display, Image, Point, Rect: import draw;
+
+include "disks.m";
+    disks: Disks;
+    Disk, PCpart, Magic0, Magic1, NTentry, Toffset, TentrySize: import disks;
+
+# From fdisk.b:
+TableSize: con TentrySize*NTentry;
+Omagic: con TableSize;
 
 #include "bufio.m";
 #    bufio: Bufio;
@@ -34,6 +42,8 @@ init(context: ref Context, nil: list of string)
 {
     sys = load Sys Sys->PATH;
     sh = load Sh Sh->PATH;
+    disks = load Disks Disks->PATH;
+    disks->init();
 #    bufio = load Bufio Bufio->PATH;
 
     sh->system(nil, "mount -c {mntgen} /n");
@@ -56,6 +66,18 @@ init(context: ref Context, nil: list of string)
     bind("#S", "/n/sd", sys->MAFTER);           # microSD card
     bind("#p", "/prog", sys->MREPL);		# prog device
     bind("#d", "/fd", sys->MREPL);
+
+    # Start partfs
+    sh->system(nil, "mount -c {partfs /n/sd/data} /n/part");
+
+    # Find partition(s) to mount
+    part_spec := array of byte find_partition("/n/sd/data");
+
+    if (part_spec != nil) {
+        f := sys->open("/n/part/ctl", sys->OWRITE);
+        sys->write(f, part_spec, len part_spec);
+        sh->system(nil, "mount -c {disk/kfs -R /n/part/p1} /n/kfs");
+    }
 
 # A simple nested loop test:
 #    for (i := 1; i <= 12; i++) {
@@ -102,3 +124,23 @@ init(context: ref Context, nil: list of string)
 #    for (i := 0; i < 100; i++)
 #        c <-= i;
 #}
+
+find_partition(disk_file_name: string): string
+{
+    disk := Disk.open(disk_file_name, Sys->OREAD, 1);
+
+    # Read the partition table
+    sys->seek(disk.fd, big Toffset, 0);
+    table := array[TableSize + 2] of byte;
+    disk.readn(table, len table);
+
+    if (int table[Omagic] != Magic0 || int table[Omagic+1] != Magic1)
+        sys->print("Failed to find partition table\n");
+
+    for (i := 0; i < TableSize; i += TentrySize) {
+        dp := PCpart.extract(table[i:], disk);
+        if (dp.ptype == Disks->Type9)
+            return sys->sprint("part plan9 %bud %bud\n", dp.offset, dp.offset + dp.size);
+    }
+    return nil;
+}
