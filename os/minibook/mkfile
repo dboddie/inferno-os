@@ -24,6 +24,7 @@ OBJ=\
 	clock.$O\
 	trap.$O\
 	peripherals/kbd.$O\
+	peripherals/mouse.$O\
 	main.$O\
 	fpispim.$O\
 	fpi.$O\

@@ -89,6 +89,8 @@ ulong   getebase(void);
 
 void    kbdinit(void);
 void    kbdpoll(void);
+void    mouseinit(void);
+void    mousepoll(void);
 void    power_init(void);
 int     power_button_pressed(void);
 void    power_check_reset(void);

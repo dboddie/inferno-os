@@ -114,7 +114,9 @@ enum GPIOPins {
     GPIO_C_LCDPanel           = 0x20000000,   /* port C/2 bit 29 */
     GPIO_C_Backlight          = 0x10000000,   /* port C/2 bit 28 */
     GPIO_C_NumLED             = 0x00400000,   /* port C/2 bit 22 */
-    GPIO_D_Keyboard_Out_Mask  = 0x2000ffff    /* port D/3 */
+    GPIO_D_Keyboard_Out_Mask  = 0x2000ffff,   /* port D/3 */
+    GPIO_D_Ethernet_In_Mask   = 0xe000ffff,   /* port D/3 bits 16-28 */
+    GPIO_D_Ethernet_Out_Mask  = 0x01e10000    /* port D/3 bits 16,21-24 */
 };
 
 typedef struct {
@@ -343,3 +345,25 @@ enum PanelData {
     Panel_FrameStart = 0,
     Panel_FrameEnd   = 0,
 };
+
+#define KBC_BASE 0x10062060
+
+typedef struct {
+    ulong data;         /* KTDR/KRDR */
+    ulong cmd_status;   /* KCCR/KCSR */
+} KBC;
+
+#define MAC_BASE 0x13101000
+
+typedef struct {
+    ulong bus_mode;     /* BMR */
+    ulong trans_poll;   /* TPDR */
+    ulong rec_poll;     /* RPDR */
+    ulong rec_desc;     /* RBAR */
+    ulong trans_desc;   /* TBAR */
+    ulong dma_status;   /* SR */
+    ulong op_mode;      /* OMR */
+    ulong int_en;       /* IER */
+    ulong missed_frame; /* MFC */
+    ulong trans_buf;
+} MAC;

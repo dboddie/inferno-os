@@ -61,7 +61,6 @@ void kbdinit(void)
 {
     /* Set up touch pad button input and LED pins */
     GPIO *gpioa = (GPIO *)(GPIO_PORT_A_BASE | KSEG1);
-    gpioa->dir &= ~GPIO_A_TouchLeft;
     gpioa->dir |= GPIO_A_CapsLED;
     gpioa->pull |= GPIO_A_Keyboard_In_Mask;
 

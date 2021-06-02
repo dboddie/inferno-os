@@ -243,7 +243,7 @@ void msc_reset(void)
         /* Supported voltages must be passed in SD mode */
         msc_send_command(CMD_SD_APP_OP_COND, 3, sdhc | mmc.voltages);
         resp = msc_response();
-        if ((resp & 0xff8000) != 0x00ff8000) {  // for the NanoNote
+        if ((resp & 0xff8000) != 0x00ff8000) {  // for the Minibook
             print("SD_APP_OP_COND: %8.8lux\n", resp);
             return;
         }

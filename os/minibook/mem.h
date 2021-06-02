@@ -309,7 +309,7 @@
 #define	KZERO	KSEG0			/* base of kernel address space */
 #define BTOFF   0x4c                    /* execution offset into boot image */
 #define	KTZERO	(KZERO+0x10000+BTOFF)   /* first address in kernel text */
-#define MEMSIZE	(32*MB)		        /* fixed memory on Nanonote */
+#define MEMSIZE	(128*MB)		/* fixed memory size */
 #define STACKTOP (MACHADDR+BY2PG)       /* top of kernel stack */
 #define ESTACKTOP (STACKTOP+BY2PG)      /* top of exception stack */
 #define	FPSTACKTOP (ESTACKTOP+BY2PG)    /* top of floating point exception stack */
