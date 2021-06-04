@@ -142,7 +142,7 @@ void trapintr(Ureg *ur)
         InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
         if (ic->pending & InterruptOST0) {
             clockintr(ur);
-            mousepoll();
+//            mousepoll();
 //            power_check_reset();
         }
         else if (ic->pending & InterruptOST1) {
