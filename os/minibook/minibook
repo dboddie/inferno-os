@@ -112,6 +112,7 @@ root
 	/dis/rm.dis
 	/dis/p.dis
 	/dis/ps.dis
+	/dis/unmount.dis
 	/dis/xd.dis
 	/dis/disk/calc.tab.dis
 	/dis/disk/fdisk.dis
