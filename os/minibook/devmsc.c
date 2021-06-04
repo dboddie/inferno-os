@@ -27,18 +27,26 @@ Dirtab msctab[]={
 };
 
 extern MMC *mmc_sd;
-static char *msc_scratch;
+static char *msc_read_scratch;
+static char *msc_write_scratch;
+/* Use locks for the buffers */
+static Lock msc_read_lock;
+static Lock msc_write_lock;
 
 static long sdread_blocks(void* a, long n, vlong offset)
 {
+    lock(&msc_read_lock);
+
     ulong blocklen = mmc_sd->csd.block_len;
     vlong within = offset % blocklen;
     long bytes_read = 0;
 
     if (within != 0) {
         /* Read the block containing the start of the data. */
-        if (msc_read((ulong)(offset / blocklen), (ulong *)msc_scratch, 1) != 0)
+        if (msc_read((ulong)(offset / blocklen), (ulong *)msc_read_scratch, 1) != 0) {
+            unlock(&msc_read_lock);
             return -1;
+        }
 
         /* Copy at most n bytes. */
         bytes_read = blocklen - within;
@@ -46,14 +54,16 @@ static long sdread_blocks(void* a, long n, vlong offset)
             bytes_read = n;
 
         /* Copy the initial data into the buffer. */
-        memcpy(a, msc_scratch + within, bytes_read);
+        memcpy(a, msc_read_scratch + within, bytes_read);
         n -= bytes_read;
         a = (void *)((ulong)a + bytes_read);
         offset += bytes_read;
     }
 
-    if (n == 0)
+    if (n == 0) {
+        unlock(&msc_read_lock);
         return bytes_read;
+    }
 
     /* The offset should be at the start of a block. */
     vlong first_block = offset / blocklen;
@@ -66,9 +76,16 @@ static long sdread_blocks(void* a, long n, vlong offset)
         blocks++;
 
     /* Copy a whole number of blocks. */
-    while (blocks > 0) {
-        if (msc_read(first_block++, a, 1) != 0)
+    while (blocks > 0)
+    {
+        /* Read each block into the word-aligned scratch space */
+        if (msc_read(first_block++, (ulong *)msc_read_scratch, 1) != 0) {
+            unlock(&msc_read_lock);
             return -1;
+        }
+        /* Then copy it to the destination */
+        memcpy(a, msc_read_scratch, blocklen);
+
         a = (void *)((uint)a + blocklen);
         n -= blocklen;
         bytes_read += blocklen;
@@ -77,23 +94,116 @@ static long sdread_blocks(void* a, long n, vlong offset)
 
     if (n > 0) {
         /* Read a whole block. */
-        if (msc_read(last_block, (ulong *)msc_scratch, 1) != 0)
+        if (msc_read(last_block, (ulong *)msc_read_scratch, 1) != 0) {
+            unlock(&msc_read_lock);
             return -1;
+        }
 
-        /* Copy n bytes into the buffer. */
-        memcpy(a, msc_scratch, n);
+        /* Copy n bytes from the buffer. */
+        memcpy(a, msc_read_scratch, n);
         bytes_read += n;
     }
 
+    unlock(&msc_read_lock);
     return bytes_read;
+}
+
+static long sdwrite_blocks(void* a, long n, vlong offset)
+{
+    lock(&msc_write_lock);
+
+    ulong blocklen = mmc_sd->csd.block_len;
+    vlong within = offset % blocklen;
+    long bytes_written = 0;
+
+    if (within != 0) {
+        /* Read the block containing the start of the data */
+        if (msc_read((ulong)(offset / blocklen), (ulong *)msc_write_scratch, 1) != 0) {
+            unlock(&msc_write_lock);
+            return -1;
+        }
+
+        /* Copy at most n bytes */
+        bytes_written = blocklen - within;
+        if (n < bytes_written)
+            bytes_written = n;
+
+        /* Copy the initial data into the buffer then write the buffer back to
+           the card */
+        memcpy(msc_write_scratch + within, a, bytes_written);
+
+        if (msc_write((ulong)(offset / blocklen), (ulong *)msc_write_scratch, 1) != 0) {
+            unlock(&msc_write_lock);
+            return -1;
+        }
+
+        n -= bytes_written;
+        a = (void *)((ulong)a + bytes_written);
+        offset += bytes_written;
+    }
+
+    if (n == 0) {
+        unlock(&msc_write_lock);
+        return bytes_written;
+    }
+
+    /* The offset should be at the start of a block */
+    vlong first_block = offset / blocklen;
+    /* The last block contains the last byte to read */
+    vlong last_block = (offset + n - 1) / blocklen;
+    /* Calculate the blocks to write, ignoring the last one unless the last
+       byte is at the end of a block */
+    uvlong blocks = last_block - first_block;
+    if ((n % blocklen) == 0)
+        blocks++;
+
+    /* Copy a whole number of blocks */
+    while (blocks > 0)
+    {
+        /* Copy the data to the word-aligned scratch space */
+        memcpy(msc_write_scratch, a, blocklen);
+        /* Then write it to the card */
+        if (msc_write(first_block++, (ulong *)msc_write_scratch, 1) != 0) {
+            unlock(&msc_write_lock);
+            return -1;
+        }
+
+        a = (void *)((uint)a + blocklen);
+        n -= blocklen;
+        bytes_written += blocklen;
+        blocks--;
+    }
+
+    if (n > 0) {
+        /* Read the block containing the start of the data */
+        if (msc_read(last_block, (ulong *)msc_write_scratch, 1) != 0) {
+            unlock(&msc_write_lock);
+            return -1;
+        }
+
+        /* Copy n bytes into the buffer */
+        memcpy(msc_write_scratch, a, n);
+        bytes_written += n;
+
+        /* Write the whole block back to the card */
+        if (msc_write(last_block, (ulong *)msc_write_scratch, 1) != 0) {
+            unlock(&msc_write_lock);
+            return -1;
+        }
+    }
+
+    unlock(&msc_write_lock);
+    return bytes_written;
 }
 
 static void
 sdinit(void)
 {
     msc_init();
-    if (mmc_sd->rca != 0)
-        msc_scratch = malloc(mmc_sd->csd.block_len);
+    if (mmc_sd->rca != 0) {
+        msc_read_scratch = malloc(mmc_sd->csd.block_len);
+        msc_write_scratch = malloc(mmc_sd->csd.block_len);
+    }
 }
 
 static Chan*
@@ -142,7 +252,7 @@ sdread(Chan* c, void* a, long n, vlong offset)
         error(Eperm);
     case Qdata:
         bytes_read = sdread_blocks(a, n, offset);
-        if (bytes_read == -1)
+        if (bytes_read < 0)
             error(Eio);
         return bytes_read;
     default:
@@ -155,9 +265,19 @@ sdread(Chan* c, void* a, long n, vlong offset)
 static long
 sdwrite(Chan* c, void* a, long n, vlong offset)
 {
-    USED(c, a, n, offset);
-    error(Eperm);
-    return 0;
+    long bytes_written;
+
+    switch((ulong)c->qid.path)
+    {
+    case Qdata:
+        bytes_written = sdwrite_blocks(a, n, offset);
+        if (bytes_written < 0)
+            error(Eio);
+        break;
+    default:
+        error(Eperm);
+    }
+    return bytes_written;
 }
 
 /* The root (msc) of this structure's name must match the device entry in the

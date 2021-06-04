@@ -363,6 +363,72 @@ ulong msc_read(ulong card_addr, ulong *dest, ushort blocks)
     return (msc->status & MSC_Status_CRCReadError);
 }
 
+ulong msc_write(ulong card_addr, ulong *src, ushort blocks)
+{
+    MSC *msc = (MSC *)(MSC_BASE | KSEG1);
+
+    if (!mmc.ccs)
+        card_addr = card_addr * mmc.csd.block_len;
+
+    /* Stop the clock - Linux does a stop and start for each command but the
+       SoC documentation doesn't suggest this */
+    msc->clock_control = MSC_ClockCtrl_StopClock;
+    while (msc->status & MSC_Status_ClockEnabled)
+        ;
+
+    msc->number_of_blocks = blocks;
+    msc->block_length = mmc.csd.block_len;
+
+    msc->cmd_index = CMD_WRITE_BLOCK;
+    msc->cmd_arg = card_addr;
+    msc->cmd_control &= ~MSC_CmdCtrl_BusWidth;
+    msc->cmd_control |= MSC_CmdCtrl_FourBit;
+    msc->cmd_control &= ~MSC_CmdCtrl_ResponseFormat;    // response format
+    msc->cmd_control |= 1;                              // is R1
+    msc->cmd_control |= MSC_CmdCtrl_DataEnabled;
+    msc->cmd_control |= MSC_CmdCtrl_WriteRead;
+    msc->cmd_control &= ~MSC_CmdCtrl_StreamBlock;
+    msc->cmd_control &= ~MSC_CmdCtrl_Busy;
+    msc->cmd_control &= ~MSC_CmdCtrl_Init;
+
+    /* Start the clock and the operation */
+    msc->clock_control = MSC_ClockCtrl_StartClock | MSC_ClockCtrl_StartOp;
+    while (!(msc->status & MSC_Status_ClockEnabled))
+        ;
+
+    /* Wait until the command completes */
+    while (!(msc->status & MSC_Status_EndCmdRes))
+        ;
+
+    ulong blocks_left = blocks;
+
+    while ((blocks_left > 0) && !(msc->status & MSC_Status_CRCWriteErrors))
+    {
+        /* Write until a whole block has been written */
+        ulong written = 0;
+        ulong words = msc->block_length/4;
+
+        while ((written < words) && !(msc->status & MSC_Status_CRCWriteErrors))
+        {
+            if (!(msc->status & MSC_Status_DataFIFOFull)) {
+                msc->trans_data_fifo = src[written];
+                written++;
+            }
+        }
+        blocks_left--;
+    }
+
+    /* Wait until the transaction is complete */
+    while (!(msc->status & MSC_Status_PrgDone))
+        ;
+
+    /* Stop transmission after multiple blocks have been sent */
+    if (blocks > 1)
+        msc_send_command(CMD_STOP_TRANSMISSION, 1, 0);
+
+    return (msc->status & MSC_Status_CRCWriteErrors);
+}
+
 void msc_init(void)
 {
     //InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
