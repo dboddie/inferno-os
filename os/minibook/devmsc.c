@@ -27,8 +27,8 @@ Dirtab msctab[]={
 };
 
 extern MMC *mmc_sd;
-static char *msc_read_scratch;
-static char *msc_write_scratch;
+static ulong *msc_read_scratch;
+static ulong *msc_write_scratch;
 /* Use locks for the buffers */
 static Lock msc_read_lock;
 static Lock msc_write_lock;
@@ -37,13 +37,14 @@ static long sdread_blocks(void* a, long n, vlong offset)
 {
     lock(&msc_read_lock);
 
+    ulong addr = (ulong)a;
     ulong blocklen = mmc_sd->csd.block_len;
     vlong within = offset % blocklen;
     long bytes_read = 0;
 
     if (within != 0) {
         /* Read the block containing the start of the data. */
-        if (msc_read((ulong)(offset / blocklen), (ulong *)msc_read_scratch, 1) != 0) {
+        if (msc_read((ulong)(offset / blocklen), msc_read_scratch, 1) != 0) {
             unlock(&msc_read_lock);
             return -1;
         }
@@ -54,9 +55,9 @@ static long sdread_blocks(void* a, long n, vlong offset)
             bytes_read = n;
 
         /* Copy the initial data into the buffer. */
-        memcpy(a, msc_read_scratch + within, bytes_read);
+        memcpy((void *)addr, (uchar *)msc_read_scratch + within, bytes_read);
         n -= bytes_read;
-        a = (void *)((ulong)a + bytes_read);
+        addr += bytes_read;
         offset += bytes_read;
     }
 
@@ -75,18 +76,28 @@ static long sdread_blocks(void* a, long n, vlong offset)
     if ((n % blocklen) == 0)
         blocks++;
 
+    /* Copy data to non-aligned addresses via a scratch buffer */
+    ulong dest;
+    if (addr & 0x3)
+        dest = (ulong)msc_read_scratch;
+    else
+        dest = addr;
+
     /* Copy a whole number of blocks. */
     while (blocks > 0)
     {
-        /* Read each block into the word-aligned scratch space */
-        if (msc_read(first_block++, (ulong *)msc_read_scratch, 1) != 0) {
+        /* Read each block into word-aligned memory */
+        if (msc_read(first_block++, (ulong *)dest, 1) != 0) {
             unlock(&msc_read_lock);
             return -1;
         }
-        /* Then copy it to the destination */
-        memcpy(a, msc_read_scratch, blocklen);
+        if (addr & 0x3) {
+            /* Copy non-aligned data from the buffer */
+            memcpy((void *)addr, (void*)dest, blocklen);
+        } else
+            dest += blocklen;
 
-        a = (void *)((uint)a + blocklen);
+        addr += blocklen;
         n -= blocklen;
         bytes_read += blocklen;
         blocks--;
@@ -94,13 +105,13 @@ static long sdread_blocks(void* a, long n, vlong offset)
 
     if (n > 0) {
         /* Read a whole block. */
-        if (msc_read(last_block, (ulong *)msc_read_scratch, 1) != 0) {
+        if (msc_read(last_block, msc_read_scratch, 1) != 0) {
             unlock(&msc_read_lock);
             return -1;
         }
 
         /* Copy n bytes from the buffer. */
-        memcpy(a, msc_read_scratch, n);
+        memcpy((void *)addr, msc_read_scratch, n);
         bytes_read += n;
     }
 
@@ -112,13 +123,14 @@ static long sdwrite_blocks(void* a, long n, vlong offset)
 {
     lock(&msc_write_lock);
 
+    ulong addr = (ulong)a;
     ulong blocklen = mmc_sd->csd.block_len;
     vlong within = offset % blocklen;
     long bytes_written = 0;
 
     if (within != 0) {
         /* Read the block containing the start of the data */
-        if (msc_read((ulong)(offset / blocklen), (ulong *)msc_write_scratch, 1) != 0) {
+        if (msc_read((ulong)(offset / blocklen), msc_write_scratch, 1) != 0) {
             unlock(&msc_write_lock);
             return -1;
         }
@@ -130,15 +142,15 @@ static long sdwrite_blocks(void* a, long n, vlong offset)
 
         /* Copy the initial data into the buffer then write the buffer back to
            the card */
-        memcpy(msc_write_scratch + within, a, bytes_written);
+        memcpy((uchar *)msc_write_scratch + within, (void *)addr, bytes_written);
 
-        if (msc_write((ulong)(offset / blocklen), (ulong *)msc_write_scratch, 1) != 0) {
+        if (msc_write((ulong)(offset / blocklen), msc_write_scratch, 1) != 0) {
             unlock(&msc_write_lock);
             return -1;
         }
 
         n -= bytes_written;
-        a = (void *)((ulong)a + bytes_written);
+        addr += bytes_written;
         offset += bytes_written;
     }
 
@@ -160,15 +172,21 @@ static long sdwrite_blocks(void* a, long n, vlong offset)
     /* Copy a whole number of blocks */
     while (blocks > 0)
     {
-        /* Copy the data to the word-aligned scratch space */
-        memcpy(msc_write_scratch, a, blocklen);
-        /* Then write it to the card */
-        if (msc_write(first_block++, (ulong *)msc_write_scratch, 1) != 0) {
+        ulong dest;
+        if (addr & 0x3) {
+            /* Copy data from non-aligned addresses via a scratch buffer */
+            memcpy(msc_write_scratch, (void *)addr, blocklen);
+            dest = (ulong)msc_write_scratch;
+        } else
+            dest = addr;
+
+        /* Write word-aligned data to the card */
+        if (msc_write(first_block++, (ulong *)dest, 1) != 0) {
             unlock(&msc_write_lock);
             return -1;
         }
 
-        a = (void *)((uint)a + blocklen);
+        addr += blocklen;
         n -= blocklen;
         bytes_written += blocklen;
         blocks--;
@@ -176,17 +194,17 @@ static long sdwrite_blocks(void* a, long n, vlong offset)
 
     if (n > 0) {
         /* Read the block containing the start of the data */
-        if (msc_read(last_block, (ulong *)msc_write_scratch, 1) != 0) {
+        if (msc_read(last_block, msc_write_scratch, 1) != 0) {
             unlock(&msc_write_lock);
             return -1;
         }
 
         /* Copy n bytes into the buffer */
-        memcpy(msc_write_scratch, a, n);
+        memcpy(msc_write_scratch, (void *)addr, n);
         bytes_written += n;
 
         /* Write the whole block back to the card */
-        if (msc_write(last_block, (ulong *)msc_write_scratch, 1) != 0) {
+        if (msc_write(last_block, msc_write_scratch, 1) != 0) {
             unlock(&msc_write_lock);
             return -1;
         }
