@@ -138,7 +138,11 @@ trapinit(void)
 
 void trapintr(Ureg *ur)
 {
-    if (ur->cause & 0x400) {
+    if (ur->cause & 0x400)
+    {
+	/* Clear EXL in status to enable exceptions to occur in the handler
+	setstatus(getstatus() & ~EXL); */
+
         InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
         if (ic->pending & InterruptOST0) {
             clockintr(ur);
@@ -159,6 +163,9 @@ void trapintr(Ureg *ur)
 /*        if (ic->pending & InterruptMSC) {
             msc_intr();
         }*/
+
+	/* restore EXL in status
+	setstatus(getstatus() | EXL); */
     }
 }
 
@@ -237,8 +244,8 @@ trap(Ureg *ur)
 		splhi();
 	}
 */
-	/* restore EXL in status */
-	setstatus(getstatus() | EXL);
+	/* restore EXL in status
+	setstatus(getstatus() | EXL); */
 }
 
 void trapexc(Ureg *ur)

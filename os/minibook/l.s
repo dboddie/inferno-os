@@ -262,130 +262,15 @@ TEXT    vector180(SB), $-8
 
 TEXT    vector200(SB), $-8
 
-        MOVW    $interrupt(SB), R26
+        MOVW    $exception(SB), R26
         JMP     (R26)
         NOP
-
-TEXT    interrupt(SB), $-4      /* Don't generate save and restore PC instructions */
-
-        /* Save SP so that we can call routines */
-        MOVW    SP, R26
-
-        MOVW    $ESTACKTOP, SP
-        SUBU    $UREGSIZE, SP
-	OR	$7, SP          /* conservative rounding for compatibility with */
-	XOR	$7, SP          /* MIPS64 */
-
-        /* Push registers onto the exception stack */
-        /* R29 is SP, stored in R26 above */
-        MOVW    R26, Ureg_sp(SP)
-
-        MOVW    M(STATUS), R26
-        EHB
-        MOVW    R26, Ureg_status(SP)
-        MOVW    M(CAUSE), R26
-        MOVW    R26, Ureg_cause(SP)
-        MOVW    M(EPC), R26
-        MOVW    R26, Ureg_pc(SP)
-
-        MOVW    R31, Ureg_r31(SP)
-        MOVW    R30, Ureg_r30(SP)
-
-        MOVW    R28, Ureg_r28(SP)
-        MOVW    R25, Ureg_r25(SP)
-        MOVW    R24, Ureg_r24(SP)
-        MOVW    R23, Ureg_r23(SP)
-        MOVW    R22, Ureg_r22(SP)
-        MOVW    R21, Ureg_r21(SP)
-        MOVW    R20, Ureg_r20(SP)
-        MOVW    R19, Ureg_r19(SP)
-        MOVW    R18, Ureg_r18(SP)
-        MOVW    R17, Ureg_r17(SP)
-        MOVW    R16, Ureg_r16(SP)
-        MOVW    R15, Ureg_r15(SP)
-        MOVW    R14, Ureg_r14(SP)
-        MOVW    R13, Ureg_r13(SP)
-        MOVW    R12, Ureg_r12(SP)
-        MOVW    R11, Ureg_r11(SP)
-        MOVW    R10, Ureg_r10(SP)
-        MOVW    R9, Ureg_r9(SP)
-        MOVW    R8, Ureg_r8(SP)
-        MOVW    R7, Ureg_r7(SP)
-        MOVW    R6, Ureg_r6(SP)
-        MOVW    R5, Ureg_r5(SP)
-        MOVW    R4, Ureg_r4(SP)
-        MOVW    R3, Ureg_r3(SP)
-        MOVW    R2, Ureg_r2(SP)
-        MOVW    R1, Ureg_r1(SP)
-
-	MOVW	HI, R1
-	MOVW	LO, R2
-	MOVW	R1, Ureg_hi(SP)
-	MOVW	R2, Ureg_lo(SP)
-
-        MOVW    SP, R1
-        JAL     trapintr(SB)
-        SUBU    $Notuoffset, SP
-
-        ADDU    $Notuoffset, SP
-
-        /* Pop registers from the stack */
-
-	MOVW	Ureg_hi(SP), R1
-	MOVW	Ureg_lo(SP), R2
-	MOVW	R1, HI
-	MOVW	R2, LO
-
-        MOVW    Ureg_r31(SP), R31
-        MOVW    Ureg_r30(SP), R30
-
-        MOVW    Ureg_r28(SP), R28
-        MOVW    Ureg_r25(SP), R25
-        MOVW    Ureg_r24(SP), R24
-        MOVW    Ureg_r23(SP), R23
-        MOVW    Ureg_r22(SP), R22
-        MOVW    Ureg_r21(SP), R21
-        MOVW    Ureg_r20(SP), R20
-        MOVW    Ureg_r19(SP), R19
-        MOVW    Ureg_r18(SP), R18
-        MOVW    Ureg_r17(SP), R17
-        MOVW    Ureg_r16(SP), R16
-        MOVW    Ureg_r15(SP), R15
-        MOVW    Ureg_r14(SP), R14
-        MOVW    Ureg_r13(SP), R13
-        MOVW    Ureg_r12(SP), R12
-        MOVW    Ureg_r11(SP), R11
-        MOVW    Ureg_r10(SP), R10
-        MOVW    Ureg_r9(SP), R9
-        MOVW    Ureg_r8(SP), R8
-        MOVW    Ureg_r7(SP), R7
-        MOVW    Ureg_r6(SP), R6
-        MOVW    Ureg_r5(SP), R5
-        MOVW    Ureg_r4(SP), R4
-        MOVW    Ureg_r3(SP), R3
-        MOVW    Ureg_r2(SP), R2
-        MOVW    Ureg_r1(SP), R1
-
-        MOVW    Ureg_status(SP), R26
-        MOVW    R26, M(STATUS)
-        EHB
-        MOVW    Ureg_cause(SP), R26
-        MOVW    R26, M(CAUSE)
-        EHB
-        MOVW    Ureg_pc(SP), R26
-        MOVW    R26, M(EPC)
-        EHB
-
-        MOVW    Ureg_sp(SP), R26
-        MOVW    R26, SP
-        ERET
 
 TEXT    exception(SB), $-4      /* Don't generate save and restore PC instructions */
 
         /* Save SP so that we can call routines */
         MOVW    SP, R26
 
-        MOVW    $ESTACKTOP, SP
         SUBU    $UREGSIZE, SP
 	OR	$7, SP          /* conservative rounding for compatibility with */
 	XOR	$7, SP          /* MIPS64 */
