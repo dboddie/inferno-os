@@ -191,3 +191,47 @@ Initialising the keyboard queue in main as a temporary measure appears to fix
 this:
 
     kbdq = qopen(4*1024, 0, 0, 0);
+
+## SD card
+
+The read and write functions of the file system can specify offsets into card
+data that are not aligned with the size of a block. To handle this case,
+scratch buffers are used to hold the contents of the block containing the
+offset of the data on the card. Once a buffer has been use for the first block,
+whole blocks can be read.
+
+Reading to and writing from the SD card involves word-sized reads and writes
+from and to FIFOs. However, both the RAM address and card offset passed to the
+read and write functions of the file system can be non-word-aligned.
+
+    a = address in RAM
+    o = offset in card
+
+ 0. Both word-aligned:
+
+      a: xxxx xxxx              Can block-align and transfer whole blocks to
+      o: xxxx xxxx              and from RAM
+
+ 1. Address not word-aligned:
+
+      a: .xxx xxxx  (1-3)       Block-aligning does not fix the address
+      o: xxxx xxxx              misalignment: a is still misaligned
+
+ 2. Offset not word-aligned:
+
+      a: xxxx xxxx              Block-aligning causes o to be word-aligned but
+      o: ..xx xxxx  (1-3)       a to be misaligned
+
+ 3. Both not word-aligned (different offsets):
+
+      a: .xxx xxxx  (1-3)       Block-aligning causes o to be word-aligned but
+      o: ...x xxxx  (1-3)       a to be misaligned
+
+ 4. Both not word-aligned (same offset):
+
+      a: .xxx xxxx  (1-3)       Can block-align and transfer whole blocks to
+      o: .xxx xxxx  (1-3)       and from RAM
+
+A quick way to optimise this is to check the alignment of the address and
+offset after block alignment and ensure that all aligned full block transfers
+are copied directly between RAM and the card.
