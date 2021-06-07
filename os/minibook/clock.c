@@ -49,7 +49,9 @@ clockinit(void)
     /* Enable interrupts for the OST0 and OST1 timers */
     InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
     ic->mask_clear = InterruptOST0 | InterruptOST1;
-    intron(INTMASK);
+
+    /* Enable the relevant interrupt in the core */
+    intron(0x400);
 }
 
 void
