@@ -127,22 +127,21 @@ fpexcname(Ureg *ur, ulong fcr31, char *buf, uint size)
 void
 trapinit(void)
 {
-/*	memmove((ulong*)UTLBMISS, (ulong*)vector0, 0x80);
-	memmove((ulong*)XEXCEPTION, (ulong*)vector0, 0x80);
-	memmove((ulong*)CACHETRAP, (ulong*)vector100, 0x80);*/
-	memmove((ulong*)EXCEPTION, (ulong*)vector180, 0x80);
-	memmove((ulong*)INTERRUPT, (ulong*)vector200, 0x80);
+    m->exc_sp = ESTACKTOP;
 
-	setstatus(getstatus() & ~BEV);
+/*  memmove((ulong*)UTLBMISS, (ulong*)vector0, 0x80);
+    memmove((ulong*)XEXCEPTION, (ulong*)vector0, 0x80);
+    memmove((ulong*)CACHETRAP, (ulong*)vector100, 0x80);*/
+    memmove((ulong*)EXCEPTION, (ulong*)vector180, 0x80);
+    memmove((ulong*)INTERRUPT, (ulong*)vector200, 0x80);
+
+    setstatus(getstatus() & ~BEV);
 }
 
 void trapintr(Ureg *ur)
 {
     if (ur->cause & 0x400)
     {
-	/* Clear EXL in status to enable exceptions to occur in the handler
-	setstatus(getstatus() & ~EXL); */
-
         InterruptCtr *ic = (InterruptCtr *)(INTERRUPT_BASE | KSEG1);
         if (ic->pending & InterruptOST0) {
             clockintr(ur);
@@ -163,9 +162,6 @@ void trapintr(Ureg *ur)
 /*        if (ic->pending & InterruptMSC) {
             msc_intr();
         }*/
-
-	/* restore EXL in status
-	setstatus(getstatus() | EXL); */
     }
 }
 
@@ -246,17 +242,6 @@ trap(Ureg *ur)
 */
 	/* restore EXL in status
 	setstatus(getstatus() | EXL); */
-}
-
-void trapexc(Ureg *ur)
-{
-    /* FPU coprocessor causing CPU exception */
-    if (((ur->cause >> 28) & 3) == 1 && ((ur->cause >> 2) & EXCMASK) == CCPU) {
-        if (fpuemu(ur) >= 0)
-            return;
-    }
-    dumpregs(ur);
-    for (;;) {}
 }
 
 static void

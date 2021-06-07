@@ -87,7 +87,6 @@ void	setwatchlo0(ulong);
 ulong   getconfig(void);
 ulong   getebase(void);
 
-void    kbdinit(void);
 void    kbdpoll(void);
 void    mouseinit(void);
 void    mousepoll(void);

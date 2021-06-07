@@ -9,6 +9,7 @@ dev
 	dup
 	uart
 	draw screen
+	kbd peripherals/kbd
 #	pointer
 	backlight peripherals/backlight
 #	power peripherals/power
@@ -92,26 +93,26 @@ root
 	/dis/disk
 	/osinit.dis
 
-# For development work (from cerf1110/cerf):
-	/dis/sh.dis
+	/dis/cd.dis
+	/dis/dd.dis
+	/dis/kbdd.dis
 	/dis/lc
 	/dis/ls.dis
 	/dis/cat.dis
 	/dis/bind.dis
+	/dis/echo.dis
 	/dis/mount.dis
 	/dis/pwd.dis
-	/dis/echo.dis
-	/dis/cd.dis
-	/dis/dd.dis
 	/dis/cp.dis
 	/dis/mc.dis
 	/dis/mkdir.dis
 	/dis/mntgen.dis
 	/dis/ns.dis
-	/dis/ramfile.dis
-	/dis/rm.dis
 	/dis/p.dis
 	/dis/ps.dis
+	/dis/ramfile.dis
+	/dis/rm.dis
+	/dis/sh.dis
 	/dis/unmount.dis
 	/dis/xd.dis
 	/dis/disk/calc.tab.dis

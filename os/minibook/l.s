@@ -256,12 +256,14 @@ TEXT    barret(SB), $-8
    Use R26 (k0) and R27 (k1) as scratch registers */
 TEXT    vector180(SB), $-8
 
+	MOVW    $ESTACKTOP, R27
         MOVW    $exception(SB), R26
         JMP     (R26)
         NOP
 
 TEXT    vector200(SB), $-8
 
+	MOVW    $ISTACKTOP, R27
         MOVW    $exception(SB), R26
         JMP     (R26)
         NOP
@@ -271,6 +273,7 @@ TEXT    exception(SB), $-4      /* Don't generate save and restore PC instructio
         /* Save SP so that we can call routines */
         MOVW    SP, R26
 
+	MOVW	R27, SP
         SUBU    $UREGSIZE, SP
 	OR	$7, SP          /* conservative rounding for compatibility with */
 	XOR	$7, SP          /* MIPS64 */
@@ -280,7 +283,6 @@ TEXT    exception(SB), $-4      /* Don't generate save and restore PC instructio
         MOVW    R26, Ureg_sp(SP)
 
         MOVW    M(STATUS), R26
-        EHB
         MOVW    R26, Ureg_status(SP)
         MOVW    M(CAUSE), R26
         MOVW    R26, Ureg_cause(SP)
@@ -291,6 +293,8 @@ TEXT    exception(SB), $-4      /* Don't generate save and restore PC instructio
         MOVW    R30, Ureg_r30(SP)
 
         MOVW    R28, Ureg_r28(SP)
+        MOVW    R27, Ureg_r27(SP)
+        MOVW    SP, Ureg_r26(SP)
         MOVW    R25, Ureg_r25(SP)
         MOVW    R24, Ureg_r24(SP)
         MOVW    R23, Ureg_r23(SP)

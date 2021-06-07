@@ -310,9 +310,10 @@
 #define BTOFF   0x4c                    /* execution offset into boot image */
 #define	KTZERO	(KZERO+0x10000+BTOFF)   /* first address in kernel text */
 #define MEMSIZE	(128*MB)		/* fixed memory size */
-#define STACKTOP (MACHADDR+BY2PG)       /* top of kernel stack */
-#define ESTACKTOP (STACKTOP+BY2PG)      /* top of exception stack */
-#define	FPSTACKTOP (ESTACKTOP+BY2PG)    /* top of floating point exception stack */
+#define STACKTOP (MACHADDR+(BY2PG*2))       /* top of kernel stack */
+#define ESTACKTOP (STACKTOP+(BY2PG*2))      /* top of exception stack */
+#define ISTACKTOP (ESTACKTOP+(BY2PG*2))      /* top of exception stack */
+#define	FPSTACKTOP (ISTACKTOP+(BY2PG*2))    /* top of floating point exception stack */
 
 /* Memory map - starts at 0x80000000, ends at 0x88000000 (128MB) */
 #define MEMORY_TOP      (KZERO+0x7f00000) /* End of memory Inferno can use */

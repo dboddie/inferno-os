@@ -45,7 +45,11 @@ enum
     End     = '\r'
 };
 
-static kbd_column;
+static int kbd_column = 0;
+static int kbd_ready = 0;
+static int kbd_pressed = 0;
+static Lock kbd_lock;
+
 static uchar kbd_state[8][17] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -57,12 +61,19 @@ static uchar kbd_state[8][17] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
-void kbdinit(void)
+void kbd_init(void)
 {
     /* Set up touch pad button input and LED pins */
     GPIO *gpioa = (GPIO *)(GPIO_PORT_A_BASE | KSEG1);
-    gpioa->dir |= GPIO_A_CapsLED;
+    gpioa->dir |= GPIO_A_CapsLED | GPIO_A_ScrollLED;
     gpioa->pull |= GPIO_A_Keyboard_In_Mask;
+
+    GPIO *gpioc = (GPIO *)(GPIO_PORT_C_BASE | KSEG1);
+    gpioa->dir |= GPIO_C_NumLED;
+
+    /* Turn off LEDs */
+    gpioa->data |= GPIO_A_CapsLED | GPIO_A_ScrollLED;
+    gpioc->data |= GPIO_C_NumLED;
 
     /* Make all keyboard pins input pins */
     GPIO *gpiod = (GPIO *)(GPIO_PORT_D_BASE | KSEG1);
@@ -73,6 +84,8 @@ void kbdinit(void)
     qnoblock(kbdq, 1);
 
     kbd_column = 0;
+    kbd_ready = 1;
+    kbd_pressed = 0;
 }
 
 static uchar keys[8][17] = {
@@ -93,7 +106,7 @@ static uchar shift_keys[8][17] = {
     { No,     Esc,  '|',  KF|4, 'G',  'H', KF|6, No,   ' ',  No,   Alt,   '"',  No,    No,   No,  Down,  No },
     { No,     'Z',  'X',  'C',  'V',  'M', '<',  '>',  Num,  '\n', No,    '|',  No,    No,   No,  Left,  No },
     { No,     No,   No,   No,   'B',  'N', No,   Menu, No,   No,   No,    '?',  No,    No,   No,  Right, No },
-    { Ctrl,   '`',  No,   No,   '%',  '^', '=',  KF|8, '\b', KF|9, No,    '_',  No,    KF|2, Ins, No,    KF|1 },
+    { Ctrl,   '`',  No,   No,   '%',  '^', '+',  KF|8, '\b', KF|9, No,    '_',  No,    KF|2, Ins, No,    KF|1 },
     { KF|5,   '!',  '@',  '#',  '$',  '&', '*',  '(',  No,   No,   PrtSc, ')',  KF|10, No,   No,  No,    Fn },
 };
 
@@ -110,10 +123,20 @@ static uchar fn_keys[8][17] = {
 
 static int kbd_d_values[17] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,29};
 
+static int kbd_buf[8] = {0,0,0,0,0,0,0,0};
+
+void kbd_add_pressed(int key)
+{
+    if (kbd_pressed < 8)
+        kbd_buf[kbd_pressed++] = key;
+}
+
 void kbdpoll(void)
 {
     GPIO *gpioa = (GPIO *)(GPIO_PORT_A_BASE | KSEG1);
     GPIO *gpiod = (GPIO *)(GPIO_PORT_D_BASE | KSEG1);
+
+    if (!kbd_ready) kbd_init();
 
     /* Make a column pin an output and bring it low */
     int bitfield = 1 << kbd_d_values[kbd_column];
@@ -136,15 +159,53 @@ void kbdpoll(void)
         {
             /* Keys that are pressed now, but weren't before */
             if ((kbd_state[1][16] != 0) || (kbd_state[2][16] != 0))
-                kbdputc(kbdq, shift_keys[row][kbd_column]);
+                kbd_add_pressed(shift_keys[row][kbd_column]);
             else if (kbd_state[7][16] != 0)
-                kbdputc(kbdq, fn_keys[row][kbd_column]);
+                kbd_add_pressed(fn_keys[row][kbd_column]);
             else
-                kbdputc(kbdq, keys[row][kbd_column]);
+                kbd_add_pressed(keys[row][kbd_column]);
+
         }
     }
     /* Make the column pin an input again */
     gpiod->dir &= ~bitfield;
 
-    if (kbd_column++ == 17) kbd_column = 0;
+    if (kbd_column++ == 17)
+        kbd_column = 0;
+}
+
+void kbd_read_pressed(void)
+{
+    for (int i = 0; i < kbd_pressed; i++)
+        kbdputc(kbdq, kbd_buf[i]);
+
+    kbd_pressed = 0;
+}
+
+void ledon(int n, int s)
+{
+    GPIO *gpioa = (GPIO *)(GPIO_PORT_A_BASE | KSEG1);
+    GPIO *gpioc = (GPIO *)(GPIO_PORT_C_BASE | KSEG1);
+    switch (n) {
+    case 0:
+        if (s)
+            gpioa->data &= ~GPIO_A_CapsLED;
+        else
+            gpioa->data |= GPIO_A_CapsLED;
+        break;
+    case 1:
+        if (s)
+            gpioa->data &= ~GPIO_A_ScrollLED;
+        else
+            gpioa->data |= GPIO_A_ScrollLED;
+        break;
+    case 2:
+        if (s)
+            gpioc->data &= ~GPIO_C_NumLED;
+        else
+            gpioc->data |= GPIO_C_NumLED;
+        break;
+    default:
+        ;
+    }
 }

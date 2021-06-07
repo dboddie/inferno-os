@@ -51,9 +51,6 @@ void main(void)
     memset(m, 0, sizeof(Mach));
     memset(edata, 0, end-edata);
 
-    /* Set the exception stack pointer to a page above that */
-    m->exc_sp = ESTACKTOP;
-
     quotefmtinstall();
     confinit();
     xinit();                    /* in port/xalloc.c */
@@ -68,8 +65,6 @@ void main(void)
     clockinit();                /* in clock.c */
     printinit();                /* in port/devcons.c */
     print("\nInferno OS %s Vita Nuova\n", VERSION);
-
-    kbdinit();
 
     procinit();                 /* in port/proc.c */
     links();                    /* in the generated nanonote.c file */
