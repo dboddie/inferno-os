@@ -157,12 +157,7 @@ void lcdinit(void)
                       LCDConfig_DataEnPos | LCDConfig_VSyncNeg |
                       LCDConfig_GenericTFT);
 
-    for (int j = 0, k = 0; j < 768000; j += 6400, k = 1 - k) {
-        if (k)
-            memset((void *)((LCD_MEM_START + j) | KSEG1), 0x02, 6400);
-        else
-            memset((void *)((LCD_MEM_START + j) | KSEG1), 0x20, 6400);
-    }
+    memset((void *)(LCD_MEM_START | KSEG1), 0, 768000);
 
     /* Enable the LCD */
     lcdctrl->state = 0;
