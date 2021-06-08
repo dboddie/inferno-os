@@ -127,8 +127,12 @@ static int kbd_buf[8] = {0,0,0,0,0,0,0,0};
 
 void kbd_add_pressed(int key)
 {
+    lock(&kbd_lock);
+
     if (kbd_pressed < 8)
         kbd_buf[kbd_pressed++] = key;
+
+    unlock(&kbd_lock);
 }
 
 void kbdpoll(void)
@@ -176,10 +180,13 @@ void kbdpoll(void)
 
 void kbd_read_pressed(void)
 {
+    ilock(&kbd_lock);
+
     for (int i = 0; i < kbd_pressed; i++)
         kbdputc(kbdq, kbd_buf[i]);
 
     kbd_pressed = 0;
+    iunlock(&kbd_lock);
 }
 
 void ledon(int n, int s)
