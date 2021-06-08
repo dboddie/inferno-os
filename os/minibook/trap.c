@@ -153,6 +153,7 @@ void trapintr(Ureg *ur)
             if (timer1->control & TimerUnder) {
                 timer1->control &= ~TimerUnder;
                 kbdpoll();
+                clockmsec();
             }
         }
         else {

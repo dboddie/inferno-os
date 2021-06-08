@@ -8,7 +8,7 @@
 #include "hardware.h"
 
 enum {
-    SystimerFreq    = 12000000 / 256,
+    SystimerFreq    = 32768,
     MaxPeriod       = SystimerFreq/HZ,
     MinPeriod       = SystimerFreq/(100*HZ)
 };
@@ -24,6 +24,15 @@ clockintr(Ureg *ureg)
         timer0->control &= ~TimerUnder;
         hzclock(ureg);
     }
+}
+
+static uint msec_counter = 0;
+
+/* Called by the timer interrupt handler in trapintr */
+void
+clockmsec(void)
+{
+    msec_counter++;
 }
 
 void
@@ -82,6 +91,15 @@ timerset(uvlong /* next */)
         period = MaxPeriod;*/
 }
 
-void mdelay(uint /* delay */)
+void mdelay(uint delay)
 {
+    uint now = msec_counter;
+    uint next = now + delay;
+
+    /* If an integer overflow occurred, wait until the counter wraps around */
+    while (next < now)
+        now = msec_counter;
+
+    while (now < next)
+        now = msec_counter;
 }

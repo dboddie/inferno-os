@@ -55,6 +55,7 @@ void	_idlehands(void);
 void	coherence(void);
 void	clockinit(void);
 void    clockintr(Ureg *);
+void    clockmsec(void);
 void	dcflush(void*, ulong);
 void	icflush(void *, ulong);
 ulong	tlbvirt(void);
