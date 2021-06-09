@@ -235,3 +235,8 @@ read and write functions of the file system can be non-word-aligned.
 A quick way to optimise this is to check the alignment of the address and
 offset after block alignment and ensure that all aligned full block transfers
 are copied directly between RAM and the card.
+
+## Hang when pressing a key during a scroll
+
+Typically, this occurs in a memmove caused by a scroll, and the cause is
+apparently a TLB exception.
