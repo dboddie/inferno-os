@@ -75,7 +75,3 @@ typedef struct {
 } MMC;
 
 MMC *mmc_sd;
-
-void msc_init(void);
-ulong msc_read(ulong card_addr, ulong *dest, ushort blocks);
-ulong msc_write(ulong card_addr, ulong *src, ushort blocks);
