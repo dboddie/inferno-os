@@ -66,6 +66,10 @@ init(context: ref Context, nil: list of string)
     bind("#S", "/n/sd", sys->MAFTER);           # microSD card
     bind("#p", "/prog", sys->MREPL);		# prog device
     bind("#d", "/fd", sys->MREPL);
+    bind("#κ", "/dev", sys->MAFTER);        # keyboard (kbd)
+
+    # Start the keyboard daemon
+    sh->system(nil, "kbdd &");
 
     # Start partfs
     sh->system(nil, "mount -c {partfs /n/sd/data} /n/part");
@@ -76,7 +80,7 @@ init(context: ref Context, nil: list of string)
     if (part_spec != nil) {
         f := sys->open("/n/part/ctl", sys->OWRITE);
         sys->write(f, part_spec, len part_spec);
-        sh->system(nil, "mount -c {disk/kfs -R /n/part/p1} /n/kfs");
+        sh->system(nil, "mount -c {disk/kfs /n/part/p1} /n/kfs");
     }
 
 # A simple nested loop test:
