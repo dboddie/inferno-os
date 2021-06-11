@@ -33,9 +33,17 @@ Init: module
 
 err(s: string) { sys->fprint(sys->fildes(2), "init: %s\n", s); }
 
-dobind(f, t: string, flags: int) {
-	if(sys->bind(f, t, flags) < 0)
-		err(sys->sprint("can't bind %s on %s: %r", f, t));
+bindsd() {
+    sys->bind("/n/local/sd/dis", "/dis", Sys->MREPL);
+    sys->bind("/n/local/sd/lib", "/lib", Sys->MREPL);
+    sys->bind("/n/local/sd/usr", "/usr", Sys->MREPL);
+    sys->bind("/n/local/sd/man", "/man", sys->MREPL);
+    sys->bind("/n/local/sd/fonts", "/fonts", sys->MREPL);
+    sys->bind("/n/local/sd/icons", "/icons", sys->MREPL);
+    sys->bind("/n/local/sd/module", "/module", sys->MREPL);
+    sys->bind("/n/local/sd/locale", "/locale", sys->MREPL);
+    sys->bind("/n/local/sd/services", "/services", sys->MREPL);
+    sys->bind("/n/local/sd/tmp", "/tmp", sys->MREPL|sys->MCREATE);
 }
 
 init(context: ref Context, nil: list of string)
@@ -44,52 +52,30 @@ init(context: ref Context, nil: list of string)
     sh = load Sh Sh->PATH;
     disks = load Disks Disks->PATH;
     disks->init();
-#    bufio = load Bufio Bufio->PATH;
 
-    sh->system(nil, "mount -c {mntgen} /n");
-	
     print("Ported to the Letux 400 Minibook by David Boddie\n\n");
 
-#    bind("#c", "/dev", sys->MAFTER);
-#    bind("#r", "/dev", sys->MAFTER);		# RTC
+    sh->system(nil, "mount -c {mntgen} /n");
+    sh->system(nil, "mount -c {mntgen} /n/local");
+    bind("#S", "/dev", sys->MAFTER);            # microSD card
+	
+    sh->system(nil, "disk/fdisk -p /dev/sdM0/data > /dev/sdM0/ctl");
+    sh->system(nil, "mount -c {disk/kfs -c -A -n main /dev/sdM0/plan9} /n/local/sd");
+    sh->system(nil, "disk/kfscmd allow");
 
-    #
-    # default namespace
-    #
-    bind("#c", "/dev", sys->MREPL);		# console
-#   bind("#t", "/dev", sys->MAFTER);		# serial port
+    bindsd();
+
+    bind("#c", "/dev", sys->MAFTER);		# console
     bind("#B", "/dev", sys->MAFTER);            # backlight
-#    bind("#L", "/dev", sys->MAFTER);            # LEDs
 #    bind("#↓", "/dev", sys->MAFTER);          # power
     bind("#Y", "/dev", sys->MAFTER);            # system information
-#    bind("#u", "/n/usb", sys->MAFTER);          # USB peripheral device
-    bind("#S", "/n/sd", sys->MAFTER);           # microSD card
+#    bind("#u", "/n/usb", sys->MAFTER);          # USB subsystem
     bind("#p", "/prog", sys->MREPL);		# prog device
     bind("#d", "/fd", sys->MREPL);
     bind("#κ", "/dev", sys->MAFTER);        # keyboard (kbd)
 
     # Start the keyboard daemon
     sh->system(nil, "kbdd &");
-
-    # Start partfs
-    sh->system(nil, "mount -c {partfs /n/sd/data} /n/part");
-
-    # Find partition(s) to mount
-    part_spec := array of byte find_partition("/n/sd/data");
-
-    if (part_spec != nil) {
-        f := sys->open("/n/part/ctl", sys->OWRITE);
-        sys->write(f, part_spec, len part_spec);
-        sh->system(nil, "mount -c {disk/kfs /n/part/p1} /n/kfs");
-    }
-
-# A simple nested loop test:
-#    for (i := 1; i <= 12; i++) {
-#        for (j := 1; j <= 12; j++)
-#            print("%3d ", i * j);
-#
-#        print("\n");
-#    }
 
 # Use the Draw module to draw on the screen.
     draw = load Draw Draw->PATH;
@@ -103,31 +89,9 @@ init(context: ref Context, nil: list of string)
 
 #    print("Starting a shell...\n");
     shell := load Sh "/dis/sh.dis";
-    #args := list of {"sh", "-c", "dd -if /n/sd/data -bs 32 -count 1 | xd"};
     args := list of {"sh"};
     spawn shell->init(context, args);
-#    for (;;) {}
-
-# Spawn a background process and collect its output.
-#    c := chan of int;
-#    spawn background(c);
-#    for (;;) {
-#        alt {
-#            s := <- c =>
-#                print("%d\n", s);
-#        }
-#    }
-
-# Open console device and write something:
-#    fd := sys->open("#c", sys->OWRITE);
-#    buf := bufio->fopen(fd, sys->OWRITE);
 }
-
-#background(c : chan of int)
-#{
-#    for (i := 0; i < 100; i++)
-#        c <-= i;
-#}
 
 find_partition(disk_file_name: string): string
 {
