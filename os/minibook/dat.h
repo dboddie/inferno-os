@@ -164,3 +164,21 @@ struct
 	int machs;          /* bitmap of active CPUs */
 	int exiting;        /* shutdown */
 } active;
+
+/* Needed by port/devsd.c */
+
+/*
+ *  hardware info about a device
+ */
+typedef struct {
+        ulong   port;
+        int     size;
+} Devport;
+
+struct DevConf
+{
+    ulong   intnum;                 /* interrupt number */
+    char    *type;                  /* card type, malloced */
+    int     nports;                 /* Number of ports */
+    Devport *ports;                 /* The ports themselves */
+};

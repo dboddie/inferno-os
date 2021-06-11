@@ -197,3 +197,5 @@ void setpanic(void)
 }
 
 void    reboot(void) { return; }
+
+char* getconf(char*) { return nil; }
