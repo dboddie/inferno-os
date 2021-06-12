@@ -15,5 +15,6 @@ init(nil: ref Draw->Context, argv: list of string)
     b := array[1] of byte;
     for (;;) {
         sys->read(f, b, 1);
+        sys->sleep(10);
     }
 }
