@@ -49,6 +49,7 @@ HFILES=\
 	fns.h\
 	io.h\
 	hardware.h\
+	build.h
 
 CFLAGS=-l -wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp -I$ROOT/Inferno/$OBJTYPE/include -I$ROOT/Inferno/include
 KERNDATE=`{$NDATE}
@@ -64,3 +65,6 @@ i$CONF: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 <../port/portmkfile
 
 main.$O:	include/ureg.h
+
+build.h:V:
+	echo '#define BUILD "'`date`'"' > build.h

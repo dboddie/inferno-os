@@ -5,6 +5,7 @@
 #include "fns.h"
 #include "version.h"
 #include "io.h"
+#include "build.h"
 
 #include "../port/uart.h"
 PhysUart* physuart[1];
@@ -65,6 +66,7 @@ void main(void)
     clockinit();                /* in clock.c */
     printinit();                /* in port/devcons.c */
     print("\nInferno OS %s Vita Nuova\n", VERSION);
+    print("Built at %s\n", BUILD);
 
     procinit();                 /* in port/proc.c */
     links();                    /* in the generated nanonote.c file */
