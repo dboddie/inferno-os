@@ -112,7 +112,8 @@ static int read_csd(uchar *buf, MMC_CSD *csd)
 
     csd->version = (uchar)read_bits(buf, 126, 0x3);
 
-    ulong _csize, csize_mult, blocklen;
+    uvlong _csize;
+    ulong csize_mult, blocklen;
 
     switch (csd->version)
     {
@@ -134,7 +135,8 @@ static int read_csd(uchar *buf, MMC_CSD *csd)
         if (blocklen < 9)
             blocklen = read_bits(buf, 22, 0xf);
 
-        csd->card_size = (_csize + 1) * 1024;
+        /* Card size in bytes: (_csize + 1) * 512K */
+        csd->card_size = (_csize + 1) * 1024 * 512;
         csd->block_len = (ushort)(1 << blocklen);
         csd->speed = read_bits(buf, 96, 0xff);
         break;
@@ -163,7 +165,7 @@ static void print_buf(uchar *buf)
 
 static void print_csd(MMC_CSD *csd)
 {
-    print("CSD: ver=%d size=%lud bl=%d\n", csd->version, csd->card_size,
+    print("CSD: ver=%d size=%llud bl=%d\n", csd->version, csd->card_size,
                                            csd->block_len);
 }
 
@@ -553,7 +555,7 @@ msc_bio(SDunit *unit, int lun, int write, void *data, long nb, uvlong bno)
 {
     int len;
     uchar *buf;
-    ulong b = bno;
+    ulong b;
 
     USED(lun);
     assert(unit->subno == 0);

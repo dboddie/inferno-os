@@ -64,7 +64,7 @@ typedef struct {
     uchar version;
     uchar speed;
     ushort block_len;
-    ulong card_size;     /* in blocks */
+    uvlong card_size;     /* in bytes */
 } MMC_CSD;
 
 typedef struct {
