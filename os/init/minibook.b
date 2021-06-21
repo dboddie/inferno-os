@@ -75,22 +75,21 @@ init(context: ref Context, nil: list of string)
     bind("#κ", "/dev", sys->MAFTER);        # keyboard (kbd)
 
     # Start the keyboard daemon
-    sh->system(nil, "kbdd &");
+    spawn kbd();
 
-# Use the Draw module to draw on the screen.
-    draw = load Draw Draw->PATH;
-    display := draw->Display.allocate(nil);
-    for (b := 0; b < 256; b++) {
-        display.image.draw(Rect(Point(b*2, 0), Point(b*2 + 2, 4)), display.rgb(b, 0, 0), display.opaque, Point(0, 0));
-        display.image.draw(Rect(Point(b*2, 4), Point(b*2 + 2, 8)), display.rgb(0, b, 0), display.opaque, Point(0, 0));
-        display.image.draw(Rect(Point(b*2, 8), Point(b*2 + 2, 12)), display.rgb(0, 0, b), display.opaque, Point(0, 0));
-        display.image.draw(Rect(Point(b*2, 12), Point(b*2 + 2, 16)), display.rgb(b, b, b), display.opaque, Point(0, 0));
-    }
-
-#    print("Starting a shell...\n");
     shell := load Sh "/dis/sh.dis";
     args := list of {"sh"};
     spawn shell->init(context, args);
+}
+
+kbd()
+{
+    f := sys->open("/dev/kbd", Sys->OREAD);
+    b := array[1] of byte;
+    for (;;) {
+        sys->sleep(10);
+        sys->read(f, b, 1);
+    }
 }
 
 find_partition(disk_file_name: string): string
