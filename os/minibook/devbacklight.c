@@ -9,6 +9,8 @@
 #include    "../port/error.h"
 
 extern void backlight_init(void);
+extern ulong backlight_get_brightness(void);
+extern void backlight_set_brightness(int brightness);
 
 enum{
     Qdir,
@@ -66,7 +68,7 @@ backlightread(Chan* c, void* a, long n, vlong offset)
     case Qdir:
         return devdirread(c, a, n, backlighttab, nelem(backlighttab), devgen);
     case Qdata:
-	snprint(lbuf, 4, "%ud", backlight_get_brightness());
+	snprint(lbuf, 4, "%lud", backlight_get_brightness());
 	return readstr(offset, a, n, lbuf);
     default:
         n=0;
