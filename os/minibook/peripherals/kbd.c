@@ -45,10 +45,14 @@ enum
     End     = '\r'
 };
 
-static int kbd_column = 0;
+typedef struct {
+    Lock;
+    int pressed;
+} Kbd;
+
+static Kbd _kbd;
 static int kbd_ready = 0;
-static int kbd_pressed = 0;
-static Lock kbd_lock;
+static int kbd_column = 0;
 
 static uchar kbd_state[8][17] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -85,12 +89,12 @@ void kbd_init(void)
 
     kbd_column = 0;
     kbd_ready = 1;
-    kbd_pressed = 0;
+    _kbd.pressed = -1;
 }
 
 static uchar keys[8][17] = {
-    { Pause,  'q',  'w',  'e',  'r', 'u',  'i', 'o',   No,   No,   No,    'p',  No,    No,   No,  No,    No },
-    { No,     '\t', Caps, KF|3, 't', 'y',  ']', KF|7,  No,   '\b', No,    '[',  Zzz,   No,   No,  No,    LShift },
+    { Pause,  'q',  'w',  'e',  'r',  'u', 'i',  'o',  No,   No,   No,    'p',  No,    No,   No,  No,    No },
+    { No,     '\t', Caps, KF|3, 't',  'y', ']', KF|7,  No,   '\b', No,    '[',  Zzz,   No,   No,  No,    LShift },
     { No,     'a',  's',  'd',  'f',  'j', 'k',  'l',  No,   No,   No,    ';',  No,    No,   No,  Up,    RShift },
     { No,     Esc,  '\\', KF|4, 'g',  'h', KF|6, No,   ' ',  No,   Alt,   '\'', No,    No,   No,  Down,  No },
     { No,     'z',  'x',  'c',  'v',  'm', ',',  '.',  Num,  '\n', No,    '\\', No,    No,   No,  Left,  No },
@@ -123,16 +127,14 @@ static uchar fn_keys[8][17] = {
 
 static int kbd_d_values[17] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,29};
 
-static int kbd_buf[8] = {0,0,0,0,0,0,0,0};
-
 void kbd_add_pressed(int key)
 {
-    lock(&kbd_lock);
+    lock(&_kbd);
 
-    if (kbd_pressed < 8)
-        kbd_buf[kbd_pressed++] = key;
+    if (_kbd.pressed == -1)
+        _kbd.pressed = key;
 
-    unlock(&kbd_lock);
+    unlock(&_kbd);
 }
 
 void kbdpoll(void)
@@ -143,7 +145,7 @@ void kbdpoll(void)
     if (!kbd_ready) kbd_init();
 
     /* Make a column pin an output and bring it low */
-    int bitfield = 1 << kbd_d_values[kbd_column];
+    ulong bitfield = 1 << kbd_d_values[kbd_column];
     gpiod->dir |= bitfield;
     gpiod->data &= ~bitfield;
 
@@ -166,27 +168,27 @@ void kbdpoll(void)
                 kbd_add_pressed(shift_keys[row][kbd_column]);
             else if (kbd_state[7][16] != 0)
                 kbd_add_pressed(fn_keys[row][kbd_column]);
-            else
+            else {
                 kbd_add_pressed(keys[row][kbd_column]);
-
+            }
         }
     }
     /* Make the column pin an input again */
     gpiod->dir &= ~bitfield;
 
-    if (kbd_column++ == 17)
-        kbd_column = 0;
+    kbd_column = (kbd_column + 1) % 17;
 }
 
 void kbd_read_pressed(void)
 {
-    ilock(&kbd_lock);
+    ilock(&_kbd);
 
-    for (int i = 0; i < kbd_pressed; i++)
-        kbdputc(kbdq, kbd_buf[i]);
+    if (_kbd.pressed != -1) {
+        kbdputc(kbdq, _kbd.pressed);
+        _kbd.pressed = -1;
+    }
 
-    kbd_pressed = 0;
-    iunlock(&kbd_lock);
+    iunlock(&_kbd);
 }
 
 void ledon(int n, int s)
