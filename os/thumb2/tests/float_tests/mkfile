@@ -1,0 +1,18 @@
+<../../../../mkconfig
+
+CC=tc
+LD=tl
+O=t
+OUT=test_floats
+
+OBJ=\
+	main.$O\
+
+SOURCES=${OBJ:%.$O=%.c}
+
+default:V:
+	$CC $SOURCES
+	$LD $LDFLAGS -f -l -s -R4 -H0 -T0x08000000 -o $OUT $OBJ
+
+clean:V:
+	rm -f $OBJ $OUT
