@@ -15,7 +15,7 @@ CC=		tc
 CFLAGS=		-wFV -I$ROOT/Inferno/$OBJTYPE/include -I$ROOT/Inferno/include -I$ROOT/include
 ANSICPP= -p
 
-LD=5l
+LD=tl
 LDFLAGS=
 
 SYSLIBS=	#-lc

@@ -17,7 +17,7 @@ CC=		tc
 CFLAGS=		-wFV -I$ROOT/Inferno/thumb/include -I$ROOT/include
 ANSICPP= -p
 
-LD=		5l
+LD=		tl
 LDFLAGS=
 
 SYSLIBS=	#-lc
