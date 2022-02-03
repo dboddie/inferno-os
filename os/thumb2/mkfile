@@ -1,0 +1,66 @@
+<../../mkconfig
+
+#CONF=micromod-stm32f405
+#CONFLIST=micromod-stm32f405
+CONF=thumb2.conf
+CONFLIST=thumb2.conf
+loadaddr=0x08000000
+# Put data above workspace at the start of RAM.
+dataaddr=0x20001000
+
+SYSTARG=$OSTARG
+OBJTYPE=thumb
+INSTALLDIR=$ROOT/Inferno/$OBJTYPE/bin
+
+<$ROOT/mkfiles/mkfile-$SYSTARG-$OBJTYPE
+
+<| $SHELLNAME ../port/mkdevlist $CONF
+
+OBJ=\
+	l.$O\
+	main.$O\
+	clock.$O\
+	div.$O\
+	dump.$O\
+	thumb2.$O\
+	trap.$O\
+	devices/clocks.$O\
+	devices/gpio.$O\
+	devices/usart.$O\
+	$IP\
+	$DEVS\
+	$ETHERS\
+	$LINKS\
+	$PORT\
+	$MISC\
+	$OTHERS\
+	$CONF.root.$O\
+
+LIBNAMES=${LIBS:%=lib%.a}
+LIBDIRS=$LIBS
+
+# Strip off the devices prefix of any object paths.
+NOPREFIXOBJ=${OBJ:devices/%=%}
+
+HFILES=\
+	mem.h\
+	dat.h\
+	fns.h\
+	io.h\
+	fpi.h\
+
+CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
+LDFLAGS=-H0 -l -s -a
+KERNDATE=`{$NDATE}
+
+default:V: kernel
+
+kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
+	echo $ROOT/mkfiles/mkfile-$SYSTARG-$OBJTYPE
+	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
+	$LD $LDFLAGS -o $target -R0 -T$loadaddr -D$dataaddr $NOPREFIXOBJ $CONF.$O $LIBFILES
+	python3 tests/tools/fix_vector_table.py kernel 0x188
+
+<../port/portmkfile
+
+main.$O:	include/ureg.h
