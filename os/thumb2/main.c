@@ -13,8 +13,7 @@ PhysUart* physuart[1];
 #include "devices/fns.h"
 
 int interrupts_enabled;
-extern char bdata[];
-/*
+
 Conf conf;
 Mach *m = (Mach*)MACHADDR;
 Proc *up = 0;
@@ -50,7 +49,7 @@ static void poolsizeinit(void)
     poolsize(heapmem, (nb*heap_pool_pcnt)/100, 0);
     poolsize(imagmem, (nb*image_pool_pcnt)/100, 1);
 }
-*/
+
 void main(void)
 {
     enablefpu();
@@ -58,38 +57,21 @@ void main(void)
     setup_usart();
 
     /* Mach is defined in dat.h, edata and end are in port/lib.h */
-//    memset(m, 0, sizeof(Mach));
-//    memset(edata, 0, end-edata);
-
-    wrhex((int)etext); wrch(' ');
-    wrhex((int)bdata); wrch(' ');
-    wrhex((int)edata); wrch(' ');
-    wrhex((int)end); newline();
+    memset(m, 0, sizeof(Mach));
+    memset(edata, 0, end-edata);
 
     trapinit();                 // in trap.c
 
-    wrstr("CCR="); wrhex(getccr()); newline();
-
-    int a = 1;
-    int b = 0;
-    a = a / b;
-/*
     quotefmtinstall();
     confinit();
     xinit();                    // in port/xalloc.c
     poolinit();                 // in port/alloc.c
     poolsizeinit();
 
-wrdec(interrupts_enabled); newline();
-
-wrch('1');
     timersinit();               // in port/portclock.c
-wrch('2');
     clockinit();                // in clock.c
-wrch('3');
     printinit();                // in port/devcons.c
-wrch('4');
-*/
+
     setup_LED();
     set_LED(1);
     for (;;) {}

@@ -29,6 +29,12 @@ _start_loop:
 
 _end_start_loop:
 
+    BL  ,introff(SB)
+
+    MOVW    $0, R1
+    MOVW    $interrupts_enabled(SB), R2
+    MOVW    R1, 0(R2)
+
     B   ,main(SB)
 
 TEXT _dummy(SB), THUMB, $-4

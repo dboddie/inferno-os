@@ -9,6 +9,12 @@
 
 #include "devices/fns.h"
 
+enum {
+    SystimerFreq    = 100,
+    MaxPeriod       = SystimerFreq / HZ,
+    MinPeriod       = SystimerFreq / (100*HZ),
+};
+
 void clockinit(void)
 {
     start_timer();
@@ -23,14 +29,14 @@ void clockcheck(void)
 }
 
 uvlong fastticks(uvlong *hz)
-{/*
+{
     if(hz)
         *hz = HZ;
     return m->ticks;
-*/}
+}
 
 void timerset(uvlong next)
-{/*
+{
     uvlong now;
     long period;
 
@@ -40,4 +46,4 @@ void timerset(uvlong next)
         period = MinPeriod;
     else if (period > MaxPeriod)
         period = MaxPeriod;
-*/}
+}

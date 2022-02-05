@@ -18,13 +18,13 @@ void trapinit(void)
     /* Enable division by zero trapping. */
     *(int *)CCR_ADDR |= CCR_DIV_0_TRP;
 }
-/*
+
 void setpanic(void)
 {
     spllo();
     consoleprint = 1;
 }
-*/
+
 void kprocchild(Proc *p, void (*func)(void*), void *arg)
 {/*
     p->sched.pc = (ulong)linkproc;
