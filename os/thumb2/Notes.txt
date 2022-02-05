@@ -1,0 +1,23 @@
+Remove everything from the mkfile except the core sources.
+Create mem.h, fns.h, io.h, dat.h, fpi.h files.
+Comment out JIT code in libinterp.
+mkdir Inferno/thumb/lib
+Add void systick(void) to the fns.h and clock.c files.
+Ensure that the correct linker is used.
+Try to compile the sources and start adding functions to fix missing symbols.
+Fix the linker to get it to handle missing operations, though it's strange that
+the double precision operations should cause problems and need to be explicitly
+included in the optab.
+
+
+Problems with ilock turned out to be problems in todsetfreq, called from
+todinit, that calls mk64fract which performs a division on one of its arguments
+that triggers a division by zero in dodiv (in libkern/vlrt-thumb.c) called via
+_divvu (also in vlrt-thumb.c).
+
+The incorrect value is held in tod.hz (in port/tod.c) when todinit calls
+todsetfreq with the existing value of tod.hz, which is zero at that point.
+Experimenting with the A7000+ port, it seems that tod.hz is set to the value
+defined as HZ in the mem.h file. It appears that the fastticks function (in
+clock.c) needs to assign the value of HZ to the contents of the address it
+receives.
