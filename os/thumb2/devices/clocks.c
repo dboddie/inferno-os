@@ -55,8 +55,8 @@ void setup_system_clock(void)
 void start_timer(void)
 {
     SysTick *tick = (SysTick *)SYSTICK;
-    /* The scaled system clock is 42MHz, so set a reset value for 0.25s. */
-    tick->reload = 10500000 - 1;
+    /* The scaled system clock is 42MHz, so set a reset value for 0.01s. */
+    tick->reload = 420000 - 1;
     tick->current = 0;
     tick->control = 7;  /* 4=processor clock (0=AHB/8, 4=AHB),
                            2=SysTick exception, 1=enable */

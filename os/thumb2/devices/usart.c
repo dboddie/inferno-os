@@ -48,8 +48,8 @@ void setup_usart(void)
     /* For over8=0, usartdiv = fCK / (16 * baud) */
     USART *usart = (USART *)USART3;
 
-    int fck = 42000000;
-    int baud = 115200;
+/*  int fck = 42000000;
+    int baud = 115200;*/
     usart->brr = 0x16c;
 
     /* 8 data bits, 1 stop bit */
@@ -105,7 +105,7 @@ void wrhex(int value)
     }
 }
 
-void write_dec(int value)
+void wrdec(int value)
 {
     char ch[10];
     int v = value;
@@ -117,7 +117,7 @@ void write_dec(int value)
     }
 
     int s = 9;
-    for (; s >= 0, v != 0; s--) {
+    for (; s >= 0 && v != 0; s--) {
         int b = v % 10;
         ch[s] = 48 + b;
         v = v / 10;

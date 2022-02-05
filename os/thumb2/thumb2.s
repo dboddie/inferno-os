@@ -29,17 +29,22 @@ TEXT splhi(SB), THUMB, $-4
 	MOVW	$(MACHADDR), R6
 	MOVW	R14, R7
         MOVW    R7, (R6)    /* m->splpc */
-	CPS(1, CPS_I)       /* disable interrupts */
-        MOVW    $0, R0
+
         MOVW    $interrupts_enabled(SB), R1
-        MOVW    R0, (R1)
+        MOVW    (R1), R0    /* load the previous state to be returned */
+
+	CPS(1, CPS_I)       /* disable interrupts */
+        MOVW    $0, R7
+        MOVW    R7, (R1)
 	RET
 
 TEXT spllo(SB), THUMB, $-4
-	CPS(0, CPS_I)       /* enable interrupts */
-        MOVW    $CPS_I, R0
         MOVW    $interrupts_enabled(SB), R1
-        MOVW    R0, (R1)
+        MOVW    (R1), R0    /* load the previous state to be returned */
+
+	CPS(0, CPS_I)       /* enable interrupts */
+        MOVW    $CPS_I, R7
+        MOVW    R7, (R1)
 	RET
 
 TEXT splx(SB), THUMB, $-4
@@ -89,31 +94,44 @@ TEXT getfpscr(SB), THUMB, $-4
         VMRS(0)
         RET
 
+TEXT introff(SB), THUMB, $-4
+    CPS(1, CPS_I)
+    RET
+
+TEXT intron(SB), THUMB, $-4
+    CPS(0, CPS_I)
+    RET
+
 TEXT coherence(SB), THUMB, $-4
 	ISB
         DSB
 	RET
 
+/* ulong _tas(ulong*); */
+
 TEXT _tas(SB), THUMB, $-4
+        PUSH(6, 1)              /* Push R1,R2,R14 */
 	MOVW    R0, R1
         DMB
 
 _tas_loop:
         LDREX(0, 1, 0)          /* 0(R1) -> R0 */
         CMP     $0, R0
-        BEQ     _tas_unlock
-
-        CLREX                   /* Cannot unlock so clear request for access. */
-	RET
+        BNE     _tas_lock_busy
 
 _tas_unlock:
         MOVW    $0xaa, R2
         STREX(0, 2, 1, 0)       /* R2 -> 0(R1) ? 1 -> R0 : 0 -> R0 */
         CMP     $0, R0
         BNE     _tas_loop
+        BEQ     _tas_exit
 
+_tas_lock_busy:
+        CLREX                   /* Cannot unlock so clear request for access. */
+
+_tas_exit:
         DMB
-        RET
+        POP(6, 1)               /* Pop R1,R2,R14 */
 
 /*
 TEXT _idlehands(SB), $-4

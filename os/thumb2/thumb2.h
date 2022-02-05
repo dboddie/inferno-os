@@ -56,6 +56,14 @@
      WORD $(0x0000e840 | ((Rt & 0xf) << 28) | (Rn & 0xf) | ((Rd & 0xf) << 24) | \
                          (((offset >> 2) & 0xff) << 16))
 
+/* ARM Architecture Reference Manual Thumb-2 Supplement, 4.6.99, T2 */
+#define PUSH(regs, lr) \
+    WORD $(0x0000e92d | ((lr & 1) << 30) | ((regs & 0x1fff) << 16))
+
+/* ARM Architecture Reference Manual Thumb-2 Supplement, 4.6.98, T2 */
+#define POP(regs, pc) \
+    WORD $(0x0000e8bd | ((pc & 1) << 31) | ((regs & 0x1fff) << 16))
+
 /*
  * Coprocessors
  */
@@ -72,9 +80,6 @@
  */
 #define CpMainctl   0
 
-#define CPUID_ADDR 0xe000ed00
-#define CPACR_ADDR 0xe000ed88
-
 /* ARM Architecture Reference Manual Thumb-2 Supplement, page A7-534 */
 #define VMRS(r) WORD $(0x0a10eef1 | (r)<<28) /* FP to ARM */
 /* ARM Architecture Reference Manual Thumb-2 Supplement, page A7-535 */
@@ -85,10 +90,31 @@
 /* ARM Architecture Reference Manual Thumb-2 Supplement, page A7-521 */
 #define VLDR(fp, Rn, offset) WORD $(0x0b00ed10 | (fp & 0xf) << 28 | ((offset >> 2) & 0xff) << 16 | (Rn))
 
+/* System control and ID registers
+   ARMv7-M Architecture Reference Manual, B3.2.2 */
+#define CPUID_ADDR 0xe000ed00
+#define CCR_ADDR   0xe000ed14
+#define CCR_DIV_0_TRP (1 << 4)
+#define SHCSR_ADDR 0xe000ed24
+#define SHCSR_USGFAULTENA (1 << 18)
+#define SHCSR_MEMFAULTENA (1 << 16)
+/* UFSR is the top 16 bits of CFSR */
+#define CFSR_ADDR  0xe000ed28
+#define UFSR_ADDR  0xe000ed2a
+#define UFSR_UNDEFINSTR  1
+#define HFSR_ADDR  0xe000ed2c
+#define MMFAR_ADDR 0xe000ed34
+#define CPACR_ADDR 0xe000ed88
+
 #define FPCCR_ADDR 0xe000ef34
 #define FPCAR_ADDR 0xe000ef38
 #define FPDSCR_ADDR 0xe000ef3c
 #define MVFR0_ADDR 0xe000ef40
 #define MVFR1_ADDR 0xe000ef44
+
+/* MRS and MSR encodings, ARMv7-M Architecture Reference Manual, B5.1.1 */
+#define MRS_MSP 8
+#define MRS_PSP 9
+#define MRS_CONTROL 20
 
 #endif

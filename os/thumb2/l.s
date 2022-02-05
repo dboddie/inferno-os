@@ -29,10 +29,6 @@ _start_loop:
 
 _end_start_loop:
 
-    MOVW    $0, R1
-    MOVW    $interrupts_enabled(SB), R2
-    MOVW    R1, 0(R2)
-
     B   ,main(SB)
 
 TEXT _dummy(SB), THUMB, $-4
@@ -43,3 +39,14 @@ TEXT _systick(SB), THUMB, $0
 
     BL  ,systick(SB)
     RET
+
+TEXT _hard_fault(SB), THUMB, $-4
+    B   ,hard_fault(SB)
+
+TEXT _usage_fault(SB), THUMB, $-4
+    MRS(0, MRS_MSP)                 /* Assuming MSP not PSP, save SP before
+                                       usage_fault changes it. */
+
+    PUSH(0xf0, 1)               /* followed by R4-R7, */
+    BL ,usage_fault(SB)         /* then call a C function to skip an instruction */
+    POP(0xf0, 1)                /* Recover R4-R7 */

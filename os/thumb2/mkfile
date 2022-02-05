@@ -27,14 +27,15 @@ OBJ=\
 	devices/clocks.$O\
 	devices/gpio.$O\
 	devices/usart.$O\
-	$IP\
-	$DEVS\
-	$ETHERS\
-	$LINKS\
-	$PORT\
-	$MISC\
-	$OTHERS\
-	$CONF.root.$O\
+	devices/sys.$O\
+##	$IP\
+#	$DEVS\
+##	$ETHERS\
+##	$LINKS\
+#	$PORT\
+##	$MISC\
+##	$OTHERS\
+#	$CONF.root.$O\
 
 LIBNAMES=${LIBS:%=lib%.a}
 LIBDIRS=$LIBS
@@ -50,7 +51,7 @@ HFILES=\
 	fpi.h\
 
 CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
-LDFLAGS=-H0 -l -s -a
+LDFLAGS=-H0 -l -s
 KERNDATE=`{$NDATE}
 
 default:V: kernel
@@ -58,7 +59,8 @@ default:V: kernel
 kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 	echo $ROOT/mkfiles/mkfile-$SYSTARG-$OBJTYPE
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
-	$LD $LDFLAGS -o $target -R0 -T$loadaddr -D$dataaddr $NOPREFIXOBJ $CONF.$O $LIBFILES
+	$LD $LDFLAGS -o $target -R0 -T$loadaddr -D$dataaddr $NOPREFIXOBJ
+# $CONF.$O $LIBFILES
 	python3 tests/tools/fix_vector_table.py kernel 0x188
 
 <../port/portmkfile

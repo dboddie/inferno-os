@@ -7,6 +7,13 @@
 #include "ureg.h"
 #include "thumb2.h"
 
+#include "devices/fns.h"
+
+void clockinit(void)
+{
+    start_timer();
+}
+
 void systick(void)
 {
 }
