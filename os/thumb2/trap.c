@@ -36,10 +36,10 @@ void kprocchild(Proc *p, void (*func)(void*), void *arg)
 
 void usage_fault(int msp)
 {
+/*
     wrstr("Usage fault at "); wrhex(*(int *)(msp + 24)); newline();
     wrstr("UFSR="); wrhex(*(int *)UFSR_ADDR); newline();
     wrstr("Instruction: "); wrhex(**(int **)(msp + 24)); newline();
-/*
     *(int *)(msp + 24) += 4;
     *(int *)(msp + 28) = 0x01000000;
 */
@@ -48,9 +48,10 @@ void usage_fault(int msp)
 
 void hard_fault(void)
 {
+/*
     wrstr("Hard fault\r\n");
     wrhex(*(int *)HFSR_ADDR); newline();
     wrhex(*(int *)UFSR_ADDR);
-
+*/
     for (;;) {}
 }

@@ -21,3 +21,11 @@ Experimenting with the A7000+ port, it seems that tod.hz is set to the value
 defined as HZ in the mem.h file. It appears that the fastticks function (in
 clock.c) needs to assign the value of HZ to the contents of the address it
 receives.
+
+
+Writing a function to implement serwrite using the USART leads to an assertion
+in (port/devcons.c), but at least it wrote it to the USART. Actually, it looks
+like the assert is not due to the serwrite function but just something that
+happens to be visible because there is a function to print it.
+
+Implementing a UART device interface like the miniuart in the rpi port.

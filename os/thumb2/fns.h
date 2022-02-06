@@ -101,7 +101,8 @@ int 	dmawait(int);
 
 /* Hardware-specific setup */
 void    hwinit(void);
-void    systick(void);
+void    systick(int);
+void    usage_fault(int);
 
 #define PTR2UINT(p)     ((uintptr)(p))
 #define UINT2PTR(i)     ((void*)(i))

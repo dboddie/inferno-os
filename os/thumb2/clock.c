@@ -10,7 +10,7 @@
 #include "devices/fns.h"
 
 enum {
-    SystimerFreq    = 100,
+    SystimerFreq    = 42000000,
     MaxPeriod       = SystimerFreq / HZ,
     MinPeriod       = SystimerFreq / (100*HZ),
 };
@@ -20,8 +20,12 @@ void clockinit(void)
     start_timer();
 }
 
-void systick(void)
+void systick(int msp)
 {
+    static Ureg ureg;
+    ureg.pc = *(int *)(msp + 24);
+
+    hzclock(ureg);
 }
 
 void clockcheck(void)

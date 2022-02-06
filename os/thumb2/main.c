@@ -8,6 +8,7 @@
 
 #include "../port/uart.h"
 PhysUart* physuart[1];
+extern void uartconsinit(void);
 
 #include "devices/stm32f405.h"
 #include "devices/fns.h"
@@ -54,7 +55,6 @@ void main(void)
 {
     enablefpu();
     setup_system_clock();
-    setup_usart();
 
     /* Mach is defined in dat.h, edata and end are in port/lib.h */
     memset(m, 0, sizeof(Mach));
@@ -68,13 +68,19 @@ void main(void)
     poolinit();                 // in port/alloc.c
     poolsizeinit();
 
+    uartconsinit();
+    serwrite = usart_serwrite;
+
     timersinit();               // in port/portclock.c
     clockinit();                // in clock.c
     printinit();                // in port/devcons.c
 
+    print("OK\r\n");
+
     setup_LED();
     set_LED(1);
-    for (;;) {}
+    for (;;) {
+    }
 }
 
 void reboot(void)

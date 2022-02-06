@@ -21,7 +21,7 @@
 /* Control 2 */
 #define USART_StopBits 0x3000
 
-void enable_usart(void)
+static void enable_usart(void)
 {
     /* The USART peripheral is on the APB1 bus and must be enabled.
        See the entry for USART3 in the memory map in the reference manual. */
@@ -131,4 +131,10 @@ void wrdec(int value)
 void newline(void)
 {
     wrch(13); wrch(10);
+}
+
+void usart_serwrite(char *s, int n)
+{
+    for (int i = 0; i < n; i++)
+        wrch(s[i]);
 }

@@ -26,15 +26,15 @@ OBJ=\
 	trap.$O\
 	devices/clocks.$O\
 	devices/gpio.$O\
-	devices/usart.$O\
+#	devices/usart.$O\
 	devices/sys.$O\
 #	$IP\
 	$DEVS\
 #	$ETHERS\
-#	$LINKS\
+	$LINKS\
 	$PORT\
-#	$MISC\
-#	$OTHERS\
+	$MISC\
+	$OTHERS\
 	$CONF.root.$O\
 
 LIBNAMES=${LIBS:%=lib%.a}
@@ -51,7 +51,7 @@ HFILES=\
 	fpi.h\
 
 CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
-LDFLAGS=-H0 -l -s -a
+LDFLAGS=-H0 -l -s
 KERNDATE=`{$NDATE}
 
 default:V: kernel

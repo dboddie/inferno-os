@@ -41,10 +41,13 @@ TEXT _dummy(SB), THUMB, $-4
 
     B   ,_dummy(SB)
 
-TEXT _systick(SB), THUMB, $0
+TEXT _systick(SB), THUMB, $-4
+    MRS(0, MRS_MSP)                 /* Assuming MSP not PSP, save SP before
+                                       usage_fault changes it. */
 
+    PUSH(0xf0, 1)               /* followed by R4-R7, */
     BL  ,systick(SB)
-    RET
+    POP(0xf0, 1)                /* Recover R4-R7 */
 
 TEXT _hard_fault(SB), THUMB, $-4
     B   ,hard_fault(SB)
