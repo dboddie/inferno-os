@@ -44,9 +44,9 @@ struct
 } table = {
 	3,
 	{
-		{ "main",  0,	 4*1024*1024, 31,  128*1024, 15*256*1024 },
-		{ "heap",  1,	16*1024*1024, 31,  128*1024, 15*1024*1024 },
-		{ "image", 2,	 8*1024*1024, 31, 300*1024, 15*512*1024 },
+		{ "main",  0,	24*1024, 31, 1024, 23*1024 },
+		{ "heap",  1,	24*1024, 31, 1024, 23*1024 },
+		{ "image", 2,	8*1024, 31, 3*1024, 15*1024 },
 	}
 };
 
@@ -60,21 +60,47 @@ static void _poolfault(void *, char *, ulong);
 void (*poolfault)(void *, char *, ulong) = _poolfault;
 
 /*	non tracing
- *
+ */
 enum {
 	Npadlong	= 0,
 	MallocOffset = 0,
 	ReallocOffset = 0
 };
- *
+ /*
  */
 
-/* tracing */
+/* tracing *
 enum {
 	Npadlong	= 2,
 	MallocOffset = 0,
 	ReallocOffset = 1
 };
+*/
+
+void dumpblocks(Bhdr *t, int indent)
+{
+    Bhdr *b = t;
+    while (b != nil) {
+
+        for (int i = 0; i < indent; i++)
+            wrstr(" ");
+
+        wrhex((int)b);
+        if (((int)b & 3) != 0) { wrstr(" (bad)\r\n"); break; } else wrstr("\r\n");
+
+        dumpblocks(b->left, indent + 1);
+        dumpblocks(b->right, indent + 1);
+        b = b->fwd;
+        if (b == t) break;
+    }
+
+}
+
+void showpool(Pool *p)
+{
+    wrstr(poolname(p)); newline();
+    dumpblocks(p->root, 1);
+}
 
 int
 memusehigh(void)
@@ -120,25 +146,34 @@ pooldel(Pool *p, Bhdr *t)
 {
 	Bhdr *s, *f, *rp, *q;
 
+        /* No parent, so not the leader, and not the root block in the pool,
+           so join the adjacent blocks, removing this block. */
 	if(t->parent == nil && p->root != t) {
 		t->prev->fwd = t->fwd;
 		t->fwd->prev = t->prev;
 		return;
 	}
 
+        /* Not the only block in the list, so replace it with the next one. */
 	if(t->fwd != t) {
 		f = t->fwd;
 		s = t->parent;
+                /* Assign this block's parent to the next block. If there is
+                   no parent, this block was the root block, so make the next
+                   block the root block. */
 		f->parent = s;
 		if(s == nil)
 			p->root = f;
 		else {
+                /* Replace the parent's left or right links to refer to the
+                   next block instead of this one. */
 			if(s->left == t)
 				s->left = f;
 			else
 				s->right = f;
 		}
 
+                /* Adjust the block's left and right nodes to refer to the next block. */
 		rp = t->left;
 		f->left = rp;
 		if(rp != nil)
@@ -148,11 +183,14 @@ pooldel(Pool *p, Bhdr *t)
 		if(rp != nil)
 			rp->parent = f;
 
+                /* Join the block's adjacent blocks, removing this block. */
 		t->prev->fwd = t->fwd;
 		t->fwd->prev = t->prev;
 		return;
 	}
 
+        /* The only block in the list, so promote a replacement from the left
+           or right links. */
 	if(t->left == nil)
 		rp = t->right;
 	else {
@@ -182,6 +220,9 @@ pooldel(Pool *p, Bhdr *t)
 			s->parent = rp;
 		}
 	}
+        /* As above, if this block has a parent, update its left or right link
+           to refer to the replacement block that was promoted in the last
+           section. */
 	q = t->parent;
 	if(q == nil)
 		p->root = rp;
