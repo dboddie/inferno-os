@@ -23,8 +23,9 @@ TEXT getcallerpc(SB), THUMB, $-4
 	MOVW    0(SP), R0
 	RET
 
-// See splhi man page for information about these functions:
+// See the splhi man page for information about these functions:
 
+/* Disable interrupts and return the previous state. */
 TEXT splhi(SB), THUMB, $-4
 	MOVW	$(MACHADDR), R6
 	MOVW	R14, R7
@@ -38,35 +39,39 @@ TEXT splhi(SB), THUMB, $-4
         MOVW    R7, (R1)
 	RET
 
+/* Enable interrupts and return the previous state. */
 TEXT spllo(SB), THUMB, $-4
         MOVW    $interrupts_enabled(SB), R1
         MOVW    (R1), R0    /* load the previous state to be returned */
 
 	CPS(0, CPS_I)       /* enable interrupts */
-        MOVW    $CPS_I, R7
+        MOVW    $1, R7
         MOVW    R7, (R1)
 	RET
 
+/* Set the state passed in R0. */
 TEXT splx(SB), THUMB, $-4
 	MOVW	$(MACHADDR), R6
 	MOVW	R14, R7
         MOVW    R7, (R6)    /* m->splpc */
 
 TEXT splxpc(SB), THUMB, $-4
-        CMP     $CPS_I, R0
+        CMP     $0, R0
         BNE splx_enable
+
 	CPS(1, CPS_I)       /* disable interrupts */
         MOVW    $interrupts_enabled(SB), R1
         MOVW    R0, (R1)
         RET
 splx_enable:
-	CPS(0, CPS_I)       /* enable interrupts */
         MOVW    $interrupts_enabled(SB), R1
         MOVW    R0, (R1)
+	CPS(0, CPS_I)       /* enable interrupts */
 	RET
 
 TEXT islo(SB), THUMB, $-4
 	MOVW	$interrupts_enabled(SB), R0
+        MOVW    (R0), R0
 	RET
 
 TEXT getR12(SB), THUMB, $-4
@@ -106,6 +111,33 @@ TEXT coherence(SB), THUMB, $-4
 	ISB
         DSB
 	RET
+
+/* Stack selection */
+
+TEXT getmsp(SB), THUMB, $-4
+    MRS(0, MRS_MSP)
+    RET
+
+TEXT getpsp(SB), THUMB, $-4
+    MRS(0, MRS_PSP)
+    RET
+
+TEXT setmsp(SB), THUMB, $-4
+    MSR(0, MRS_MSP)
+    RET
+
+TEXT setpsp(SB), THUMB, $-4
+    MSR(0, MRS_PSP)
+    RET
+
+TEXT getcontrol(SB), THUMB, $-4
+    MRS(0, MRS_CONTROL)
+    RET
+
+TEXT setcontrol(SB), THUMB, $-4
+    MSR(0, MRS_CONTROL)
+    ISB
+    RET
 
 /* ulong _tas(ulong*); */
 

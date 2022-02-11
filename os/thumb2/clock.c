@@ -20,14 +20,6 @@ void clockinit(void)
     start_timer();
 }
 
-void systick(int msp)
-{
-    static Ureg ureg;
-    ureg.pc = *(int *)(msp + 24);
-
-    hzclock(ureg);
-}
-
 void clockcheck(void)
 {
 }

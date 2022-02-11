@@ -12,12 +12,11 @@
 #define GiB             1073741824u /*! Gibi 000000000040000000 */
 
 #define KZERO           0x08000000          /*! kernel address space */
-#define BY2PG           (4*KiB)             /*! bytes per page */
+#define BY2PG           512                 /*! bytes per page */
 #define BI2BY           8                   /*! bits per byte */
 #define BI2WD           32                  /* bits per word */
 #define BY2WD           4                   /* bytes per word */
 #define BY2V            8                   /*! only used in xalloc.c */
-#define MACHADDR        RAM_START           /*! Mach structure */
 
 #define KTZERO          (ROM_START + VEC_SIZE)  /* kernel text start */
 
@@ -29,8 +28,12 @@
 #define CACHELINESZ     32
 #define BLOCKALIGN	32
 
-#define KSTKSIZE    (8*KiB)
-#define KSTACK      KSTKSIZE
+#define KSTKSIZE	512
+#define KSTACK		KSTKSIZE
 
 /* Memory map - starts at 0x20000000, ends at 0x20020000 (128KB) */
 #define MEMORY_TOP      0x20020000  /* End of memory Inferno can use */
+
+#define MACHADDR        RAM_START           /*! Mach structure */
+#define STACK_TOP       (MACHADDR + 1024)
+#define PSP_TOP         (STACK_TOP - 256)

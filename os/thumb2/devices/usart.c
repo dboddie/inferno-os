@@ -135,6 +135,9 @@ void newline(void)
 
 void usart_serwrite(char *s, int n)
 {
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n; i++) {
+        if (s[i] == '\n')
+            wrch('\r');
         wrch(s[i]);
+    }
 }

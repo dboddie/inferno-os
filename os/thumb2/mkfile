@@ -6,7 +6,7 @@ CONF=thumb2.conf
 CONFLIST=thumb2.conf
 loadaddr=0x08000000
 # Put data above workspace at the start of RAM.
-dataaddr=0x20001000
+dataaddr=0x20000400
 
 SYSTARG=$OSTARG
 OBJTYPE=thumb
@@ -51,7 +51,7 @@ HFILES=\
 	fpi.h\
 
 CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
-LDFLAGS=-H0 -l -s
+LDFLAGS=-H0 -l -s -a
 KERNDATE=`{$NDATE}
 
 default:V: kernel

@@ -26,6 +26,32 @@ receives.
 Writing a function to implement serwrite using the USART leads to an assertion
 in (port/devcons.c), but at least it wrote it to the USART. Actually, it looks
 like the assert is not due to the serwrite function but just something that
-happens to be visible because there is a function to print it.
+happens to be visible because there is a function to print it. The assertion is
+actually in the tadd function in port/portclock.c.
 
 Implementing a UART device interface like the miniuart in the rpi port.
+
+
+The "arena too large" error is temporarily solved by tuning the pool allocation
+table in port/alloc.c to select chunk sizes that are large enough.
+
+
+Spent a lot of time trying to find out what was corrupting the pool->root->left
+members in port/alloc.c only to find that the setmalloctag function was doing
+it. Disabled tracing in that file.
+
+The source of unaligned accesses related to locks occur in port/chan.c in the
+newcname function when smalloc is called, returning a non-word-aligned address.
+Since the Cname struct is based on the Ref struct and the incref function
+relies on the Ref members to perform locking, the resulting address passed via
+lock to _tas causes the unaligned access.
+
+Found that the namec function in port/chan.c corrupts the pool structure when
+assigning the aname argument to the name variable.
+
+(Spent some time trying to determine if preemption was causing stack issues and
+fixing interrupt handling.)
+
+It turns out that the amount of stack allocated per-process was too small and
+the stack was overrunning into adjacent pool blocks. I updated the KSTKSIZE
+definition in mem.h to 512 bytes.

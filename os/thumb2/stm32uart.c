@@ -32,7 +32,7 @@ static Uart* pnp(void)
 
 static void enable(Uart *, int)
 {
-    setup_usart();
+//    setup_usart();
 }
 
 static void disable(Uart *) {}

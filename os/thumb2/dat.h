@@ -133,10 +133,7 @@ struct Mach
 	int     fpcnt;                  /* how many consecutive at that addr */
 
 	/* stacks for exceptions */
-	ulong   fiqstack[5];
 	ulong   irqstack[5];
-	ulong   abtstack[5];
-	ulong   undstack[5];
 	ulong	sysstack[5];
 	int	stack[1];
 };

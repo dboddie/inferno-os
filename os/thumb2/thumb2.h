@@ -95,6 +95,7 @@
 #define CPUID_ADDR 0xe000ed00
 #define CCR_ADDR   0xe000ed14
 #define CCR_DIV_0_TRP (1 << 4)
+#define CCR_UNALIGN_TRP (1 << 3)
 #define SHCSR_ADDR 0xe000ed24
 #define SHCSR_USGFAULTENA (1 << 18)
 #define SHCSR_MEMFAULTENA (1 << 16)
@@ -104,6 +105,7 @@
 #define UFSR_UNDEFINSTR  1
 #define HFSR_ADDR  0xe000ed2c
 #define MMFAR_ADDR 0xe000ed34
+#define BFAR_ADDR  0xe000ed38
 #define CPACR_ADDR 0xe000ed88
 
 #define FPCCR_ADDR 0xe000ef34
@@ -116,5 +118,7 @@
 #define MRS_MSP 8
 #define MRS_PSP 9
 #define MRS_CONTROL 20
+
+#define CONTROL_SPSEL 2
 
 #endif

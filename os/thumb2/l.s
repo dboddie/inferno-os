@@ -1,13 +1,14 @@
+#include "mem.h"
 #include "thumb2.h"
 #include "vectors.s"
 
 THUMB=4
-STACK_TOP=0x20020000
 
 TEXT _start(SB), THUMB, $-4
 
     MOVW    $setR12(SB), R1
     MOVW    R1, R12	/* static base (SB) */
+    /* After reset, we are in thread mode with main stack pointer (MSP) used. */
     MOVW    $STACK_TOP, R1
     MOVW    R1, SP
 
@@ -41,21 +42,23 @@ TEXT _dummy(SB), THUMB, $-4
 
     B   ,_dummy(SB)
 
-TEXT _systick(SB), THUMB, $-4
-    MRS(0, MRS_MSP)                 /* Assuming MSP not PSP, save SP before
-                                       usage_fault changes it. */
+/* These exception handlers will be entered in handler mode, using the main
+   stack pointer (MSP). */
 
-    PUSH(0xf0, 1)               /* followed by R4-R7, */
+TEXT _systick(SB), THUMB, $-4
+    MRS(0, MRS_MSP)     /* Pass the process stack pointer (MSP) to a C function. */
+    PUSH(0x1ff0, 1)
     BL  ,systick(SB)
-    POP(0xf0, 1)                /* Recover R4-R7 */
+    POP(0x1ff0, 1)
 
 TEXT _hard_fault(SB), THUMB, $-4
-    B   ,hard_fault(SB)
+    MRS(0, MRS_MSP)     /* Pass the process stack pointer (MSP) to a C function. */
+    PUSH(0x1ff0, 1)
+    BL ,hard_fault(SB)
+    POP(0x1ff0, 1)
 
 TEXT _usage_fault(SB), THUMB, $-4
-    MRS(0, MRS_MSP)                 /* Assuming MSP not PSP, save SP before
-                                       usage_fault changes it. */
-
-    PUSH(0xf0, 1)               /* followed by R4-R7, */
-    BL ,usage_fault(SB)         /* then call a C function to skip an instruction */
-    POP(0xf0, 1)                /* Recover R4-R7 */
+    MRS(0, MRS_MSP)     /* Pass the process stack pointer (MSP) to a C function. */
+    PUSH(0x1ff0, 1)
+    BL ,usage_fault(SB)
+    POP(0x1ff0, 1)

@@ -103,6 +103,14 @@ int 	dmawait(int);
 void    hwinit(void);
 void    systick(int);
 void    usage_fault(int);
+void    hard_fault(int);
+
+int getcontrol(void);
+void setcontrol(int);
+int getmsp(void);
+void setmsp(int);
+int getpsp(void);
+void setpsp(int);
 
 #define PTR2UINT(p)     ((uintptr)(p))
 #define UINT2PTR(i)     ((void*)(i))

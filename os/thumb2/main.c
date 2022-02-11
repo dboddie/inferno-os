@@ -10,6 +10,7 @@
 PhysUart* physuart[1];
 extern void uartconsinit(void);
 
+#include "thumb2.h"
 #include "devices/stm32f405.h"
 #include "devices/fns.h"
 
@@ -33,9 +34,10 @@ void confinit(void)
     conf.npage1 = 0;
     conf.npage0 = (conf.topofmem - base)/BY2PG;
     conf.npage = conf.npage0 + conf.npage1;
-    conf.ialloc = (((conf.npage*(main_pool_pcnt))/100)/2)*BY2PG;
+    conf.ialloc = (((conf.npage*(main_pool_pcnt))/10)/2)*BY2PG;
 
-    conf.nproc = 100 + ((conf.npage*BY2PG)/MB)*5;
+//    conf.nproc = 100 + ((conf.npage*BY2PG)/MB)*5;
+    conf.nproc = 20;
     conf.nmach = 1;
 
     active.machs = 1;
@@ -46,15 +48,17 @@ static void poolsizeinit(void)
 {
     ulong nb;
     nb = conf.npage*BY2PG;
-    poolsize(mainmem, (nb*main_pool_pcnt)/100, 0);
-    poolsize(heapmem, (nb*heap_pool_pcnt)/100, 0);
-    poolsize(imagmem, (nb*image_pool_pcnt)/100, 1);
+    poolsize(mainmem, (nb*main_pool_pcnt)/10, 0);
+    poolsize(heapmem, (nb*heap_pool_pcnt)/10, 0);
+    poolsize(imagmem, (nb*image_pool_pcnt)/10, 1);
 }
+
+extern char bdata[];
 
 void main(void)
 {
-    enablefpu();
     setup_system_clock();
+    setup_usart();
 
     /* Mach is defined in dat.h, edata and end are in port/lib.h */
     memset(m, 0, sizeof(Mach));
@@ -75,12 +79,90 @@ void main(void)
     clockinit();                // in clock.c
     printinit();                // in port/devcons.c
 
-    print("OK\r\n");
+//print("bdata=%x\n", bdata);
+//print("edata=%x\n", edata);
+//print("end=%x\n", end);
+//print("conf.base0=%x\n", conf.base0);
+//print("conf.topofmem=%x\n", conf.topofmem);
+//print("conf.npage=%d\n", conf.npage);
+//print("conf.ialloc=%d\n", conf.ialloc);
 
-    setup_LED();
-    set_LED(1);
+    procinit();                 /* in port/proc.c */
+    links();                    /* in the generated efikamx.c file */
+    chandevreset();
+
+    eve = strdup("inferno");
+    userinit();
+    schedinit();                /* in port/proc.c and should never return */
+
     for (;;) {
     }
+}
+
+extern void showpool(Pool *);
+
+void
+init0(void)
+{
+    Osenv *o;
+    char buf[2*KNAMELEN];
+
+    up->nerrlab = 0;
+
+    spllo();
+
+    if(waserror())
+        panic("init0 %r");
+
+    /* These are o.k. because rootinit is null.
+     * Then early kproc's will have a root and dot. */
+
+    o = up->env;
+    o->pgrp->slash = namec("#/", Atodir, 0, 0);
+    cnameclose(o->pgrp->slash->name);
+    o->pgrp->slash->name = newcname("/");
+    o->pgrp->dot = cclone(o->pgrp->slash);
+
+    chandevinit();
+
+    if(!waserror()){
+        ksetenv("cputype", "arm", 0);
+        snprint(buf, sizeof(buf), "arm %s", conffile);
+        ksetenv("terminal", buf, 0);
+        poperror();
+    }
+
+    poperror();
+
+    disinit("/osinit.dis");
+}
+
+void
+userinit(void)
+{
+    Proc *p;
+    Osenv *o;
+
+    p = newproc();
+    o = p->env;
+
+    o->fgrp = newfgrp(nil);
+    o->pgrp = newpgrp();
+    o->egrp = newegrp();
+    kstrdup(&o->user, eve);
+
+    strcpy(p->text, "interp");
+
+    p->fpstate = FPINIT;
+
+    /*    Kernel Stack
+        N.B. The -12 for the stack pointer is important.
+        4 bytes for gotolabel's return PC */
+    p->sched.pc = (ulong)init0;
+    p->sched.sp = (ulong)p->kstack+KSTACK-8;
+
+wrstr("islo="); wrdec(islo()); newline();
+    ready(p);
 }
 
 void reboot(void)
@@ -110,9 +192,7 @@ void FPrestore(FPenv *fps)
 
 void fpinit(void)
 {
-    /* Enable CP10 and CP11 coprocessors - see page 7-71 of the Arm Cortex-M4
-       Processor Technical Reference Manual. */
-//    *(int *)CPACR_ADDR |= (0xf << 20);
+    enablefpu();
 }
 
 void    segflush(void *p, ulong n)
