@@ -19,8 +19,6 @@ void trapinit(void)
 
     /* Enable division by zero trapping. */
     *(int *)CCR_ADDR |= CCR_DIV_0_TRP | CCR_UNALIGN_TRP;
-
-    wrstr("CCR="); wrhex(*(int *)CCR_ADDR); newline();
 }
 
 void showregs(int sp, int below)

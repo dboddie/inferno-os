@@ -161,7 +161,6 @@ userinit(void)
     p->sched.pc = (ulong)init0;
     p->sched.sp = (ulong)p->kstack+KSTACK-8;
 
-wrstr("islo="); wrdec(islo()); newline();
     ready(p);
 }
 
