@@ -55,3 +55,8 @@ fixing interrupt handling.)
 It turns out that the amount of stack allocated per-process was too small and
 the stack was overrunning into adjacent pool blocks. I updated the KSTKSIZE
 definition in mem.h to 512 bytes.
+
+
+Booting gets as far as the message, '[Init] Broken: "module not loaded"'. The
+module that fails is the init module at "/osinit.dis", which should be there.
+The problem was the missing "sys" entry in the "mod" section of the conf file.
