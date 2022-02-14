@@ -42,4 +42,6 @@ void timerset(uvlong next)
         period = MinPeriod;
     else if (period > MaxPeriod)
         period = MaxPeriod;
+
+    /* TODO: Actually set a timer to go off at now + period. */
 }

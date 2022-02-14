@@ -1,8 +1,4 @@
 typedef struct Ureg {
-	uint	r0;
-	uint	r1;
-	uint	r2;
-	uint	r3;
 	uint	r4;
 	uint	r5;
 	uint	r6;
@@ -12,15 +8,14 @@ typedef struct Ureg {
 	uint	r10;
 	uint	r11;
 	uint	r12; /* sb */
-	union {
-		uint	r13;
-		uint	sp;
-	};
+	uint	r0;
+	uint	r1;
+	uint	r2;
+	uint	r3;
 	union {
 		uint	r14;
 		uint	link;
 	};
-	uint	type;   /* of exception */
-	uint	psr;    /* status register of interrupted code */
 	uint	pc;     /* interrupted addr */
+	uint	psr;    /* status register of interrupted code */
 } Ureg;

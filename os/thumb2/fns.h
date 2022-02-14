@@ -101,7 +101,8 @@ int 	dmawait(int);
 
 /* Hardware-specific setup */
 void    hwinit(void);
-void    systick(int);
+
+void    systick(Ureg *);
 void    usage_fault(int);
 void    hard_fault(int);
 

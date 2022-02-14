@@ -60,3 +60,9 @@ definition in mem.h to 512 bytes.
 Booting gets as far as the message, '[Init] Broken: "module not loaded"'. The
 module that fails is the init module at "/osinit.dis", which should be there.
 The problem was the missing "sys" entry in the "mod" section of the conf file.
+
+A simple init script can print a welcome message.
+
+
+Trying to spawn a shell causes the init process to hang or, at least, not print
+the welcome message.

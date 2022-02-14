@@ -46,19 +46,19 @@ TEXT _dummy(SB), THUMB, $-4
    stack pointer (MSP). */
 
 TEXT _systick(SB), THUMB, $-4
-    MRS(0, MRS_MSP)     /* Pass the process stack pointer (MSP) to a C function. */
     PUSH(0x1ff0, 1)
+    MOVW    SP, R0
     BL  ,systick(SB)
     POP(0x1ff0, 1)
 
 TEXT _hard_fault(SB), THUMB, $-4
-    MRS(0, MRS_MSP)     /* Pass the process stack pointer (MSP) to a C function. */
+    MRS(0, MRS_MSP)     /* Pass the main stack pointer (MSP) to a C function. */
     PUSH(0x1ff0, 1)
     BL ,hard_fault(SB)
     POP(0x1ff0, 1)
 
 TEXT _usage_fault(SB), THUMB, $-4
-    MRS(0, MRS_MSP)     /* Pass the process stack pointer (MSP) to a C function. */
+    MRS(0, MRS_MSP)     /* Pass the main stack pointer (MSP) to a C function. */
     PUSH(0x1ff0, 1)
     BL ,usage_fault(SB)
     POP(0x1ff0, 1)

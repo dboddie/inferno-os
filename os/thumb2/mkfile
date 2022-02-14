@@ -20,7 +20,6 @@ OBJ=\
 	l.$O\
 	main.$O\
 	clock.$O\
-	div.$O\
 	dump.$O\
 	thumb2.$O\
 	trap.$O\
@@ -51,7 +50,7 @@ HFILES=\
 	fpi.h\
 
 CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
-LDFLAGS=-H0 -l -s -a
+LDFLAGS=-H0 -l -s
 KERNDATE=`{$NDATE}
 
 default:V: kernel

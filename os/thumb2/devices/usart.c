@@ -105,9 +105,9 @@ void wrhex(int value)
     }
 }
 
-void wrdec(int value)
+void wrdec(long long value)
 {
-    char ch[10];
+    char ch[20];
     int v = value;
     if (v < 0) {
         wrch(45); v = -v;
@@ -116,7 +116,7 @@ void wrdec(int value)
         return;
     }
 
-    int s = 9;
+    int s = 19;
     for (; s >= 0 && v != 0; s--) {
         int b = v % 10;
         ch[s] = 48 + b;
@@ -124,7 +124,7 @@ void wrdec(int value)
         if (v == 0) break;
     }
 
-    for (; s < 10; s++)
+    for (; s < 20; s++)
         wrch(ch[s]);
 }
 

@@ -24,40 +24,38 @@ void trapinit(void)
 void showregs(int sp, int below)
 {
     int i;
-    for (i = 0; i < 3; i++)
-        print("r%d=%.8lux ", i, *(int *)(sp + (i*4)));
+    for (i = 0; i < 4; i++)
+        print("r%d=%.8lux ", i, *(ulong *)(sp + (i*4)));
 
     print("\n");
 
     if (below) {
         for (i = 4; i < 13; i++) {
-            print("r%d=%.8lux ", i, *(int *)(sp - 40 + (i - 4)*4));
+            print("r%d=%.8lux ", i, *(ulong *)(sp - 40 + (i - 4)*4));
             if (i % 4 == 3) print("\n");
         }
     }
 
-    print("lr=%.8lux ", *(int *)(sp + 20));
-    print("pc=%.8lux\n", *(int *)(sp + 24));
+    print("lr=%.8lux ", *(ulong *)(sp + 20));
+    print("pc=%.8lux\n", *(ulong *)(sp + 24));
 }
 
-void systick(int sp)
+void systick(Ureg *ureg)
 {
     int t;
-    static Ureg ureg;
-    ureg.pc = *(int *)(sp + 24);
 
 //    wrstr("> sp="); wrhex(getsp()); newline();
 //    showregs(sp);
 //    wrstr("up="); wrhex((int)up); newline();
 
     if (up) {
-        up->pc = ureg.pc;
+        up->pc = ureg->pc;
     }
 
     t = m->ticks;       /* CPU time per proc */
     up = nil;           /* no process at interrupt level */
 
-    hzclock(&ureg);
+    hzclock(ureg);
 
     m->inidle = 0;
     up = m->proc;
@@ -101,7 +99,7 @@ void kprocchild(Proc *p, void (*func)(void*), void *arg)
 void usage_fault(int sp)
 {
     wrstr("Usage fault at "); wrhex(*(int *)(sp + 24)); newline();
-    wrstr("UFSR="); wrhex(*(int *)UFSR_ADDR); newline();
+    wrstr("UFSR="); wrhex(*(short *)UFSR_ADDR); newline();
     wrstr("Instruction: "); wrhex(**(int **)(sp + 24)); newline();
 
 /* Step past an FP instruction, setting Thumb mode execution.

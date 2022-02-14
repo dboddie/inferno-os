@@ -28,7 +28,7 @@
 #define CACHELINESZ     32
 #define BLOCKALIGN	32
 
-#define KSTKSIZE	512
+#define KSTKSIZE	1024
 #define KSTACK		KSTKSIZE
 
 /* Memory map - starts at 0x20000000, ends at 0x20020000 (128KB) */
@@ -36,4 +36,3 @@
 
 #define MACHADDR        RAM_START           /*! Mach structure */
 #define STACK_TOP       (MACHADDR + 1024)
-#define PSP_TOP         (STACK_TOP - 256)
