@@ -1,3 +1,5 @@
+THUMB = 4
+
 TS = 0
 TE = 1
 FROM = 2
@@ -5,8 +7,8 @@ N = 3
 TMP = 3					/* N and TMP don't overlap */
 TMP1 = 4
 
-TEXT	memcpy(SB), $0
-TEXT memmove(SB), $-4
+TEXT	memcpy(SB), THUMB, $0
+TEXT memmove(SB), THUMB, $-4
 _memmove:
 	MOVW	R(TS), to+0(FP)		/* need to save for return value */
 	MOVW	from+4(FP), R(FROM)

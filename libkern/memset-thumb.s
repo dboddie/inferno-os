@@ -1,9 +1,11 @@
+THUMB = 4
+
 TO = 1
 TOE = 2
 N = 3
 TMP = 3					/* N and TMP don't overlap */
 
-TEXT memset(SB), $0
+TEXT memset(SB), THUMB, $0
 	MOVW	R0, R(TO)
 	MOVW	data+4(FP), R(4)
 	MOVW	n+8(FP), R(N)

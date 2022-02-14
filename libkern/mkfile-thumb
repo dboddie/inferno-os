@@ -4,10 +4,9 @@
 TARGFILES=\
 	frexp-thumb.$O\
 	getfcr-thumb.$O\
-	memmove-thumb.$O\
-	memset-thumb.$O\
+	memmove.$O\
+	memset.$O\
 	nan-thumb.$O\
-	strchr-thumb.$O\
+	strchr.$O\
 	vlop-thumb.$O\
 	vlrt-thumb.$O\
-	div-thumb.$O\

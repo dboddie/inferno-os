@@ -1,12 +1,14 @@
-TEXT	setfcr(SB), $0
+THUMB=4
+
+TEXT	setfcr(SB), THUMB, $0
 	RET
 
-TEXT	getfcr(SB), $0
+TEXT	getfcr(SB), THUMB, $0
 	RET
 
-TEXT	getfsr(SB), $0
+TEXT	getfsr(SB), THUMB, $0
 	RET
 
-TEXT	setfsr(SB), $0
+TEXT	setfsr(SB), THUMB, $0
 	RET
 
