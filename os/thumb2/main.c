@@ -177,6 +177,7 @@ print("userinit\n");
     p->sched.pc = (ulong)init0;
     p->sched.sp = (ulong)p->kstack+KSTACK-8;
 
+print("init0 is at %.8lux %.8lux\n", p->sched.pc, p->sched.sp);
     ready(p);
 }
 

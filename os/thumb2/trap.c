@@ -40,17 +40,26 @@ void showregs(int sp, int below)
     print("pc=%.8lux\n", *(ulong *)(sp + 24));
 }
 
+void dumpregs(Ureg *ureg)
+{
+    print("R0 %.8lux  R1 %.8lux  R2  %.8lux  R3  %.8lux\n", ureg->r0, ureg->r1, ureg->r2, ureg->r3);
+    print("R4 %.8lux  R5 %.8lux  R6  %.8lux  R7  %.8lux\n", ureg->r4, ureg->r5, ureg->r6, ureg->r7);
+    print("R8 %.8lux  R9 %.8lux  R10 %.8lux  R11 %.8lux\n", ureg->r8, ureg->r9, ureg->r10, ureg->r11);
+    print("R12 %.8lux SP %.8lux  LR  %.8lux  PC  %.8lux\n", ureg->r12, ureg->sp, ureg->lr, ureg->pc);
+    print("PSR %.8lux EXC_RETURN %.8lux \n", ureg->psr, ureg->exc_r14);
+}
+
 void systick(Ureg *ureg)
 {
     int t;
 
-//    wrstr("> sp="); wrhex(getsp()); newline();
-//    showregs(sp);
-//    wrstr("up="); wrhex((int)up); newline();
+//    wrch('.');
+    print("sp=%.8lux\n", getsp());
+//    print("up=%.8lux\n", up);
+//    print("psr=%.8lux\n", ureg->psr);
+//    dumpregs(ureg);
 
-    if (up) {
-        up->pc = ureg->pc;
-    }
+    if (up) up->pc = ureg->pc;
 
     t = m->ticks;       /* CPU time per proc */
     up = nil;           /* no process at interrupt level */
@@ -66,9 +75,8 @@ void systick(Ureg *ureg)
     m->inidle = 0;
     splhi();
 
-//    wrstr("< sp="); wrhex(getsp()); newline();
-//    showregs(sp);
-//    wrstr("up="); wrhex((int)up); newline();
+//    print("up=%.8lux\n", up);
+    print("<< sp=%.8lux\n", getsp());
 }
 
 void setpanic(void)
@@ -100,7 +108,7 @@ void usage_fault(int sp)
 {
     wrstr("Usage fault at "); wrhex(*(int *)(sp + 24)); newline();
     wrstr("UFSR="); wrhex(*(short *)UFSR_ADDR); newline();
-    wrstr("Instruction: "); wrhex(**(int **)(sp + 24)); newline();
+//    wrstr("Instruction: "); wrhex(**(int **)(sp + 24)); newline();
 
 /* Step past an FP instruction, setting Thumb mode execution.
     *(int *)(sp + 24) += 4;

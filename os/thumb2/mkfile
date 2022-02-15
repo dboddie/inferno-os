@@ -50,7 +50,7 @@ HFILES=\
 	fpi.h\
 
 CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
-LDFLAGS=-H0 -l -s
+LDFLAGS=-H0 -l -s -a
 KERNDATE=`{$NDATE}
 
 default:V: kernel

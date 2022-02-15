@@ -46,10 +46,17 @@ TEXT _dummy(SB), THUMB, $-4
    stack pointer (MSP). */
 
 TEXT _systick(SB), THUMB, $-4
-    PUSH(0x1ff0, 1)
+   /* Disable interrupts and record that they are disabled. */
+/*    CPS(1, CPS_I)
+    MOVW    $0, R0
+    MOVW    $interrupts_enabled(SB), R1
+    MOVW    R0, (R1)
+*/
+    MOVW    SP, R0
+    PUSH(0x0ff1, 1)
     MOVW    SP, R0
     BL  ,systick(SB)
-    POP(0x1ff0, 1)
+    POP(0x0ff1, 1)
 
 TEXT _hard_fault(SB), THUMB, $-4
     MRS(0, MRS_MSP)     /* Pass the main stack pointer (MSP) to a C function. */

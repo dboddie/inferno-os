@@ -66,3 +66,38 @@ A simple init script can print a welcome message.
 
 Trying to spawn a shell causes the init process to hang or, at least, not print
 the welcome message.
+
+
+Revisiting process context switching, the sched() function is called when
+schedinit() is called by the main() function. This causes the init0() function
+to be run, which enables interrupts. This allows the systick handler to
+interrupt processes.
+
+When a process (P) is interrupted by the systick interrupt, the processor is
+put into handler mode with automatically stacked registers and a special value
+of R14 (EXC_RETURN_ that will be used to exit handler mode. The interrupt
+handler calls a C function that calls the preemption() function. If preemption
+should occur, this function calls sched() to switch to another process (Q),
+updating the PC and SP:
+
+    Process P running -> Interrupt handler -> systick() -> sched()
+                                                                  \
+                                                            PC and SP updated
+                                                                  /
+    Process Q running <- Interrupt handler <- systick() <- sched()
+
+The other process should have reached sched() in the same way, so it will
+return from the sched() function all the way back to the interrupt handler
+using its own stack. The handler returns normally, putting the EXC_RETURN value
+into the PC and the processor switches back to thread mode and continues
+executing process Q.
+
+One problem is that the sched() function is called in normal thread mode when
+schedinit() is called, without having switched to handler mode. It also does so
+without all the additional frames and extra data on the stack, but this is not
+a problem because the stack is switched when the process is switched, so the
+program would not be encountering code in the trap file with incorrect stack
+frames. Also, returning to the first label in schedinit() causes sched() to be
+called again. This shouldn't be a problem if another process is entered as long
+as that process was previously entered via the interrupt handler. Otherwise,
+the processor remains in handler mode.
