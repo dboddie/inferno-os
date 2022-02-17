@@ -78,32 +78,7 @@ void main(void)
     timersinit();               // in port/portclock.c
     clockinit();                // in clock.c
     printinit();                // in port/devcons.c
-/*
-    vlong x = 32;
-    vlong y = 11;
-    vlong z;
 
-    z = x * y;
-
-    for (int jj = 0; jj < 32; jj+=4)
-        print("%.8lux ", *(uint *)(0x200000e0 + jj));
-
-    print("\n%lld\n", z);
-
-    print("%.8lux %.8lux %.8lux\n", getsp(), *(uint *)(&z), *(uint *)((uint)&z + 4));
-    for (int ii = 0; ii < 48; ii+=4)
-        print("%d %.8lux\n", ii, *(uint *)((uint)getsp() + ii));
-
-print("bdata=%x\n", bdata);
-print("edata=%x\n", edata);
-print("end=%x\n", end);
-print("conf.base0=%x\n", conf.base0);
-print("conf.topofmem=%x\n", conf.topofmem);
-print("conf.npage=%d\n", conf.npage);
-print("conf.ialloc=%d\n", conf.ialloc);
-
-    for (;;) {}
-*/
     procinit();                 /* in port/proc.c */
     links();                    /* in the generated efikamx.c file */
     chandevreset();
@@ -158,7 +133,6 @@ userinit(void)
     Proc *p;
     Osenv *o;
 
-print("userinit\n");
     p = newproc();
     o = p->env;
 
@@ -177,7 +151,6 @@ print("userinit\n");
     p->sched.pc = (ulong)init0;
     p->sched.sp = (ulong)p->kstack+KSTACK-8;
 
-print("init0 is at %.8lux %.8lux\n", p->sched.pc, p->sched.sp);
     ready(p);
 }
 
