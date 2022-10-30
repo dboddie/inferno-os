@@ -54,7 +54,7 @@ void systick(Ureg *ureg)
     int t;
 
 //    wrch('.');
-    print("sp=%.8lux\n", getsp());
+//    print("sp=%.8lux\n", getsp());
 //    print("up=%.8lux\n", up);
 //    print("psr=%.8lux\n", ureg->psr);
 //    dumpregs(ureg);
@@ -76,7 +76,7 @@ void systick(Ureg *ureg)
     splhi();
 
 //    print("up=%.8lux\n", up);
-    print("<< sp=%.8lux\n", getsp());
+//    print("<< sp=%.8lux\n", getsp());
 }
 
 void setpanic(void)
