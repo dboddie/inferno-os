@@ -75,7 +75,7 @@ interrupt processes.
 
 When a process (P) is interrupted by the systick interrupt, the processor is
 put into handler mode with automatically stacked registers and a special value
-of R14 (EXC_RETURN_ that will be used to exit handler mode. The interrupt
+of R14 (EXC_RETURN) that will be used to exit handler mode. The interrupt
 handler calls a C function that calls the preemption() function. If preemption
 should occur, this function calls sched() to switch to another process (Q),
 updating the PC and SP:
