@@ -1,6 +1,5 @@
 #define ROM_START       0x08000000
 #define VEC_SIZE        0x188
-#define RAM_START       0x20000000
 
 #define HZ      	(100)       /*! clock frequency */
 #define MS2HZ       (1000/HZ)   /*! millisec per clock tick */
@@ -32,7 +31,6 @@
 #define KSTACK		KSTKSIZE
 
 /* Memory map - starts at 0x20000000, ends at 0x20020000 (128KB) */
-#define MEMORY_TOP      0x20020000  /* End of memory Inferno can use */
-
-#define MACHADDR        RAM_START           /*! Mach structure */
-#define STACK_TOP       (MACHADDR + 1024)
+#define MACHADDR        0x20000190  /*! Mach structure */
+#define STACK_TOP       0x2001fffc
+#define MEMORY_TOP      0x2001f000  /* End of memory Inferno can use */

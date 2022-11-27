@@ -11,7 +11,7 @@
 #define prev	u.s.bhv
 #define parent	u.s.bhp
 
-#define RESERVED	256*1024
+#define RESERVED	32*1024
 
 struct Pool
 {
@@ -44,9 +44,9 @@ struct
 } table = {
 	3,
 	{
-		{ "main",  0,	24*1024, 31, 1024, 23*1024 },
-		{ "heap",  1,	24*1024, 31, 1024, 23*1024 },
-		{ "image", 2,	8*1024, 31, 3*1024, 15*1024 },
+		{ "main",  0,	28*1024, 31, 512, 27*1024 },
+		{ "heap",  1,	8*1024, 31, 512, 7*1024 },
+		{ "image", 2,	4*1024, 31, 3*1024, 3*1024 },
 	}
 };
 
@@ -597,6 +597,7 @@ malloc(ulong size)
 		}
 		memset(v, 0, size);
 	}
+//        print("malloc %ulx\n", v);
 	return v;
 }
 

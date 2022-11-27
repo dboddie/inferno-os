@@ -34,10 +34,10 @@ void confinit(void)
     conf.npage1 = 0;
     conf.npage0 = (conf.topofmem - base)/BY2PG;
     conf.npage = conf.npage0 + conf.npage1;
-    conf.ialloc = (((conf.npage*(main_pool_pcnt))/10)/2)*BY2PG;
+    conf.ialloc = BY2PG;
 
 //    conf.nproc = 100 + ((conf.npage*BY2PG)/MB)*5;
-    conf.nproc = 20;
+    conf.nproc = 10;
     conf.nmach = 1;
 
     active.machs = 1;
@@ -48,9 +48,9 @@ static void poolsizeinit(void)
 {
     ulong nb;
     nb = conf.npage*BY2PG;
-    poolsize(mainmem, (nb*main_pool_pcnt)/10, 0);
-    poolsize(heapmem, (nb*heap_pool_pcnt)/10, 0);
-    poolsize(imagmem, (nb*image_pool_pcnt)/10, 1);
+    poolsize(mainmem, 1024*28, 0);
+    poolsize(heapmem, 1024*8, 0);
+    poolsize(imagmem, 1024*4, 1);
 }
 
 extern char bdata[];
@@ -78,6 +78,10 @@ void main(void)
     timersinit();               // in port/portclock.c
     clockinit();                // in clock.c
     printinit();                // in port/devcons.c
+
+//poolsummary();
+//print("%ulx %ulx %ulx %ulx %ulx\n", etext, bdata, edata, end, m);
+//print("%ulx\n", *(int *)SHPR2);
 
     procinit();                 /* in port/proc.c */
     links();                    /* in the generated efikamx.c file */
