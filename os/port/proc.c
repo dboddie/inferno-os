@@ -87,11 +87,16 @@ sched(void)
 	if(up) {
 		splhi();
 		procsave(up);
+                /* When interrupting a process, set a label and return to the
+                   scheduler. When returning to a process, enable interrupts
+                   and continue executing. */
 		if(setlabel(&up->sched)) {
+                        /* Resume: Called when the label is jumped to. */
 			/* procrestore(up); */
 			spllo();
 			return;
 		}
+                /* Pre-empted: Called when the label is set. */
 		gotolabel(&m->sched);
 	}
 	up = runproc();
