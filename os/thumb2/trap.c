@@ -40,16 +40,27 @@ void showregs(int sp, int below)
     print("pc=%.8lux\n", *(ulong *)(sp + 24));
 }
 
-void dumpregs(Ureg *ureg)
+void dumpregs(Ureg *uregs)
 {
-    print("R0 %.8lux  R1 %.8lux  R2  %.8lux  R3  %.8lux\n", ureg->r0, ureg->r1, ureg->r2, ureg->r3);
-    print("R4 %.8lux  R5 %.8lux  R6  %.8lux  R7  %.8lux\n", ureg->r4, ureg->r5, ureg->r6, ureg->r7);
-    print("R8 %.8lux  R9 %.8lux  R10 %.8lux  R11 %.8lux\n", ureg->r8, ureg->r9, ureg->r10, ureg->r11);
-    print("R12 %.8lux SP %.8lux  LR  %.8lux  PC  %.8lux\n", ureg->r12, ureg->sp, ureg->lr, ureg->pc);
-    print("PSR %.8lux EXC_RETURN %.8lux \n", ureg->psr, ureg->exc_r14);
+    wrstr(" r0="); wrhex(uregs->r0); wrch(' ');
+    wrstr("r1="); wrhex(uregs->r1); wrch(' ');
+    wrstr(" r2="); wrhex(uregs->r2); wrch(' ');
+    wrstr("r3="); wrhex(uregs->r3); newline();
+    wrstr(" r4="); wrhex(uregs->r4); wrch(' ');
+    wrstr("r5="); wrhex(uregs->r5); wrch(' ');
+    wrstr(" r6="); wrhex(uregs->r6); wrch(' ');
+    wrstr("r7="); wrhex(uregs->r7); newline();
+    wrstr(" r8="); wrhex(uregs->r8); wrch(' ');
+    wrstr("r9="); wrhex(uregs->r9); wrch(' ');
+    wrstr("r10="); wrhex(uregs->r10); wrch(' ');
+    wrstr("r11="); wrhex(uregs->r11); newline();
+    wrstr("r12="); wrhex(uregs->r12); wrch(' ');
+    wrstr("sp="); wrhex((unsigned long)uregs); wrch(' ');
+    wrstr("r14="); wrhex(uregs->r14);
+    wrstr("pc="); wrhex(uregs->pc); newline();
 }
 
-void systick(Ureg *ureg)
+void switcher(Ureg *ureg)
 {
     int t;
 

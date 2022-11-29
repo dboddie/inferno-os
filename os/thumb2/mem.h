@@ -27,7 +27,7 @@
 #define CACHELINESZ     32
 #define BLOCKALIGN	32
 
-#define KSTKSIZE	1024
+#define KSTKSIZE	2048
 #define KSTACK		KSTKSIZE
 
 /* Memory map - starts at 0x20000000, ends at 0x20020000 (128KB) */

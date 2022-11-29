@@ -20,6 +20,8 @@ Conf conf;
 Mach *m = (Mach*)MACHADDR;
 Proc *up = 0;
 
+unsigned int switch_pc = 0;
+
 extern int main_pool_pcnt;
 extern int heap_pool_pcnt;
 extern int image_pool_pcnt;
@@ -48,8 +50,8 @@ static void poolsizeinit(void)
 {
     ulong nb;
     nb = conf.npage*BY2PG;
-    poolsize(mainmem, 1024*28, 0);
-    poolsize(heapmem, 1024*8, 0);
+    poolsize(mainmem, 1024*40, 0);
+    poolsize(heapmem, 1024*16, 0);
     poolsize(imagmem, 1024*4, 1);
 }
 
@@ -79,9 +81,8 @@ void main(void)
     clockinit();                // in clock.c
     printinit();                // in port/devcons.c
 
-//poolsummary();
-//print("%ulx %ulx %ulx %ulx %ulx\n", etext, bdata, edata, end, m);
-//print("%ulx\n", *(int *)SHPR2);
+poolsummary();
+print("%ulx %ulx %ulx %ulx %ulx\n", etext, bdata, edata, end, m);
 
     procinit();                 /* in port/proc.c */
     links();                    /* in the generated efikamx.c file */

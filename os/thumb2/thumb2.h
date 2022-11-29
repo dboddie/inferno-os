@@ -64,6 +64,9 @@
 #define POP(regs, pc) \
     WORD $(0x0000e8bd | ((pc & 1) << 31) | ((regs & 0x1fff) << 16))
 
+#define POP_LR_PC(regs, lr, pc) \
+    WORD $(0x0000e8bd | ((lr & 1) << 30) | ((pc & 1) << 31) | ((regs & 0x1fff) << 16))
+
 /*
  * Coprocessors
  */
