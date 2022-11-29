@@ -52,7 +52,7 @@ static void poolsizeinit(void)
     nb = conf.npage*BY2PG;
     poolsize(mainmem, 1024*40, 0);
     poolsize(heapmem, 1024*16, 0);
-    poolsize(imagmem, 1024*4, 1);
+    poolsize(imagmem, 1024*3, 1);
 }
 
 extern char bdata[];

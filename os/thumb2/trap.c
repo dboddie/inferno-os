@@ -125,6 +125,7 @@ void usage_fault(int sp)
     *(int *)(sp + 24) += 4;
     *(int *)(sp + 28) = 0x01000000;
 */
+    wrstr("sp="); wrhex(sp); newline();
     wrstr("r0="); wrhex(*(int *)(sp)); newline();
     wrstr("r1="); wrhex(*(int *)(sp + 4)); newline();
     wrstr("pc="); wrhex(*(int *)(sp + 24)); newline();
