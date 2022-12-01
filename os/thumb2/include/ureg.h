@@ -10,7 +10,6 @@ typedef struct Ureg {
     ulong r9;
     ulong r10;
     ulong r11;
-    ulong r12;  /* sb */
     union {
         ulong r14;
         ulong link;

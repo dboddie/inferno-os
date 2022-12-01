@@ -20,8 +20,6 @@ Conf conf;
 Mach *m = (Mach*)MACHADDR;
 Proc *up = 0;
 
-unsigned int switch_pc = 0;
-
 extern int main_pool_pcnt;
 extern int heap_pool_pcnt;
 extern int image_pool_pcnt;
@@ -51,8 +49,8 @@ static void poolsizeinit(void)
     ulong nb;
     nb = conf.npage*BY2PG;
     poolsize(mainmem, 1024*40, 0);
-    poolsize(heapmem, 1024*16, 0);
-    poolsize(imagmem, 1024*3, 1);
+    poolsize(heapmem, 1024*12, 0);
+    poolsize(imagmem, 1024*1, 1);
 }
 
 extern char bdata[];

@@ -17,10 +17,10 @@ TEXT setlabel(SB), THUMB, $-4
    struct passed by the caller and return 1. This causes execution to continue
    after a call to setlabel elsewhere in the kernel. */
 TEXT gotolabel(SB), THUMB, $-4
-	MOVW    0(R0), R7
-        MOVW    R7, R13
 	MOVW    4(R0), R7
         MOVW    R7, R14
+	MOVW    0(R0), R0
+        MOVW    R0, R13
 	MOVW    $1, R0
 	RET
 
@@ -42,13 +42,24 @@ TEXT splhi(SB), THUMB, $-4
 	CPS(1, CPS_I)       /* disable interrupts */
         MOVW    $0, R7
         MOVW    R7, (R1)
+/*
+        PUSH(1, 1)
+        MOVW    R14, R0
+        BL      ,wrhex(SB)
+        POP_LR_PC(1, 1, 0)
+*/
 	RET
 
 /* Enable interrupts and return the previous state. */
 TEXT spllo(SB), THUMB, $-4
         MOVW    $interrupts_enabled(SB), R1
         MOVW    (R1), R0    /* load the previous state to be returned */
-
+/*
+        PUSH(1, 1)
+        MOVW    R14, R0
+        BL      ,wrhex(SB)
+        POP_LR_PC(1, 1, 0)
+*/
 	CPS(0, CPS_I)       /* enable interrupts */
         MOVW    $1, R7
         MOVW    R7, (R1)

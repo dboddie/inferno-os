@@ -11,7 +11,7 @@
 #define GiB             1073741824u /*! Gibi 000000000040000000 */
 
 #define KZERO           0x08000000          /*! kernel address space */
-#define BY2PG           512                 /*! bytes per page */
+#define BY2PG           256                 /*! bytes per page */
 #define BI2BY           8                   /*! bits per byte */
 #define BI2WD           32                  /* bits per word */
 #define BY2WD           4                   /* bytes per word */
@@ -27,10 +27,10 @@
 #define CACHELINESZ     32
 #define BLOCKALIGN	32
 
-#define KSTKSIZE	2048
+#define KSTKSIZE	4096
 #define KSTACK		KSTKSIZE
 
 /* Memory map - starts at 0x20000000, ends at 0x20020000 (128KB) */
 #define MACHADDR        0x20000190  /*! Mach structure */
 #define STACK_TOP       0x2001fffc
-#define MEMORY_TOP      0x2001f000  /* End of memory Inferno can use */
+#define MEMORY_TOP      (STACK_TOP - KSTKSIZE)  /* End of memory Inferno can use */

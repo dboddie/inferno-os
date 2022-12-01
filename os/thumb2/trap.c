@@ -36,6 +36,7 @@ void showregs(int sp, int below)
         }
     }
 
+    print("sp=%.8lux ", sp);
     print("lr=%.8lux ", *(ulong *)(sp + 20));
     print("pc=%.8lux\n", *(ulong *)(sp + 24));
 }
@@ -54,7 +55,6 @@ void dumpregs(Ureg *uregs)
     wrstr("r9="); wrhex(uregs->r9); wrch(' ');
     wrstr("r10="); wrhex(uregs->r10); wrch(' ');
     wrstr("r11="); wrhex(uregs->r11); newline();
-    wrstr("r12="); wrhex(uregs->r12); wrch(' ');
     wrstr("sp="); wrhex((unsigned long)uregs); wrch(' ');
     wrstr("r14="); wrhex(uregs->r14);
     wrstr("pc="); wrhex(uregs->pc); newline();
@@ -65,7 +65,7 @@ void switcher(Ureg *ureg)
     int t;
 
 //    wrch('.');
-//    print("sp=%.8lux\n", getsp());
+//    wrstr(">> sp="); wrhex(getsp()); newline();
 //    print("up=%.8lux\n", up);
 //    print("psr=%.8lux\n", ureg->psr);
 //    dumpregs(ureg);
@@ -87,7 +87,8 @@ void switcher(Ureg *ureg)
     splhi();
 
 //    print("up=%.8lux\n", up);
-//    print("<< sp=%.8lux\n", getsp());
+//    wrstr("<< sp="); wrhex(getsp()); newline();
+//    wrstr("pc="); wrhex((uint)ureg->pc); wrstr(" r14="); wrhex((uint)ureg->lr); newline();
 }
 
 void setpanic(void)

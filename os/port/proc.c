@@ -93,10 +93,12 @@ sched(void)
 		if(setlabel(&up->sched)) {
                         /* Resume: Called when the label is jumped to. */
 			/* procrestore(up); */
+                        //wrstr("resume "); wrhex((int)up); wrch(32); wrhex((int)getsp()); newline();
 			spllo();
 			return;
 		}
                 /* Pre-empted: Called when the label is set. */
+                //wrstr("suspend "); wrhex((int)up); wrch(32); wrhex((int)getsp()); newline();
 		gotolabel(&m->sched);
 	}
 	up = runproc();

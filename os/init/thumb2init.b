@@ -4,7 +4,9 @@ implement Init;
 
 include "draw.m";
 include "sys.m";
-include "sh.m";
+#include "sh.m";
+#include "env.m";
+#include "readdir.m";
 
 draw: Draw;
 sys: Sys;
@@ -18,9 +20,16 @@ Init: module
 init(context: ref Draw->Context, nil: list of string)
 {
     sys = load Sys Sys->PATH;
+    #rd := load Readdir Readdir->PATH;
     #sh = load Sh "/dis/tiny/sh.dis";
 
     sys->print("**\n** Inferno\n** Vita Nuova\n**\n");
+
+    #(a, l) := rd->init("/", Readdir->COMPACT);
+    #sys->print("%d\n", l);
+
+    #for (i := 0; i < l; i++)
+    #    sys->print("%s\n", a[i].name);
 
     #sys->bind("#c", "/dev", sys->MREPL);
     #sys->bind("#e", "/env", sys->MREPL);
@@ -31,13 +40,13 @@ init(context: ref Draw->Context, nil: list of string)
 
     spawn func();
 
-    i := 0;
-    for (;; i++)
+    for (i := 0; i < 100; i++)
         sys->print("A %d\n", i);
+#    for (;;) {}
 }
 
 func()
 {
-    for (i := 0; i < 1000; i++)
+    for (i := 0; i < 100; i++)
         sys->print("B %d\n", i);
 }
