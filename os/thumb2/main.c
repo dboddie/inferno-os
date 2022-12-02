@@ -48,9 +48,9 @@ static void poolsizeinit(void)
 {
     ulong nb;
     nb = conf.npage*BY2PG;
-    poolsize(mainmem, 1024*40, 0);
-    poolsize(heapmem, 1024*12, 0);
-    poolsize(imagmem, 1024*1, 1);
+    poolsize(mainmem, 1024*44, 0);
+    poolsize(heapmem, 1024*8, 0);
+    poolsize(imagmem, 1024*0, 1);
 }
 
 extern char bdata[];
@@ -81,6 +81,7 @@ void main(void)
 
 poolsummary();
 print("%ulx %ulx %ulx %ulx %ulx\n", etext, bdata, edata, end, m);
+print("%ud\n", MEMORY_TOP - (ulong)end);
 
     procinit();                 /* in port/proc.c */
     links();                    /* in the generated efikamx.c file */

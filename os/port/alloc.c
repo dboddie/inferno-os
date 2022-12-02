@@ -44,9 +44,9 @@ struct
 } table = {
 	3,
 	{
-		{ "main",  0,	40*1024, 31, 512, 39*1024 },
-		{ "heap",  1,	12*1024, 31, 512, 11*1024 },
-		{ "image", 2,	1*1024, 31, 2*1024, 0*1024 },
+		{ "main",  0,	44*1024, 31, 512, 43*1024 },
+		{ "heap",  1,	8*1024, 31, 512, 7*1024 },
+		{ "image", 2,	0*1024, 31, 0*1024, 0*1024 },
 	}
 };
 
@@ -382,8 +382,12 @@ poolalloc(Pool *p, ulong asize)
 			if(p->warn)
 				return nil;
 			p->warn = 1;
-			if (p != mainmem || ns > 512)
+			if (p != mainmem || ns > 512) {
 				print("arena too large: %s size %d cursize %lud arenasize %lud maxsize %lud, alloc = %d\n", p->name, osize, p->cursize, p->arenasize, p->maxsize, alloc);
+/*                                ulong sp = getsp();
+                                for (ulong si = 0; si < 20; si += 4)
+                                    print("%lux\n", *(ulong *)(sp + si));*/
+                            }
 			return nil;
 		}
 		alloc = ns+ldr+ldr;
