@@ -25,7 +25,6 @@ OBJ=\
 	trap.$O\
 	devices/clocks.$O\
 	devices/gpio.$O\
-#	devices/usart.$O\
 	devices/sys.$O\
 #	$IP\
 	$DEVS\
