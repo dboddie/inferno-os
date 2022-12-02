@@ -66,12 +66,8 @@ TEXT _systick(SB), THUMB, $-4
 TEXT _preswitch(SB), THUMB, $-4
 
     MOVW R0, R0
-    PUSH(0x1, 0)                /* Save R0 (will be PC). */
-    PUSH(0x1, 0)                /* Save R0. */
-    MOVW    R12, R0             /* Recover the interrupted PC from R12. */
-    MOVW    R0, 4(SP)           /* Save the interrupted PC at the frame top. */
-
-    PUSH(0x0ffe, 1)             /* Save registers in case the interrupted code
+    PUSH(0x1000, 0)             /* Save R12 (will be PC). */
+    PUSH(0x0fff, 1)             /* Save registers in case the interrupted code
                                    uses them. */
     MOVW    SP, R0              /* Pass the stack pointer to the switcher. */
     BL      ,switcher(SB)
@@ -79,9 +75,8 @@ TEXT _preswitch(SB), THUMB, $-4
     MOVW    $setR12(SB), R1
     MOVW    R1, R12             /* Reset static base (SB) */
 
-    POP_LR_PC(0x0ffe, 1, 0)           /* Recover R1-R11 and R14 */
-    POP_LR_PC(0x1, 0, 0)              /* then R0 itself, */
-    POP_LR_PC(0, 0, 1)                /* and PC. */
+    POP_LR_PC(0x0fff, 1, 0)     /* Recover R0-R11 and R14 */
+    POP_LR_PC(0, 0, 1)          /* then PC. */
 
 TEXT _hard_fault(SB), THUMB, $-4
     MRS(0, MRS_MSP)     /* Pass the main stack pointer (MSP) to a C function. */
