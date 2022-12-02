@@ -31,6 +31,6 @@
 #define KSTACK		KSTKSIZE
 
 /* Memory map - starts at 0x20000000, ends at 0x20020000 (128KB) */
-#define MACHADDR        0x20000190  /*! Mach structure */
-#define STACK_TOP       0x2001fffc
-#define MEMORY_TOP      (STACK_TOP - KSTKSIZE)  /* End of memory Inferno can use */
+#define MACHADDR        0x10000000  /*! Mach structure */
+#define STACK_TOP       0x1000fffc
+#define MEMORY_TOP      0x20020000  /* End of memory Inferno can use */

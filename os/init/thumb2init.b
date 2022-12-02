@@ -10,7 +10,7 @@ include "sys.m";
 
 draw: Draw;
 sys: Sys;
-sh: Sh;
+#sh: Sh;
 
 Init: module
 {
@@ -25,28 +25,56 @@ init(context: ref Draw->Context, nil: list of string)
 
     sys->print("**\n** Inferno\n** Vita Nuova\n**\n");
 
-    #(a, l) := rd->init("/", Readdir->COMPACT);
-    #sys->print("%d\n", l);
+#    sys->bind("#^", "/chan", sys->MBEFORE);
+    sys->bind("#c", "/dev", sys->MREPL);
+    sys->bind("#e", "/env", sys->MREPL);
+    sys->bind("#p", "/prog", sys->MREPL);
 
-    #for (i := 0; i < l; i++)
-    #    sys->print("%s\n", a[i].name);
+#    (l, d) := sys->stat("/dis");
+#    sys->print("%s %s %s %d\n", d.name, d.uid, d.gid, l);
 
-    #sys->bind("#c", "/dev", sys->MREPL);
-    #sys->bind("#e", "/env", sys->MREPL);
-    #sys->bind("#p", "/prog", sys->MREPL);
+#    (l, d) = sys->stat("/invalid");
+#    sys->print("%s %s %s %d\n", d.name, d.uid, d.gid, l);
+
+    fd := sys->open("/README.md", Sys->OREAD);
+    if (fd == nil) {
+        sys->print("error reading /\n");
+        return;
+    }
+
+#    sys->print("fd=%d\n", fd.fd);
+
+    a := array[128] of byte;
+    stdout := sys->fildes(1);
+
+    for (;;) {
+        n := sys->readn(fd, a, 128);
+        if (n < 0)
+            sys->print("%r");
+        else if (n == 0)
+            break;
+        else
+            sys->write(stdout, a, n);
+    }
+
+#    (a, l) := rd->init("/dis", Readdir->COMPACT);
+#    sys->print("%d\n", l);
+
+#    for (i := 0; i < l; i++)
+#        sys->print("%s\n", a[i].name);
 
     #args: list of string;
     #sh->init(context, args);
 
-    spawn func();
+#    spawn func();
 
-    for (i := 0; i < 100; i++)
-        sys->print("A %d\n", i);
+#    for (i := 0; i < 20; i++)
+#        sys->print("A %d\n", i);
 #    for (;;) {}
 }
 
 func()
 {
-    for (i := 0; i < 100; i++)
+    for (i := 0; i < 20; i++)
         sys->print("B %d\n", i);
 }
