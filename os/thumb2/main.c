@@ -48,8 +48,8 @@ static void poolsizeinit(void)
 {
     ulong nb;
     nb = conf.npage*BY2PG;
-    poolsize(mainmem, 1024*44, 0);
-    poolsize(heapmem, 1024*16, 0);
+    poolsize(mainmem, 1024*35, 0);
+    poolsize(heapmem, 1024*25, 0);
     poolsize(imagmem, 1024*0, 1);
 }
 

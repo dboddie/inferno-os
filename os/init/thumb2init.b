@@ -36,7 +36,7 @@ init(context: ref Draw->Context, nil: list of string)
 #    (l, d) = sys->stat("/invalid");
 #    sys->print("%s %s %s %d\n", d.name, d.uid, d.gid, l);
 
-    fd := sys->open("/README.md", Sys->OREAD);
+    fd := sys->open("/", Sys->OREAD);
     if (fd == nil) {
         sys->print("error reading /\n");
         return;
@@ -44,24 +44,28 @@ init(context: ref Draw->Context, nil: list of string)
 
 #    sys->print("fd=%d\n", fd.fd);
 
-    a := array[128] of byte;
-    stdout := sys->fildes(1);
+    (nr, b) := sys->dirread(fd);
+    sys->print("%d\n", nr);
 
-    for (;;) {
-        n := sys->readn(fd, a, 128);
-        if (n < 0)
-            sys->print("%r");
-        else if (n == 0)
-            break;
-        else
-            sys->write(stdout, a, n);
-    }
+#    a := array[128] of byte;
+#    stdout := sys->fildes(1);
+#
+#    for (;;) {
+#        n := sys->readn(fd, a, 128);
+#        if (n < 0)
+#            sys->print("%r");
+#        else if (n == 0)
+#            break;
+#        else
+#            sys->write(stdout, a, n);
+#    }
 
-#    (a, l) := rd->init("/dis", Readdir->COMPACT);
+#    (a, l) := rd->init("/", Readdir->COMPACT);
 #    sys->print("%d\n", l);
+#    sys->print("%r");
 
-#    for (i := 0; i < l; i++)
-#        sys->print("%s\n", a[i].name);
+    for (i := 0; i < nr; i++)
+        sys->print("%s\n", b[i].name);
 
     #args: list of string;
     #sh->init(context, args);
