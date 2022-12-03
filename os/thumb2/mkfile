@@ -5,8 +5,8 @@
 CONF=thumb2.conf
 CONFLIST=thumb2.conf
 loadaddr=0x08000000
-# Put data above vectors at the start of RAM.
-dataaddr=0x20000200
+# Put data at the start of RAM.
+dataaddr=0x20000000
 
 SYSTARG=$OSTARG
 OBJTYPE=thumb
