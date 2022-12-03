@@ -1,19 +1,20 @@
 #include "stm32f405.h"
 
+#ifdef ALL_GPIO
 void enable_GPIO_A(void)
 {
     /* Enable GPIO A on the AHB1 bus */
     RCC *rcc = (RCC *)RCC_CR;
     rcc->ahb1enr |= RCC_AHB1_ENABLE_GPIO_A;
 }
-
+#endif
 void enable_GPIO_B(void)
 {
     /* Enable GPIO B on the AHB1 bus */
     RCC *rcc = (RCC *)RCC_CR;
     rcc->ahb1enr |= RCC_AHB1_ENABLE_GPIO_B;
 }
-
+#ifdef ALL_GPIO
 void enable_GPIO_C(void)
 {
     /* Enable GPIO C on the AHB1 bus */
@@ -45,3 +46,4 @@ void set_LED(int on)
     else
         gpioa->odr &= ~(1 << 15);
 }
+#endif
