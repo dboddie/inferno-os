@@ -40,7 +40,8 @@ _end_start_loop:
 
 TEXT _dummy(SB), THUMB, $-4
 
-    B   ,_dummy(SB)
+    MOVW    SP, R0
+    B   ,dummy(SB)
 
 /* These exception handlers will be entered in handler mode, using the main
    stack pointer (MSP). */
@@ -85,3 +86,21 @@ TEXT _hard_fault(SB), THUMB, $-4
 TEXT _usage_fault(SB), THUMB, $-4
     MRS(0, MRS_MSP)     /* Pass the main stack pointer (MSP) to a C function. */
     B ,usage_fault(SB)
+
+TEXT _nmi(SB), THUMB, $-4
+    B ,_nmi(SB)
+
+TEXT _mem_manage(SB), THUMB, $-4
+    B ,_mem_manage(SB)
+
+TEXT _bus_fault(SB), THUMB, $-4
+    B ,_bus_fault(SB)
+
+TEXT _svcall(SB), THUMB, $-4
+    B ,_svcall(SB)
+
+TEXT _pendsv(SB), THUMB, $-4
+    B ,_pendsv(SB)
+
+TEXT _uart3(SB), THUMB, $-4
+    B ,_uart3(SB)

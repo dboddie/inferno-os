@@ -151,3 +151,14 @@ void hard_fault(int sp)
 
     for (;;) {}
 }
+
+void dummy(int sp)
+{
+    wrstr("sp="); wrhex(sp); newline();
+    wrstr("r0="); wrhex(*(int *)(sp)); newline();
+    wrstr("r1="); wrhex(*(int *)(sp + 4)); newline();
+    wrstr("pc="); wrhex(*(int *)(sp + 24)); newline();
+    wrstr("lr="); wrhex(*(int *)(sp + 20)); newline();
+
+    for (;;) {}
+}

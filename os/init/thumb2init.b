@@ -4,13 +4,12 @@ implement Init;
 
 include "draw.m";
 include "sys.m";
-#include "sh.m";
-#include "env.m";
+include "sh.m";
 #include "readdir.m";
 
 draw: Draw;
 sys: Sys;
-#sh: Sh;
+sh: Sh;
 
 Init: module
 {
@@ -20,13 +19,14 @@ Init: module
 init(context: ref Draw->Context, nil: list of string)
 {
     sys = load Sys Sys->PATH;
-    #rd := load Readdir Readdir->PATH;
-    #sh = load Sh "/dis/tiny/sh.dis";
+#    rd := load Readdir Readdir->PATH;
+    sh = load Sh "/dis/tiny/sh.dis";
 
     sys->print("**\n** Inferno\n** Vita Nuova\n**\n");
 
 #    sys->bind("#^", "/chan", sys->MBEFORE);
     sys->bind("#c", "/dev", sys->MREPL);
+    sys->bind("#t", "/dev", sys->MAFTER);
     sys->bind("#e", "/env", sys->MREPL);
     sys->bind("#p", "/prog", sys->MREPL);
 
@@ -36,16 +36,16 @@ init(context: ref Draw->Context, nil: list of string)
 #    (l, d) = sys->stat("/invalid");
 #    sys->print("%s %s %s %d\n", d.name, d.uid, d.gid, l);
 
-    fd := sys->open("/", Sys->OREAD);
-    if (fd == nil) {
-        sys->print("error reading /\n");
-        return;
-    }
+#    fd := sys->open("/dev", Sys->OREAD);
+#    if (fd == nil) {
+#        sys->print("error reading /dev\n");
+#        return;
+#    }
 
 #    sys->print("fd=%d\n", fd.fd);
 
-    (nr, b) := sys->dirread(fd);
-    sys->print("%d\n", nr);
+#    (nr, b) := sys->dirread(fd);
+#    sys->print("%d\n", nr);
 
 #    a := array[128] of byte;
 #    stdout := sys->fildes(1);
@@ -60,15 +60,15 @@ init(context: ref Draw->Context, nil: list of string)
 #            sys->write(stdout, a, n);
 #    }
 
-#    (a, l) := rd->init("/", Readdir->COMPACT);
-#    sys->print("%d\n", l);
+#    (b, nr) := rd->init("/dis", Readdir->COMPACT);
+#    sys->print("%d\n", nr);
 #    sys->print("%r");
 
-    for (i := 0; i < nr; i++)
-        sys->print("%s\n", b[i].name);
+#    for (i := 0; i < nr; i++)
+#        sys->print("%s\n", b[i].name);
 
-    #args: list of string;
-    #sh->init(context, args);
+    args: list of string;
+    sh->init(context, args);
 
 #    spawn func();
 
@@ -77,8 +77,8 @@ init(context: ref Draw->Context, nil: list of string)
 #    for (;;) {}
 }
 
-func()
-{
-    for (i := 0; i < 20; i++)
-        sys->print("B %d\n", i);
-}
+#func()
+#{
+#    for (i := 0; i < 20; i++)
+#        sys->print("B %d\n", i);
+#}

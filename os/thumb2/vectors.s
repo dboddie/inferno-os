@@ -4,25 +4,31 @@
 #define SYSTICK _systick(SB)
 #define HARD_FAULT _hard_fault(SB)
 #define USAGE_FAULT _usage_fault(SB)
+#define NMI _nmi(SB)
+#define MEM_MANAGE _mem_manage(SB)
+#define BUS_FAULT _bus_fault(SB)
+#define SVCALL _svcall(SB)
+#define PENDSV _pendsv(SB)
+#define UART3_INT _uart3(SB)
 
 /* See page 372 of the STM32F405/415 Reference Manual RM0090 */
 
 TEXT vectors(SB), $0
     WORD    $STACKTOP
     WORD    $RESET
-    WORD    $DUMMY
+    WORD    $NMI
     WORD    $HARD_FAULT
-    WORD    $DUMMY
-    WORD    $DUMMY
+    WORD    $MEM_MANAGE
+    WORD    $BUS_FAULT
     WORD    $USAGE_FAULT
     WORD    $0
     WORD    $0
     WORD    $0
     WORD    $0
-    WORD    $DUMMY
+    WORD    $SVCALL
     WORD    $0
     WORD    $0
-    WORD    $DUMMY
+    WORD    $PENDSV
     WORD    $SYSTICK
 
 /* Handlers for peripherals start at 0x40 from the start of the vector table */
@@ -75,7 +81,7 @@ TEXT vectors(SB), $0
     WORD    $DUMMY
     WORD    $DUMMY
     WORD    $DUMMY
-    WORD    $DUMMY
+    WORD    $UART3_INT
 
     WORD    $DUMMY
     WORD    $DUMMY

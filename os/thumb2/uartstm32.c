@@ -1,3 +1,5 @@
+/* This file must be given a name that begins with "uart". */
+
 #include "u.h"
 #include "../port/lib.h"
 #include "../port/error.h"
@@ -12,21 +14,21 @@
 /* This file will get built as a result of its entry in the misc section of the
    thumb2.conf file. */
 
-/* Forward declaration of the API structure */
-extern PhysUart physusart;
+/* Forward declaration of the API structure. The name must end in "uart". */
+extern PhysUart stm32physuart;
 
-static Uart uart0 = {
-    .name = "uart0",
-    .phys = &physusart,
+static Uart uart3 = {
+    .name = "uart3",
+    .phys = &stm32physuart,
 };
 
 static Uart* pnp(void)
 {
     Uart *uart;
 
-    uart = &uart0;
-    if(uart->console == 0)
-        kbdq = qopen(8*1024, 0, nil, nil);
+    uart = &uart3;
+    if(uart->console == 0 && kbdq == 0)
+        kbdq = qopen(64, 0, nil, nil);
     return uart;
 }
 
@@ -72,18 +74,18 @@ void uartconsinit(void)
 {
     Uart *uart;
 
-    uart = &uart0;
+    uart = &uart3;
 
     if(!uart->enabled)
         (*uart->phys->enable)(uart, 0);
-    uartctl(uart, "b9600 l8 pn s1");
+    uartctl(uart, "b115200 l8 pn s1");
 
     consuart = uart;
     uart->console = 1;
 }
 
-PhysUart physusart = {
-	.name		= "usart",
+PhysUart stm32physuart = {
+	.name		= "uart3",
 	.pnp		= pnp,
 	.enable		= enable,
 	.disable	= disable,

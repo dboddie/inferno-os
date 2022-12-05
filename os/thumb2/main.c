@@ -27,12 +27,15 @@ extern int image_pool_pcnt;
 void confinit(void)
 {
     ulong base = PGROUND((ulong)end);
+    ulong CCMtop = STACK_TOP + 4 - KSTKSIZE;
+    ulong CCMbase = MACHADDR + PGROUND(sizeof(Mach));
 
     conf.topofmem = MEMORY_TOP;
     conf.base0 = base;
+    conf.base1 = CCMbase;
 
-    conf.npage1 = 0;
     conf.npage0 = (conf.topofmem - base)/BY2PG;
+    conf.npage1 = (CCMtop - CCMbase)/BY2PG;
     conf.npage = conf.npage0 + conf.npage1;
     conf.ialloc = BY2PG;
 
@@ -48,8 +51,8 @@ static void poolsizeinit(void)
 {
     ulong nb;
     nb = conf.npage*BY2PG;
-    poolsize(mainmem, 1024*35, 0);
-    poolsize(heapmem, 1024*25, 0);
+    poolsize(mainmem, 1024*60, 0);
+    poolsize(heapmem, 1024*46, 0);
     poolsize(imagmem, 1024*0, 1);
 }
 
