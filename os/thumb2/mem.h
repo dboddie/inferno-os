@@ -34,3 +34,4 @@
 #define MACHADDR        0x10000000  /*! Mach structure */
 #define STACK_TOP       0x1000fffc
 #define MEMORY_TOP      0x20020000  /* End of memory Inferno can use */
+#define CCM_MEMORY_TOP  (STACK_TOP + 4 - KSTKSIZE)

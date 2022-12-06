@@ -49,11 +49,14 @@ void confinit(void)
 
 static void poolsizeinit(void)
 {
-    ulong nb;
-    nb = conf.npage*BY2PG;
-    poolsize(mainmem, 1024*60, 0);
-    poolsize(heapmem, 1024*37, 0);
-    poolsize(imagmem, 1024*0, 1);
+    ulong nb = conf.npage*BY2PG;
+    print("Total memory available: %ld K\n",nb/1024);
+    print("Bank 0: %ld bytes\n", CCM_MEMORY_TOP - conf.base0);
+    print("Bank 1: %ld bytes\n", conf.topofmem - conf.base1);
+
+    poolsize(mainmem, (nb*main_pool_pcnt)/100, 0);
+    poolsize(heapmem, (nb*heap_pool_pcnt)/100, 0);
+    poolsize(imagmem, (nb*image_pool_pcnt)/100, 1);
 }
 
 extern char bdata[];
@@ -70,9 +73,6 @@ void main(void)
     quotefmtinstall();
     confinit();
     xinit();                    // in port/xalloc.c
-    poolinit();                 // in port/alloc.c
-    poolsizeinit();
-
     trapinit();                 // in trap.c
 
 //    uartconsinit();
@@ -82,9 +82,11 @@ void main(void)
     clockinit();                // in clock.c
     printinit();                // in port/devcons.c
 
-poolsummary();
+    poolinit();                 // in port/alloc.c
+    poolsizeinit();
+
+//poolsummary();
 print("%ulx %ulx %ulx %ulx %ulx\n", etext, bdata, edata, end, m);
-print("%ud\n", MEMORY_TOP - (ulong)end);
 
     kbdinit();
 

@@ -31,7 +31,7 @@ struct Label
 };
 
 enum {
-        Maxfpregs       = 32,   /* could be 16 or 32, see Mach.fpnregs */
+        Maxfpregs       = 16,   /* 16 for Thumb-2, see Mach.fpnregs */
 	Nfpctlregs      = 16,
 };
 
@@ -95,14 +95,6 @@ enum {
 	Alt5	= 0x2,
 };
 
-/*
- *  MMU stuff in Mach.
- */
-struct MMMU
-{
-	PTE*	mmul1;		/* l1 for this processor */
-};
-
 #include "../port/portdat.h"
 
 struct Mach
@@ -119,7 +111,6 @@ struct Mach
 	uvlong	cyclefreq;	/* Frequency of user readable cycle counter */
 	u32int	inidle;
 	u32int	idleticks;
-	MMMU;
 
 	/* vfp2 or vfp3 fpu */
 	int     havefp;
@@ -131,11 +122,6 @@ struct Mach
 	int     fppid;                  /* pid of last fault */
 	uintptr fppc;                   /* addr of last fault */
 	int     fpcnt;                  /* how many consecutive at that addr */
-
-	/* stacks for exceptions */
-	ulong   irqstack[5];
-	ulong	sysstack[5];
-	int	stack[1];
 };
 
 extern Mach *m;
