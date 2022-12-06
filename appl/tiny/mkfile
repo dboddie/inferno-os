@@ -3,6 +3,7 @@
 TARG=\
 	broke.dis\
 	kill.dis\
+	ls.dis\
 	rm.dis\
 	sh.dis\
 
@@ -14,6 +15,8 @@ SYSMODULES=\
 	env.m\
 	filepat.m\
 	bufio.m\
+	readdir.m\
+	workdir.m\
 
 DISBIN=$ROOT/dis/tiny
 
