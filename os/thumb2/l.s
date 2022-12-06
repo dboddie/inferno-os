@@ -70,11 +70,11 @@ TEXT _preswitch(SB), THUMB, $-4
     PUSH(0x1000, 0)             /* Save R12 (will be PC). */
     PUSH(0x0fff, 1)             /* Save registers in case the interrupted code
                                    uses them. */
-    MOVW    SP, R0              /* Pass the stack pointer to the switcher. */
-    BL      ,switcher(SB)
-
     MOVW    $setR12(SB), R1
     MOVW    R1, R12             /* Reset static base (SB) */
+
+    MOVW    SP, R0              /* Pass the stack pointer to the switcher. */
+    BL      ,switcher(SB)
 
     POP_LR_PC(0x0fff, 1, 0)     /* Recover R0-R11 and R14 */
     POP_LR_PC(0, 0, 1)          /* then PC. */
@@ -103,4 +103,10 @@ TEXT _pendsv(SB), THUMB, $-4
     B ,_pendsv(SB)
 
 TEXT _uart3(SB), THUMB, $-4
-    B ,_uart3(SB)
+    PUSH(0x1fff, 1)
+
+    MOVW    $setR12(SB), R1
+    MOVW    R1, R12             /* Reset static base (SB) */
+    BL ,uart3_intr(SB)
+
+    POP_LR_PC(0x1fff, 0, 1)

@@ -27,13 +27,16 @@ static Uart* pnp(void)
     Uart *uart;
 
     uart = &uart3;
-    if(uart->console == 0 && kbdq == 0)
+    if(uart->console == 0 && kbdq == 0) {
         kbdq = qopen(64, 0, nil, nil);
+        qnoblock(kbdq, 1);
+    }
     return uart;
 }
 
-static void enable(Uart *, int)
+static void enable(Uart *, int ie)
 {
+    enable_usart_intr(ie);
 //    setup_usart();
 }
 
@@ -103,3 +106,18 @@ PhysUart stm32physuart = {
 	.getc		= getc,
 	.putc		= putc,
 };
+
+/* Not part of the above API. Called from the l.s file. */
+void uart3_intr(void)
+{
+    Uart *uart = &uart3;
+
+    if (uart->console) {
+        if (uart->opens == 1)
+            uart->putc = kbdcr2nl;
+        else
+            uart->putc = nil;
+    }
+
+    uartrecv(uart, rdch());
+}

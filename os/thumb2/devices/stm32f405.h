@@ -188,4 +188,16 @@ extern void newline(void);
 
 extern void setup_i2c(void);
 
+/* Interrupts (NVIC) */
+typedef struct {
+    uint iser0_31;
+    uint iser32_63;
+    uint iser64_95;
+} NVIC;
+
+#define NVIC_ISER 0xe000e100
+#define NVIC_ISER0 NVIC_ISER    // interrupts 0-31
+#define NVIC_ISER1 0xe000e104   // interrupts 32-63
+#define NVIC_ISER2 0xe000e108   // interrupts 64-95
+
 #endif

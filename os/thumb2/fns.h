@@ -105,6 +105,7 @@ void    hwinit(void);
 void    switcher(Ureg *);
 void    usage_fault(int);
 void    hard_fault(int);
+void    uart3_intr(void);
 
 int getcontrol(void);
 void setcontrol(int);

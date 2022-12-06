@@ -15,6 +15,7 @@
 #define USART_Over8            0x8000
 #define USART_Enable           0x2000
 #define USART_WordLength       0x1000
+#define USART_RecvIntEnable    0x20
 #define USART_TransEnable      0x8
 #define USART_RecvEnable       0x4
 
@@ -64,6 +65,19 @@ void setup_usart(void)
 
     /* Wait until the USART is ready to transmit */
     while (!(usart->sr & USART_TransComplete));
+}
+
+void enable_usart_intr(int enable)
+{
+    USART *usart = (USART *)USART3;
+    NVIC *nvic = (NVIC *)NVIC_ISER;
+    if (enable) {
+        nvic->iser32_63 |= (1 << 7);
+        usart->cr1 |= USART_RecvIntEnable;
+    } else {
+        nvic->iser32_63 &= ~(1 << 7);
+        usart->cr1 &= ~USART_RecvIntEnable;
+    }
 }
 
 int rdch_wait(void)

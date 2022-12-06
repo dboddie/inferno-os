@@ -31,11 +31,11 @@ void confinit(void)
     ulong CCMbase = MACHADDR + PGROUND(sizeof(Mach));
 
     conf.topofmem = MEMORY_TOP;
-    conf.base0 = base;
-    conf.base1 = CCMbase;
+    conf.base0 = CCMbase;
+    conf.base1 = base;
 
-    conf.npage0 = (conf.topofmem - base)/BY2PG;
-    conf.npage1 = (CCMtop - CCMbase)/BY2PG;
+    conf.npage0 = (CCMtop - CCMbase)/BY2PG;
+    conf.npage1 = (conf.topofmem - base)/BY2PG;
     conf.npage = conf.npage0 + conf.npage1;
     conf.ialloc = BY2PG;
 
@@ -52,7 +52,7 @@ static void poolsizeinit(void)
     ulong nb;
     nb = conf.npage*BY2PG;
     poolsize(mainmem, 1024*60, 0);
-    poolsize(heapmem, 1024*46, 0);
+    poolsize(heapmem, 1024*37, 0);
     poolsize(imagmem, 1024*0, 1);
 }
 
@@ -67,15 +67,15 @@ void main(void)
     memset(m, 0, sizeof(Mach));
     memset(edata, 0, end-edata);
 
-    trapinit();                 // in trap.c
-
     quotefmtinstall();
     confinit();
     xinit();                    // in port/xalloc.c
     poolinit();                 // in port/alloc.c
     poolsizeinit();
 
-    uartconsinit();
+    trapinit();                 // in trap.c
+
+//    uartconsinit();
     serwrite = usart_serwrite;
 
     timersinit();               // in port/portclock.c
@@ -85,6 +85,8 @@ void main(void)
 poolsummary();
 print("%ulx %ulx %ulx %ulx %ulx\n", etext, bdata, edata, end, m);
 print("%ud\n", MEMORY_TOP - (ulong)end);
+
+    kbdinit();
 
     procinit();                 /* in port/proc.c */
     links();                    /* in the generated efikamx.c file */
@@ -193,4 +195,16 @@ void fpinit(void)
 
 void    segflush(void *p, ulong n)
 {
+}
+
+void uartputs(char *data, int len)
+{
+    int s;
+    s = splhi();
+    while (--len >= 0) {
+    if (*data == '\n')
+        wrch('\r');
+        wrch(*data++);
+    }
+    splx(s);
 }

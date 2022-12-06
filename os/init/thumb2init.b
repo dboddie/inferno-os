@@ -26,7 +26,7 @@ init(context: ref Draw->Context, nil: list of string)
 
 #    sys->bind("#^", "/chan", sys->MBEFORE);
     sys->bind("#c", "/dev", sys->MREPL);
-    sys->bind("#t", "/dev", sys->MAFTER);
+#    sys->bind("#t", "/dev", sys->MAFTER);
     sys->bind("#e", "/env", sys->MREPL);
     sys->bind("#p", "/prog", sys->MREPL);
 
