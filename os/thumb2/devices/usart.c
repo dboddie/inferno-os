@@ -119,29 +119,6 @@ void wrhex(int value)
     }
 }
 
-void wrdec(long long value)
-{
-    char ch[20];
-    int v = value;
-    if (v < 0) {
-        wrch(45); v = -v;
-    } else if (v == 0) {
-        wrch('0');
-        return;
-    }
-
-    int s = 19;
-    for (; s >= 0 && v != 0; s--) {
-        int b = v % 10;
-        ch[s] = 48 + b;
-        v = v / 10;
-        if (v == 0) break;
-    }
-
-    for (; s < 20; s++)
-        wrch(ch[s]);
-}
-
 void newline(void)
 {
     wrch(13); wrch(10);
