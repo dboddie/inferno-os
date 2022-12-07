@@ -106,6 +106,8 @@ void    switcher(Ureg *);
 void    usage_fault(int);
 void    hard_fault(int);
 void    uart3_intr(void);
+uint    get_r10(void);
+uint    get_r12(void);
 
 int getcontrol(void);
 void setcontrol(int);

@@ -131,6 +131,10 @@ void usage_fault(int sp)
     wrstr("r1="); wrhex(*(int *)(sp + 4)); newline();
     wrstr("pc="); wrhex(*(int *)(sp + 24)); newline();
     wrstr("lr="); wrhex(*(int *)(sp + 20)); newline();
+    wrstr("r10="); wrhex(get_r10()); newline();
+    wrstr("r12="); wrhex(get_r12()); newline();
+
+    poolsummary();
 
     for (;;) {}
 }
@@ -147,7 +151,11 @@ void hard_fault(int sp)
         wrhex(*(int *)BFAR_ADDR);
     }
 
-    showregs(sp, 1);
+    wrstr("r10="); wrhex(get_r10()); newline();
+    wrstr("r12="); wrhex(get_r12()); newline();
+    showregs(sp, 0);
+
+    poolsummary();
 
     for (;;) {}
 }
@@ -159,6 +167,10 @@ void dummy(int sp)
     wrstr("r1="); wrhex(*(int *)(sp + 4)); newline();
     wrstr("pc="); wrhex(*(int *)(sp + 24)); newline();
     wrstr("lr="); wrhex(*(int *)(sp + 20)); newline();
+    wrstr("r10="); wrhex(get_r10()); newline();
+    wrstr("r12="); wrhex(get_r12()); newline();
+
+    poolsummary();
 
     for (;;) {}
 }

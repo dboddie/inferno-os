@@ -1,4 +1,5 @@
 typedef struct Ureg {
+    ulong r0;
     ulong r1;
     ulong r2;
     ulong r3;
@@ -15,6 +16,5 @@ typedef struct Ureg {
         ulong link;
         ulong lr;
     };
-    ulong r0;
     ulong pc;   /* interrupted addr */
 } Ureg;

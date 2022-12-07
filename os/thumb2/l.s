@@ -36,6 +36,9 @@ _end_start_loop:
     MOVW    $interrupts_enabled(SB), R2
     MOVW    R1, 0(R2)
 
+    MOVW    $0x1234, R1
+    MOVW    R1, R10
+
     B   ,main(SB)
 
 TEXT _dummy(SB), THUMB, $-4
@@ -58,7 +61,11 @@ TEXT _systick(SB), THUMB, $-4
 
     MOVW    $_preswitch(SB), R0
     MOVW    R0, 24(SP)          /* Return to the _preswitch routine instead. */
-
+/*
+    MOVW    $in_interrupt(SB), R0
+    MOVW    $1, R1
+    MOVW    R1, (R0)
+*/
     RET
 
 /* When _systick returns, the exception returns and thread mode is entered
@@ -68,15 +75,19 @@ TEXT _preswitch(SB), THUMB, $-4
 
     MOVW R0, R0
     PUSH(0x1000, 0)             /* Save R12 (will be PC). */
-    PUSH(0x0fff, 1)             /* Save registers in case the interrupted code
-                                   uses them. */
+    PUSH(0x0bff, 1)             /* Save registers R0-R9, R11 as well as R14, in
+                                   case the interrupted code uses them. */
     MOVW    $setR12(SB), R1
     MOVW    R1, R12             /* Reset static base (SB) */
-
+/*
+    MOVW    $in_interrupt(SB), R0
+    MOVW    $0, R1
+    MOVW    R1, (R0)
+*/
     MOVW    SP, R0              /* Pass the stack pointer to the switcher. */
     BL      ,switcher(SB)
 
-    POP_LR_PC(0x0fff, 1, 0)     /* Recover R0-R11 and R14 */
+    POP_LR_PC(0x0bff, 1, 0)     /* Recover R0-R9,R11 and R14 */
     POP_LR_PC(0, 0, 1)          /* then PC. */
 
 TEXT _hard_fault(SB), THUMB, $-4
@@ -103,10 +114,18 @@ TEXT _pendsv(SB), THUMB, $-4
     B ,_pendsv(SB)
 
 TEXT _uart3(SB), THUMB, $-4
-    PUSH(0x1fff, 1)
+    PUSH(0x1bff, 1)
 
     MOVW    $setR12(SB), R1
     MOVW    R1, R12             /* Reset static base (SB) */
     BL ,uart3_intr(SB)
 
-    POP_LR_PC(0x1fff, 0, 1)
+    POP_LR_PC(0x1bff, 0, 1)
+
+TEXT get_r10(SB), THUMB, $-4
+    MOVW    R10, R0
+    RET
+
+TEXT get_r12(SB), THUMB, $-4
+    MOVW    R12, R0
+    RET
