@@ -124,4 +124,9 @@
 
 #define CONTROL_SPSEL 2
 
+/* System handler priority register 3 (SysTick is in top 4/8 bits) and
+   equivalent for IRQs 36-39 (UART3 is 39, so in the top 4/8 bits). */
+#define SHPR3 0xe000ed20
+#define NVIC_IPR9 0xe000e424
+
 #endif

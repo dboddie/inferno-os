@@ -12,6 +12,15 @@ TEXT _start(SB), THUMB, $-4
     MOVW    $STACK_TOP, R1
     MOVW    R1, SP
 
+    /* Set the priority number of the SysTick interrupt to higher than that of
+       the UART3 IRQ. Higher priority number means lower priority. */
+    MOVW    $SHPR3, R1
+    MOVW    $(1 << 24), R0
+    MOVW    R0, (R1)
+    MOVW    $NVIC_IPR9, R1
+    MOVW    $0, R0
+    MOVW    R0, (R1)
+
     /* Copy initial values of data from after the end of the text section to
        the beginning of the data section. */
     MOVW    $etext(SB), R1
