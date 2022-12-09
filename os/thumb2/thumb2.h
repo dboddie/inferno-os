@@ -129,4 +129,10 @@
 #define SHPR3 0xe000ed20
 #define NVIC_IPR9 0xe000e424
 
+/* System control block (STM32 Cortex-M4 programming manual, section 4.4.5) */
+#define SCB_AIRCR 0xe000ed0c
+#define SCB_AIRCR_VECTKEYRESET 0x05fa0000
+#define SCB_AIRCR_SYSRESETREQ 0x04
+#define SCB_AIRCR_VECTRESET 0x01
+
 #endif

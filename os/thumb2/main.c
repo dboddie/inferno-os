@@ -171,7 +171,8 @@ userinit(void)
 
 void reboot(void)
 {
-    return;
+    print("rebooting...\n");
+    *(uint *)SCB_AIRCR = SCB_AIRCR_VECTKEYRESET | SCB_AIRCR_SYSRESETREQ;
 }
 
 void idlehands(void)
@@ -180,6 +181,7 @@ void idlehands(void)
 
 void exit(int)
 {
+    reboot();
 }
 
 void halt(void)
