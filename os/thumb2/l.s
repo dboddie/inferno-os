@@ -44,10 +44,10 @@ _end_start_loop:
     MOVW    $0, R1
     MOVW    $interrupts_enabled(SB), R2
     MOVW    R1, 0(R2)
-
+/* This was used to show that R10 isn't used by the compiler:
     MOVW    $0x1234, R1
     MOVW    R1, R10
-
+*/
     B   ,main(SB)
 
 TEXT _dummy(SB), THUMB, $-4
@@ -125,13 +125,13 @@ TEXT _pendsv(SB), THUMB, $-4
 
 /* Vector routine for UART3 */
 TEXT _uart3(SB), THUMB, $-4
-    PUSH(0x1bff, 1)
+    PUSH(0x1bff, 1)             /* Save registers R0-R9, R11-R12 and R14 */
 
     MOVW    $setR12(SB), R1
     MOVW    R1, R12             /* Reset static base (SB) */
     BL ,uart3_intr(SB)
 
-    POP_LR_PC(0x1bff, 0, 1)
+    POP_LR_PC(0x1bff, 0, 1)     /* Pop registers R0-R9, R11-R12 and return */
 
 TEXT get_r10(SB), THUMB, $-4
     MOVW    R10, R0
