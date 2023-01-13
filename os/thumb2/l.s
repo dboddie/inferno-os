@@ -101,6 +101,7 @@ TEXT _preswitch(SB), THUMB, $-4
 
 TEXT _hard_fault(SB), THUMB, $-4
     MRS(0, MRS_MSP)     /* Pass the main stack pointer (MSP) to a C function. */
+    PUSH(0x1ff0, 0)
     B ,hard_fault(SB)
 
 TEXT _usage_fault(SB), THUMB, $-4
@@ -122,6 +123,7 @@ TEXT _svcall(SB), THUMB, $-4
 TEXT _pendsv(SB), THUMB, $-4
     B ,_pendsv(SB)
 
+/* Vector routine for UART3 */
 TEXT _uart3(SB), THUMB, $-4
     PUSH(0x1bff, 1)
 

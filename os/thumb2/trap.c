@@ -36,7 +36,7 @@ void showregs(int sp, int below)
         }
     }
 
-    print("sp=%.8lux ", sp);
+    print("sp=%.8lux ", (ulong)sp);
     print("lr=%.8lux ", *(ulong *)(sp + 20));
     print("pc=%.8lux\n", *(ulong *)(sp + 24));
 }
@@ -151,9 +151,9 @@ void hard_fault(int sp)
         wrhex(*(int *)BFAR_ADDR);
     }
 
-    wrstr("r10="); wrhex(get_r10()); newline();
+    wrstr("r10="); wrhex(get_r10()); wrch(' ');
     wrstr("r12="); wrhex(get_r12()); newline();
-    showregs(sp, 0);
+    showregs(sp, 1);
 
     poolsummary();
 
