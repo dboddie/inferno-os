@@ -12,7 +12,7 @@ void kbdinit(void)
 {
     kbdq = qopen(1024, 0, nil, nil);
     qnoblock(kbdq, 1);
-    enable_usart_intr(1);
+    enable_usart_intr(0);
 }
 
 void uart3_intr(void)

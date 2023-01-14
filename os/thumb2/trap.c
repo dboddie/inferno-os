@@ -86,6 +86,9 @@ void switcher(Ureg *ureg)
     m->inidle = 0;
     splhi();
 
+    if (rdch_ready())
+        uart3_intr();
+
 //    print("up=%.8lux\n", up);
 //    wrstr("<< sp="); wrhex(getsp()); newline();
 //    wrstr("pc="); wrhex((uint)ureg->pc); wrstr(" r14="); wrhex((uint)ureg->lr); newline();

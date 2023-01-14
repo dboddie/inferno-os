@@ -119,7 +119,8 @@ typedef struct {
 #define USART3      0x40004800
 
 enum USART_Status {
-    USART_TransComplete = 0x40
+    USART_TransComplete = 0x40,
+    USART_ReadNotEmpty = 0x20
 };
 
 enum USART_Control1 {
@@ -199,5 +200,16 @@ typedef struct {
 #define NVIC_ISER0 NVIC_ISER    // interrupts 0-31
 #define NVIC_ISER1 0xe000e104   // interrupts 32-63
 #define NVIC_ISER2 0xe000e108   // interrupts 64-95
+
+typedef struct {
+    uint icer0_31;
+    uint icer32_63;
+    uint icer64_95;
+} NVIC_clear;
+
+#define NVIC_ICER 0xe000e180
+#define NVIC_ICER0 NVIC_ICER    // interrupts 0-31
+#define NVIC_ICER1 0xe000e184   // interrupts 32-63
+#define NVIC_ICER2 0xe000e188   // interrupts 64-95
 
 #endif

@@ -70,12 +70,13 @@ void setup_usart(void)
 void enable_usart_intr(int enable)
 {
     USART *usart = (USART *)USART3;
-    NVIC *nvic = (NVIC *)NVIC_ISER;
     if (enable) {
+        NVIC *nvic = (NVIC *)NVIC_ISER;
         nvic->iser32_63 |= (1 << 7);
         usart->cr1 |= USART_RecvIntEnable;
     } else {
-        nvic->iser32_63 &= ~(1 << 7);
+        NVIC_clear *nvic_clr = (NVIC_clear *)NVIC_ICER;
+        nvic_clr->icer32_63 |= (1 << 7);
         usart->cr1 &= ~USART_RecvIntEnable;
     }
 }
@@ -131,4 +132,10 @@ void usart_serwrite(char *s, int n)
             wrch('\r');
         wrch(s[i]);
     }
+}
+
+int rdch_ready(void)
+{
+    USART *usart = (USART *)USART3;
+    return (usart->sr & USART_ReadNotEmpty);
 }
