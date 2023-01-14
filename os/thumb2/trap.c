@@ -9,6 +9,9 @@
 #include "../port/error.h"
 
 #include "devices/fns.h"
+extern void wrch(int);
+extern void showpool(Pool *p);
+extern void poolsummary(void);
 
 extern void hzclock(Ureg *);
 
@@ -159,6 +162,11 @@ void hard_fault(int sp)
     showregs(sp, 1);
 
     poolsummary();
+
+    newline();
+    showpool(mainmem);
+    newline();
+    showpool(heapmem);
 
     for (;;) {}
 }
