@@ -72,17 +72,16 @@ TEXT splx(SB), THUMB, $-4
         MOVW    R7, (R6)    /* m->splpc */
 
 TEXT splxpc(SB), THUMB, $-4
-        CMP     $0, R0
-        BNE splx_enable
+        MOVW    $interrupts_enabled(SB), R1
+        MOVW    R0, (R1)
 
-	CPS(1, CPS_I)       /* disable interrupts */
-        MOVW    $interrupts_enabled(SB), R1
-        MOVW    R0, (R1)
-        RET
-splx_enable:
-        MOVW    $interrupts_enabled(SB), R1
-        MOVW    R0, (R1)
+        CMP     $0, R0
+        BEQ splx_disable
+
 	CPS(0, CPS_I)       /* enable interrupts */
+        RET
+splx_disable:
+	CPS(1, CPS_I)       /* disable interrupts */
 	RET
 
 TEXT islo(SB), THUMB, $-4
