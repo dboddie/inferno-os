@@ -15,7 +15,7 @@
 #define BI2BY           8                   /*! bits per byte */
 #define BI2WD           32                  /* bits per word */
 #define BY2WD           4                   /* bytes per word */
-#define BY2V            8                   /*! only used in xalloc.c */
+#define BY2V            8                   /*! only used in xalloc.c and allocb.c */
 
 #define KTZERO          (ROM_START + VEC_SIZE)  /* kernel text start */
 
