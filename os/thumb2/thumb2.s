@@ -155,30 +155,31 @@ TEXT setcontrol(SB), THUMB, $-4
     RET
 
 /* ulong _tas(ulong*); */
+/* Accepts R0 = address of key; returns R0 = 0 (success) or 1 (failure) */
+/* Tries to write a lock value to the address. Returns 0 if able to do so, or
+   returns 1 to indicate failure.
+   (Adapted from emu/Linux/arm-tas-v7.S) */
 
 TEXT _tas(SB), THUMB, $-4
-        PUSH(6, 1)              /* Push R1,R2,R14 */
-	MOVW    R0, R1
         DMB
+	MOVW    R0, R1          /* R1 = address of key */
+        MOVW    $0xaa, R2
 
 _tas_loop:
+        /* Read the key address to check the lock value. */
         LDREX(0, 1, 0)          /* 0(R1) -> R0 */
         CMP     $0, R0
-        BNE     _tas_lock_busy
-
-_tas_unlock:
-        MOVW    $0xaa, R2
-        STREX(0, 2, 1, 0)       /* R2 -> 0(R1) ? 1 -> R0 : 0 -> R0 */
-        CMP     $0, R0
-        BNE     _tas_loop
-        BEQ     _tas_exit
-
-_tas_lock_busy:
-        CLREX                   /* Cannot unlock so clear request for access. */
-
-_tas_exit:
+        BNE     _tas_lockbusy   /* The value loaded was non-zero, so the lock
+                                   is in use. */
+        STREX(3, 2, 1, 0)       /* R2 -> 0(R1) ? 0 -> R3 : 1 -> R3 (fail) */
+        CMP     $0, R3
+        BNE     _tas_loop       /* Failed to store, so try again. */
         DMB
-        POP(6, 1)               /* Pop R1,R2,R14 */
+        RET
+
+_tas_lockbusy:
+        CLREX
+        RET
 
 /*
 TEXT _idlehands(SB), $-4
