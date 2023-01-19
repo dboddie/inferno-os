@@ -124,42 +124,88 @@ void kprocchild(Proc *p, void (*func)(void*), void *arg)
 
 void usage_fault(int sp)
 {
-    wrstr("Usage fault at "); wrhex(*(int *)(sp + 24)); newline();
+    /* Entered with sp pointing to R4-R12, R0-R3, R12, R14, PC and xPSR. */
+    wrstr("Usage fault at "); wrhex(*(int *)(sp + 60)); newline();
     wrstr("UFSR="); wrhex(*(short *)UFSR_ADDR); newline();
 //    wrstr("Instruction: "); wrhex(**(int **)(sp + 24)); newline();
+
+    short ufsr = *(short *)UFSR_ADDR;
+    if (ufsr & 0x2) {
+        wrstr("MMFAR="); wrhex(*(int *)MMFAR_ADDR); newline();
+    }
 
 /* Step past an FP instruction, setting Thumb mode execution.
     *(int *)(sp + 24) += 4;
     *(int *)(sp + 28) = 0x01000000;
 */
     wrstr("sp="); wrhex(sp); newline();
-    wrstr("r0="); wrhex(*(int *)(sp)); newline();
-    wrstr("r1="); wrhex(*(int *)(sp + 4)); newline();
-    wrstr("pc="); wrhex(*(int *)(sp + 24)); newline();
-    wrstr("lr="); wrhex(*(int *)(sp + 20)); newline();
     wrstr("r10="); wrhex(get_r10()); newline();
     wrstr("r12="); wrhex(get_r12()); newline();
 
+    wrstr("sp="); wrhex(sp); newline();
+    wrstr("r10="); wrhex(get_r10()); wrch(' ');
+    wrstr("r12="); wrhex(get_r12()); newline();
+
+    wrstr("r0="); wrhex(*(int *)(sp + 36)); wrch(' ');
+    wrstr("r1="); wrhex(*(int *)(sp + 40)); wrch(' ');
+    wrstr("r2="); wrhex(*(int *)(sp + 44)); wrch(' ');
+    wrstr("r3="); wrhex(*(int *)(sp + 48)); newline();
+    wrstr("r4="); wrhex(*(int *)(sp)); wrch(' ');
+    wrstr("r5="); wrhex(*(int *)(sp + 4)); wrch(' ');
+    wrstr("r6="); wrhex(*(int *)(sp + 8)); wrch(' ');
+    wrstr("r7="); wrhex(*(int *)(sp + 12)); newline();
+    wrstr("r8="); wrhex(*(int *)(sp + 16)); wrch(' ');
+    wrstr("r9="); wrhex(*(int *)(sp + 20)); wrch(' ');
+    wrstr("r10="); wrhex(*(int *)(sp + 24)); wrch(' ');
+    wrstr("r11="); wrhex(*(int *)(sp + 28)); newline();
+    wrstr("r12="); wrhex(*(int *)(sp + 32)); wrch(' ');
+    wrstr("lr="); wrhex(*(int *)(sp + 56)); wrch(' ');
+    wrstr("pc="); wrhex(*(int *)(sp + 60)); wrch(' ');
+    wrstr("xPSR="); wrhex(*(int *)(sp + 64)); newline();
+
     poolsummary();
+
+    newline();
+    showpool(mainmem);
+    newline();
+    showpool(heapmem);
 
     for (;;) {}
 }
 
 void hard_fault(int sp)
 {
-    wrstr("Hard fault at "); wrhex(*(int *)(sp + 24)); newline();
+    /* Entered with sp pointing to R4-R12, R0-R3, R12, R14, PC and xPSR. */
+    wrstr("Hard fault at "); wrhex(*(int *)(sp + 60)); newline();
 /*    wrstr("UFSR="); wrhex(*(int *)UFSR_ADDR); newline();
     wrstr("Instruction: "); wrhex(**(int **)(sp + 24)); newline();*/
     int cfsr = *(int *)CFSR_ADDR;
     wrstr("CFSR="); wrhex(cfsr); newline();
 
     if (cfsr & 0x200) {
-        wrhex(*(int *)BFAR_ADDR);
+        wrstr("BFAR="); wrhex(*(int *)BFAR_ADDR); newline();
     }
 
+    wrstr("sp="); wrhex(sp); newline();
     wrstr("r10="); wrhex(get_r10()); wrch(' ');
     wrstr("r12="); wrhex(get_r12()); newline();
-    showregs(sp, 1);
+
+    wrstr("r0="); wrhex(*(int *)(sp + 36)); wrch(' ');
+    wrstr("r1="); wrhex(*(int *)(sp + 40)); wrch(' ');
+    wrstr("r2="); wrhex(*(int *)(sp + 44)); wrch(' ');
+    wrstr("r3="); wrhex(*(int *)(sp + 48)); newline();
+    wrstr("r4="); wrhex(*(int *)(sp)); wrch(' ');
+    wrstr("r5="); wrhex(*(int *)(sp + 4)); wrch(' ');
+    wrstr("r6="); wrhex(*(int *)(sp + 8)); wrch(' ');
+    wrstr("r7="); wrhex(*(int *)(sp + 12)); newline();
+    wrstr("r8="); wrhex(*(int *)(sp + 16)); wrch(' ');
+    wrstr("r9="); wrhex(*(int *)(sp + 20)); wrch(' ');
+    wrstr("r10="); wrhex(*(int *)(sp + 24)); wrch(' ');
+    wrstr("r11="); wrhex(*(int *)(sp + 28)); newline();
+    wrstr("r12="); wrhex(*(int *)(sp + 32)); wrch(' ');
+    wrstr("lr="); wrhex(*(int *)(sp + 56)); wrch(' ');
+    wrstr("pc="); wrhex(*(int *)(sp + 60)); wrch(' ');
+    wrstr("xPSR="); wrhex(*(int *)(sp + 64)); newline();
 
     poolsummary();
 
@@ -181,7 +227,17 @@ void dummy(int sp)
     wrstr("r10="); wrhex(get_r10()); newline();
     wrstr("r12="); wrhex(get_r12()); newline();
 
+    wrstr("stack from sp:\n");
+    int i;
+    for (i = 0; i < 32; i++)
+        print("%.8lux ", *(ulong *)(sp + (i*4)));
+
     poolsummary();
+
+    newline();
+    showpool(mainmem);
+    newline();
+    showpool(heapmem);
 
     for (;;) {}
 }

@@ -14,13 +14,13 @@ TEXT _start(SB), THUMB, $-4
 
     /* Set the priority number of the SysTick interrupt to higher than that of
        the UART3 IRQ. Higher priority number means lower priority. */
-    MOVW    $SHPR3, R1
+/*    MOVW    $SHPR3, R1
     MOVW    $(1 << 24), R0
     MOVW    R0, (R1)
     MOVW    $NVIC_IPR9, R1
     MOVW    $0, R0
     MOVW    R0, (R1)
-
+*/
     /* Copy initial values of data from after the end of the text section to
        the beginning of the data section. */
     MOVW    $etext(SB), R1
@@ -69,6 +69,7 @@ TEXT _systick(SB), THUMB, $-4
     MOVW    R0, 16(SP)
 
     MOVW    $_preswitch(SB), R0
+    ORR     $1, R0
     MOVW    R0, 24(SP)          /* Return to the _preswitch routine instead. */
 /*
     MOVW    $in_interrupt(SB), R0
@@ -79,7 +80,8 @@ TEXT _systick(SB), THUMB, $-4
 
 /* When _systick returns, the exception returns and thread mode is entered
    again. The registers from the interrupted code have the values they would
-   have if uninterrupted except for PC which points to here. */
+   have if uninterrupted except for R12 which contains the interrupted PC and
+   PC which points to here. */
 TEXT _preswitch(SB), THUMB, $-4
 
     MOVW R0, R0
@@ -100,12 +102,15 @@ TEXT _preswitch(SB), THUMB, $-4
     POP_LR_PC(0, 0, 1)          /* then PC. */
 
 TEXT _hard_fault(SB), THUMB, $-4
-    MRS(0, MRS_MSP)     /* Pass the main stack pointer (MSP) to a C function. */
+/*    MRS(0, MRS_MSP)     Pass the main stack pointer (MSP) to a C function. */
     PUSH(0x1ff0, 0)
+    MOVW    SP, R0
     B ,hard_fault(SB)
 
 TEXT _usage_fault(SB), THUMB, $-4
-    MRS(0, MRS_MSP)     /* Pass the main stack pointer (MSP) to a C function. */
+/*     MRS(0, MRS_MSP)     Pass the main stack pointer (MSP) to a C function. */
+    PUSH(0x1ff0, 0)
+    MOVW    SP, R0
     B ,usage_fault(SB)
 
 TEXT _nmi(SB), THUMB, $-4

@@ -101,3 +101,15 @@ frames. Also, returning to the first label in schedinit() causes sched() to be
 called again. This shouldn't be a problem if another process is entered as long
 as that process was previously entered via the interrupt handler. Otherwise,
 the processor remains in handler mode.
+
+
+The capstone disassembler labels R9 as sb, R10 as sl, R11 as fp, R12 as ip,
+R13 as sp, R14 as lr and R15 as pc.
+
+
+Debugging crashes in the allocator again. Running ps a few times usually causes
+a crash, typically a hard fault, in
+
+ * pooldel
+ * markheap, as it tries to call the mark struct member on a type,
+ * in _preswitch, during preemption
