@@ -36,47 +36,27 @@ TEXT splhi(SB), THUMB, $-4
 	MOVW	R14, R7
         MOVW    R7, (R6)    /* m->splpc */
 
-        MOVW    $interrupts_enabled(SB), R1
-        MOVW    (R1), R0    /* load the previous state to be returned */
-
+        MRS(0, MRS_PRIMASK) /* load the previous interrupt disabled state */
+        RSB $1, R0, R0
 	CPS(1, CPS_I)       /* disable interrupts */
-        MOVW    $0, R7
-        MOVW    R7, (R1)
-/*
-        PUSH(1, 1)
-        MOVW    R14, R0
-        BL      ,wrhex(SB)
-        POP_LR_PC(1, 1, 0)
-*/
 	RET
 
 /* Enable interrupts and return the previous state. */
 TEXT spllo(SB), THUMB, $-4
-        MOVW    $interrupts_enabled(SB), R1
-        MOVW    (R1), R0    /* load the previous state to be returned */
-/*
-        PUSH(1, 1)
-        MOVW    R14, R0
-        BL      ,wrhex(SB)
-        POP_LR_PC(1, 1, 0)
-*/
+        MRS(0, MRS_PRIMASK) /* load the previous interrupt disabled state */
+        RSB $1, R0, R0
 	CPS(0, CPS_I)       /* enable interrupts */
-        MOVW    $1, R7
-        MOVW    R7, (R1)
 	RET
 
-/* Set the state passed in R0. */
+/* Set the interrupt enabled state passed in R0. */
 TEXT splx(SB), THUMB, $-4
 	MOVW	$(MACHADDR), R6
 	MOVW	R14, R7
         MOVW    R7, (R6)    /* m->splpc */
 
 TEXT splxpc(SB), THUMB, $-4
-        MOVW    $interrupts_enabled(SB), R1
-        MOVW    R0, (R1)
-
-        CMP     $0, R0
-        BEQ splx_disable
+        CMP     $1, R0
+        BNE splx_disable
 
 	CPS(0, CPS_I)       /* enable interrupts */
         RET
@@ -85,8 +65,8 @@ splx_disable:
 	RET
 
 TEXT islo(SB), THUMB, $-4
-	MOVW	$interrupts_enabled(SB), R0
-        MOVW    (R0), R0
+        MRS(0, MRS_PRIMASK) /* load the interrupt disabled state */
+        RSB $1, R0, R0
 	RET
 
 TEXT getR12(SB), THUMB, $-4
@@ -143,6 +123,10 @@ TEXT setmsp(SB), THUMB, $-4
 
 TEXT setpsp(SB), THUMB, $-4
     MSR(0, MRS_PSP)
+    RET
+
+TEXT getprimask(SB), THUMB, $-4
+    MRS(0, MRS_PRIMASK)
     RET
 
 TEXT getcontrol(SB), THUMB, $-4

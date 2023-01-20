@@ -14,8 +14,6 @@ extern void uartconsinit(void);
 #include "devices/stm32f405.h"
 #include "devices/fns.h"
 
-int interrupts_enabled;
-
 Conf conf;
 Mach *m = (Mach*)MACHADDR;
 Proc *up = 0;

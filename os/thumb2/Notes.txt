@@ -113,3 +113,12 @@ a crash, typically a hard fault, in
  * pooldel
  * markheap, as it tries to call the mark struct member on a type,
  * in _preswitch, during preemption
+
+
+Getting interrupt status requires getting the contents of the PRIMASK special
+register via MRS, but this can only be done in privileged mode. Ideally, we
+could enter privileged mode and get the value by using a syscall and
+implementing a handler for svcall but that won't work when interrupts are
+disabled.
+
+It turns out that we are running in privileged mode, anyway.

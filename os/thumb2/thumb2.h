@@ -120,6 +120,7 @@
 /* MRS and MSR encodings, ARMv7-M Architecture Reference Manual, B5.1.1 */
 #define MRS_MSP 8
 #define MRS_PSP 9
+#define MRS_PRIMASK 16
 #define MRS_CONTROL 20
 
 #define CONTROL_SPSEL 2
@@ -134,5 +135,9 @@
 #define SCB_AIRCR_VECTKEYRESET 0x05fa0000
 #define SCB_AIRCR_SYSRESETREQ 0x04
 #define SCB_AIRCR_VECTRESET 0x01
+
+/* ARMv7-M Architecture Reference Manual, B3.2.4 */
+#define ICSR 0xe000ed04
+#define VECTACTIVE_MASK 0x1ff
 
 #endif

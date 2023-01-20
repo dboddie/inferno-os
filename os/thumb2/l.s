@@ -41,9 +41,6 @@ _end_start_loop:
 
     BL  ,introff(SB)
 
-    MOVW    $0, R1
-    MOVW    $interrupts_enabled(SB), R2
-    MOVW    R1, 0(R2)
 /* This was used to show that R10 isn't used by the compiler:
     MOVW    $0x1234, R1
     MOVW    R1, R10
