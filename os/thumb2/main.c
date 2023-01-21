@@ -22,8 +22,6 @@ extern int main_pool_pcnt;
 extern int heap_pool_pcnt;
 extern int image_pool_pcnt;
 
-int in_interrupt = 0;
-
 void confinit(void)
 {
     conf.topofmem = MEMORY_TOP;
