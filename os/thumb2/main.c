@@ -22,10 +22,12 @@ extern int main_pool_pcnt;
 extern int heap_pool_pcnt;
 extern int image_pool_pcnt;
 
+int in_interrupt = 0;
+
 void confinit(void)
 {
     conf.topofmem = MEMORY_TOP;
-    conf.base0 = CCM_BASE + KSTKSIZE + PGROUND(sizeof(Mach));
+    conf.base0 = MACHADDR + PGROUND(sizeof(Mach));
     conf.base1 = PGROUND((ulong)end);
 
     conf.npage0 = (CCM_MEMORY_TOP - conf.base0)/BY2PG;
