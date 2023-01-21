@@ -6,10 +6,8 @@ THUMB=4
 /* Store the stack pointer and return address in the Label struct passed by the
    caller and return 0. */
 TEXT setlabel(SB), THUMB, $-4
-	MOVW    R13, R7
-        MOVW    R7, 0(R0)
-	MOVW    R14, R7
-        MOVW    R7, 4(R0)
+	STR_imm(13, 0, 0)
+	STR_imm(14, 0, 4)
 	MOVW    $0, R0
 	RET
 
@@ -17,10 +15,8 @@ TEXT setlabel(SB), THUMB, $-4
    struct passed by the caller and return 1. This causes execution to continue
    after a call to setlabel elsewhere in the kernel. */
 TEXT gotolabel(SB), THUMB, $-4
-	MOVW    4(R0), R7
-        MOVW    R7, R14
-	MOVW    0(R0), R0
-        MOVW    R0, R13
+	LDR_imm(14, 0, 4)
+	LDR_imm(13, 0, 0)
 	MOVW    $1, R0
 	RET
 
