@@ -122,3 +122,17 @@ implementing a handler for svcall but that won't work when interrupts are
 disabled.
 
 It turns out that we are running in privileged mode, anyway.
+
+
+
+ulong _tas(ulong *addr)
+{
+    int s;
+    s = splhi();
+    if (*addr != 0)
+        return 1;
+
+    *addr = 1;
+    splx(s);
+    return 0;
+}
