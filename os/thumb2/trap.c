@@ -58,9 +58,9 @@ void dumpregs(Ureg *uregs)
     wrstr("r9="); wrhex(uregs->r9); wrch(' ');
     wrstr("r10="); wrhex(uregs->r10); wrch(' ');
     wrstr("r11="); wrhex(uregs->r11); newline();
-    wrstr("sp="); wrhex((unsigned long)uregs); wrch(' ');
-    wrstr("r14="); wrhex(uregs->r14);
-    wrstr("pc="); wrhex(uregs->pc); newline();
+    wrstr("r12="); wrhex(get_r12()); wrch(' ');
+    wrstr("sp="); wrhex((int)uregs); wrch(' ');
+    wrstr("r14="); wrhex(uregs->r14); newline();
 }
 
 void switcher(Ureg *ureg)
@@ -68,10 +68,11 @@ void switcher(Ureg *ureg)
     int t;
 
 //    wrch('.');
-//    wrstr(">> sp="); wrhex(getsp()); newline();
+//    wrstr(">> sp="); wrhex(getsp()); wrstr(" pc="); wrhex(*(ulong *)((ulong)ureg + 52)); newline();
 //    print("up=%.8lux\n", up);
 //    print("psr=%.8lux\n", ureg->psr);
-//    dumpregs(ureg);
+//    wrstr("in\r\n");
+//    _dumpregs();
 
     if (up) up->pc = ureg->pc;
 
@@ -93,8 +94,10 @@ void switcher(Ureg *ureg)
         uart3_intr();
 
 //    print("up=%.8lux\n", up);
-//    wrstr("<< sp="); wrhex(getsp()); newline();
+//    wrstr("<< sp="); wrhex(getsp()); wrstr(" pc="); wrhex(*(ulong *)((ulong)ureg + 52)); newline();
 //    wrstr("pc="); wrhex((uint)ureg->pc); wrstr(" r14="); wrhex((uint)ureg->lr); newline();
+//    wrstr("out\r\n");
+//    _dumpregs();
 }
 
 void setpanic(void)
@@ -209,10 +212,7 @@ void hard_fault(int sp)
 
     poolsummary();
 
-    newline();
-    showpool(mainmem);
-    newline();
-    showpool(heapmem);
+    poolshow();
 
     for (;;) {}
 }
@@ -234,10 +234,7 @@ void dummy(int sp)
 
     poolsummary();
 
-    newline();
-    showpool(mainmem);
-    newline();
-    showpool(heapmem);
+    poolshow();
 
     for (;;) {}
 }
