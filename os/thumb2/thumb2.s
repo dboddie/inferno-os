@@ -29,8 +29,7 @@ TEXT getcallerpc(SB), THUMB, $-4
 /* Disable interrupts and return the previous state. */
 TEXT splhi(SB), THUMB, $-4
 	MOVW	$(MACHADDR), R6
-	MOVW	R14, R7
-        MOVW    R7, (R6)    /* m->splpc */
+	STR_imm(14, 6, 0)   /* m->splpc */
 
         MRS(0, MRS_PRIMASK) /* load the previous interrupt disabled state */
         RSB $1, R0, R0
@@ -47,8 +46,7 @@ TEXT spllo(SB), THUMB, $-4
 /* Set the interrupt enabled state passed in R0. */
 TEXT splx(SB), THUMB, $-4
 	MOVW	$(MACHADDR), R6
-	MOVW	R14, R7
-        MOVW    R7, (R6)    /* m->splpc */
+	STR_imm(14, 6, 0)   /* m->splpc */
 
 TEXT splxpc(SB), THUMB, $-4
         CMP     $1, R0
