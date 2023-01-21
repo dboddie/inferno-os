@@ -67,6 +67,22 @@
 #define POP_LR_PC(regs, lr, pc) \
     WORD $(0x0000e8bd | ((lr & 1) << 30) | ((pc & 1) << 31) | ((regs & 0x1fff) << 16))
 
+/* ARM Architecture Reference Manual Thumb-2 Supplement, 4.6.43, T3 */
+#define LDR_imm(Rt, Rn, imm12) \
+    WORD $(0x0000f8d0 | (Rn & 0xf) | ((imm12 & 0xfff) << 16) | ((Rt & 0xf) << 28))
+
+/* ARM Architecture Reference Manual Thumb-2 Supplement, 4.6.45, T2 */
+#define LDR2(Rt, Rn, Rm, shift) \
+    WORD $(0x0000f850 | (Rn & 0xf) | ((Rm & 0xf) << 16) | ((shift & 0x3) << 20) | ((Rt & 0xf) << 28))
+
+/* ARM Architecture Reference Manual Thumb-2 Supplement, 4.6.162, T3 */
+#define STR_imm(Rt, Rn, imm12) \
+    WORD $(0x0000f8c0 | (Rn & 0xf) | ((imm12 & 0xfff) << 16) | ((Rt & 0xf) << 28))
+
+/* ARM Architecture Reference Manual Thumb-2 Supplement, 4.6.163, T2 */
+#define STR2(Rt, Rn, Rm, shift) \
+    WORD $(0x0000f840 | (Rn & 0xf) | ((Rm & 0xf) << 16) | ((shift & 0x3) << 20) | ((Rt & 0xf) << 28))
+
 /*
  * Coprocessors
  */
