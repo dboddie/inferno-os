@@ -10,7 +10,7 @@
 
 void kbdinit(void)
 {
-    kbdq = qopen(1024, 0, nil, nil);
+    kbdq = qopen(128, 0, nil, nil);
     qnoblock(kbdq, 1);
     enable_usart_intr(0);
 }
