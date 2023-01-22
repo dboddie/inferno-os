@@ -11,7 +11,7 @@
 #define prev	u.s.bhv
 #define parent	u.s.bhp
 
-#define RESERVED	32*1024
+#define RESERVED	(1*1024)
 
 struct Pool
 {
@@ -44,9 +44,9 @@ struct
 } table = {
 	3,
 	{
-		{ "main",  0,	61*1024, 31, 256, 60*1024 },
-		{ "heap",  1,	56*1024, 31, 256, 55*1024 },
-		{ "image", 2,	0*1024, 31, 0*1024, 0*1024 },
+		{ "main",  0,	4*1024*1024, 31,  1024, 15*256*1024 },
+		{ "heap",  1,	16*1024*1024, 31,  1024, 15*1024*1024 },
+		{ "image", 2,	8*1024*1024, 31, 300*1024, 15*512*1024 },
 	}
 };
 
@@ -76,31 +76,6 @@ enum {
 	ReallocOffset = 1
 };
 */
-
-void dumpblocks(Bhdr *t, int indent)
-{
-    Bhdr *b = t;
-    while (b != nil) {
-
-        for (int i = 0; i < indent; i++)
-            wrstr(" ");
-
-        wrhex((int)b);
-        if (((int)b & 3) != 0) { wrstr(" (bad)\r\n"); break; } else wrstr("\r\n");
-
-        dumpblocks(b->left, indent + 1);
-        dumpblocks(b->right, indent + 1);
-        b = b->fwd;
-        if (b == t) break;
-    }
-
-}
-
-void showpool(Pool *p)
-{
-    wrstr(poolname(p)); newline();
-    dumpblocks(p->root, 1);
-}
 
 int
 memusehigh(void)
@@ -382,12 +357,8 @@ poolalloc(Pool *p, ulong asize)
 			if(p->warn)
 				return nil;
 			p->warn = 1;
-			if (p != mainmem || ns > 512) {
+			if (p != mainmem || ns > 512)
 				print("arena too large: %s size %d cursize %lud arenasize %lud maxsize %lud, alloc = %d\n", p->name, osize, p->cursize, p->arenasize, p->maxsize, alloc);
-/*                                ulong sp = getsp();
-                                for (ulong si = 0; si < 20; si += 4)
-                                    print("%lux\n", *(ulong *)(sp + si));*/
-                            }
 			return nil;
 		}
 		alloc = ns+ldr+ldr;
@@ -601,7 +572,6 @@ malloc(ulong size)
 		}
 		memset(v, 0, size);
 	}
-//        print("malloc %ulx\n", v);
 	return v;
 }
 
