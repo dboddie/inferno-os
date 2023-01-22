@@ -10,7 +10,6 @@
 
 #include "devices/fns.h"
 extern void wrch(int);
-extern void showpool(Pool *p);
 extern void poolsummary(void);
 
 extern void hzclock(Ureg *);
@@ -165,11 +164,7 @@ void usage_fault(int sp)
     wrstr("xPSR="); wrhex(*(int *)(sp + 64)); newline();
 
     poolsummary();
-
-    newline();
-    showpool(mainmem);
-    newline();
-    showpool(heapmem);
+    poolshow();
 
     for (;;) {}
 }
@@ -210,7 +205,6 @@ void hard_fault(int sp)
     wrstr("xPSR="); wrhex(*(int *)(sp + 64)); newline();
 
     poolsummary();
-
     poolshow();
 
     for (;;) {}
