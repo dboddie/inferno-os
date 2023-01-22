@@ -60,22 +60,21 @@ static void _poolfault(void *, char *, ulong);
 void (*poolfault)(void *, char *, ulong) = _poolfault;
 
 /*	non tracing
- */
+ *
 enum {
 	Npadlong	= 0,
 	MallocOffset = 0,
 	ReallocOffset = 0
 };
- /*
+ *
  */
 
-/* tracing *
+/* tracing */
 enum {
 	Npadlong	= 2,
 	MallocOffset = 0,
 	ReallocOffset = 1
 };
-*/
 
 int
 memusehigh(void)
