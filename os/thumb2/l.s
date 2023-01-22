@@ -62,9 +62,13 @@ TEXT _systick(SB), THUMB, $-4
        by the stack pointer. */
 
     MOVW    28(SP), R0          /* Read xPSR */
+    MOVW    R0, R2
     MOVW    $0x1ff, R1
     AND.S   R1, R0              /* Check the exception number */
     BNE     _systick_exit
+
+    MOVW    $apsr_flags(SB), R1
+    MOVW    R2, (R1)
 
     MOVW    24(SP), R0          /* Record the interrupted PC in the slot for R12. */
     ORR     $1, R0
@@ -92,6 +96,10 @@ TEXT _preswitch(SB), THUMB, $-4
 
     MOVW    SP, R0              /* Pass the stack pointer to the switcher. */
     BL      ,switcher(SB)
+
+    MOVW    $apsr_flags(SB), R1
+    MOVW    (R1), R1
+    MSR(1, 0)                /* Restore the status bits. */
 
     POP_LR_PC(0x0bff, 1, 0)     /* Recover R0-R9, R11 and R14 */
     POP_LR_PC(0, 0, 1)          /* then PC. */

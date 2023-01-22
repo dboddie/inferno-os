@@ -33,7 +33,7 @@
 
 /* ARMv7-M Architecture Reference Manual, A7.7.82, mask=2 */
 #define MSR(Rn, spec) \
-    WORD $(0x8000f380 | (Rn & 0xf) | ((2 & 3) << 26) | ((spec & 0xff) << 16))
+    WORD $(0x8000f380 | (Rn & 0xf) | ((3 & 3) << 26) | ((spec & 0xff) << 16))
 
 /* ARM Architecture Reference Manual Thumb-2 Supplement, 4.6.34 */
 #define DMB WORD $0x8f5ff3bf
