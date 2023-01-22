@@ -723,6 +723,7 @@ fddump()
 
 	p = proctab(6);
 	o = p->env;
+        if (!o) return;
 	for(i = 0; i <= o->fgrp->maxfd; i++) {
 		if((c = o->fgrp->fd[i]) == nil)
 			continue;
