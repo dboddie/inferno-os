@@ -67,12 +67,20 @@ TEXT _systick(SB), THUMB, $-4
     AND.S   R1, R0              /* Check the exception number */
     BNE     _systick_exit
 
+    /* Store the xPSR flags for the interrupted routine. These will be
+       temporarily overwritten and restored later. */
     MOVW    $apsr_flags(SB), R1
     MOVW    R2, (R1)
 
-    MOVW    24(SP), R0          /* Record the interrupted PC in the slot for R12. */
+    /* Record the interrupted PC in the slot for R12. */
+    MOVW    24(SP), R0
     ORR     $1, R0
     MOVW    R0, 16(SP)
+
+    /* Clear the condition flags before jumping into the switcher. */
+    MOVW    $0x07ffffff, R0
+    AND     R2, R0
+    MOVW    R0, 28(SP)
 
     MOVW    $_preswitch(SB), R0
     ORR     $1, R0

@@ -156,4 +156,7 @@
 #define ICSR 0xe000ed04
 #define VECTACTIVE_MASK 0x1ff
 
+/* ARMv7-M Architecture Reference Manual, B1.4.2 */
+#define EPSR_T 0x01000000
+
 #endif
