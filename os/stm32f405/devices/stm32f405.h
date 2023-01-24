@@ -168,8 +168,9 @@ enum I2C_Constants {
 };
 
 extern void setup_system_clock(void);
-extern void setup_LED(void);
-extern void set_LED(int on);
+extern void setup_led(void);
+extern int get_led(void);
+extern void set_led(int on);
 extern void toggle_led(void);
 extern void start_timer(void);
 extern void wait_ms(int);
