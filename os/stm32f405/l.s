@@ -63,9 +63,9 @@ TEXT _systick(SB), THUMB, $-4
 
     MOVW    28(SP), R0          /* Read xPSR */
     MOVW    R0, R2
-    MOVW    $0x1ff, R1
-    AND.S   R1, R0              /* Check the exception number */
-    BNE     _systick_exit
+    MOVW    $0x060fffff, R1
+    AND.S   R1, R0              /* Check the exception number and other bits. */
+    BNE     _systick_exit       /* Don't interrupt if these are set. */
 
     /* Store the xPSR flags for the interrupted routine. These will be
        temporarily overwritten and restored later. */
