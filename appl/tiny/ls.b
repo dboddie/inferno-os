@@ -28,17 +28,20 @@ init(nil: ref Draw->Context, argv: list of string)
 	(ok, dir) := sys->stat(file);
         if (ok < 0) continue;
 
-        if (dir.mode & Sys->DMDIR != 0) {
-            fd := sys->open(dir.name, Sys->OREAD);
-            if (fd != nil) {
-                for (;;) {
-                    (nr, b) := sys->dirread(fd);
-                    if (nr <= 0) break;
-                    for (i := 0; i < nr; i++)
-                        sys->print("%s\n", b[i].name);
-                }
+        # dir.name may differ from the original file name and will only refer
+        # to one source in a union directory, so use the original file name.
+        fd := sys->open(file, Sys->OREAD);
+        if (fd != nil) {
+            for (;;) {
+                (nr, b) := sys->dirread(fd);
+                if (nr <= 0) break;
+                for (i := 0; i < nr; i++)
+                    sys->print("%s\n", b[i].name);
             }
-        } else
+        }
+
+        # Show individual files.
+        if ((dir.mode & Sys->DMDIR) == 0)
             sys->print("%s\n", dir.name);
     }
 }
