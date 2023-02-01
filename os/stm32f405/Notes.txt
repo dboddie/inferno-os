@@ -141,3 +141,6 @@ ulong _tas(ulong *addr)
 We can't use the trick I wanted to in the handler-to-thread mode systick
 handler because the processor flags will be corrupted. We need to save the
 processor flags and apply them when returning to the interrupted routine.
+We also need to avoid dropping into the preswitch routine with the flags from
+the interrupted routine - it seems that clearing some flags is problematic so,
+instead, we ignore interrupts where certain flags are set.
