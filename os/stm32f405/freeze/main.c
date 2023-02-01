@@ -430,9 +430,9 @@ process(char *path, uchar *code, ulong length, Dir *dir, char *prefix)
 		uchar *fn_name = istream;
 		while(*istream++)
 			;
-		print("WORD $0x%08x\n", pc);
-		print("WORD $0x%08x\n", de);
-		print("WORD $0x%08x\n", v);
+		print("WORD $0x%08ux\n", pc);
+		print("WORD $0x%08ux\n", de);
+		print("WORD $0x%08ux\n", v);
                 lsp = appendstring(lsp, fn_name);
                 print("WORD $%s_links_str%d(SB)\n", prefix, i);
 	}
