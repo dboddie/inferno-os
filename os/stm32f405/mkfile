@@ -66,7 +66,6 @@ kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES frozen.h
 	echo $ROOT/mkfiles/mkfile-$SYSTARG-$OBJTYPE
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
 	$LD $LDFLAGS -o $target -R0 -T$loadaddr -D$dataaddr $NOPREFIXOBJ $CONF.$O $LIBFILES
-	python3 tests/tools/fix_vector_table.py kernel 0x188
 
 <../port/portmkfile
 
