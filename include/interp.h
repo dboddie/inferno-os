@@ -68,6 +68,9 @@ typedef struct Atidle	Atidle;
 typedef struct Altc	Altc;
 typedef struct Except Except;
 typedef struct Handler Handler;
+typedef struct LinkData LinkData;
+typedef struct FrozenMod FrozenMod;
+typedef struct FrozenMods FrozenMods;
 
 struct ILock
 {
@@ -269,6 +272,7 @@ struct Module
 {
 	int	ref;		/* Use count */
 	int	compiled;	/* Compiled into native assembler */
+	int	frozen;		/* Built into the operating system */
 	ulong	ss;		/* Stack size */
 	ulong	rt;		/* Runtime flags */
 	ulong	mtime;		/* Modtime of dis file */
@@ -348,6 +352,39 @@ struct Handler
 	Except*	etab;
 };
 
+struct LinkData {
+	int pc;
+	int de;
+	int v;
+	uchar *fn_name;
+};
+
+struct FrozenMod
+{
+	ulong	ss;
+	ulong	rt;
+	ulong	nprog;
+	ulong	dsize;		/* number of data items */
+	ulong	ntype;
+	ulong	nlink;		/* number of link items */
+	ulong	entry;
+	ulong	entryt;
+	Inst*	inst;
+	uchar*	types;          /* raw type data */
+	uchar*	data;           /* raw data items */
+	char* name;
+	char* path;
+	LinkData* links;
+	Import** imports;
+	uchar* handlers;
+};
+
+struct FrozenMods
+{
+	FrozenMod* mod;
+	FrozenMods* link;
+};
+
 #define H2D(t, x)	((t)(((uchar*)(x))+sizeof(Heap)))
 #define D2H(x)		((Heap*)(((uchar*)(x))-sizeof(Heap)))
 #define H		((void*)(-1))
@@ -385,6 +422,7 @@ extern	int	minvalid;
 
 extern	int		Dconv(Fmt*);
 extern	void		acquire(void);
+extern	void		addfrozenmod(FrozenMod*);
 extern	void		addrun(Prog*);
 extern	void		altdone(Alt*, Prog*, Channel*, int);
 extern	void		altgone(Prog*);
@@ -452,6 +490,7 @@ extern	int		killgrp(Prog*, char*);
 extern	Modlink*	linkmod(Module*, Import*, int);
 extern	Modlink*	mklinkmod(Module*, int);
 extern	Module*		load(char*);
+extern	Module*		loadfrozen(Module*, uchar*);
 extern	Module*		lookmod(char*);
 extern	long	magic(void);
 extern	void		markarray(Type*, void*);

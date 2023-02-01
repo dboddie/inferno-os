@@ -16,6 +16,10 @@ INSTALLDIR=$ROOT/Inferno/$OBJTYPE/bin
 
 <| $SHELLNAME ../port/mkdevlist $CONF
 
+MODFILES=`ls frozen/*mod.s`
+STRUCTS=${MODFILES:frozen/%.s=extern FrozenMod\ %;\\n}
+CALLS=${MODFILES:frozen/%.s=addfrozenmod(\&%);\\\n}
+
 OBJ=\
 	l.$O\
 	main.$O\
@@ -34,12 +38,15 @@ OBJ=\
 	$MISC\
 	$OTHERS\
 	$CONF.root.$O\
+	frozen.$O\
+	${MODFILES:%.s=%.$O}
 
 LIBNAMES=${LIBS:%=lib%.a}
 LIBDIRS=$LIBS
 
 # Strip off the devices prefix of any object paths.
 NOPREFIXOBJ=${OBJ:devices/%=%}
+NOPREFIXOBJ=${NOPREFIXOBJ:frozen/%=%}
 
 HFILES=\
 	mem.h\
@@ -47,6 +54,7 @@ HFILES=\
 	fns.h\
 	io.h\
 	fpi.h\
+	frozen.h\
 
 CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
 LDFLAGS=-H0 -l -s -a
@@ -54,7 +62,7 @@ KERNDATE=`{$NDATE}
 
 default:V: kernel
 
-kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
+kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES frozen.h
 	echo $ROOT/mkfiles/mkfile-$SYSTARG-$OBJTYPE
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
 	$LD $LDFLAGS -o $target -R0 -T$loadaddr -D$dataaddr $NOPREFIXOBJ $CONF.$O $LIBFILES
@@ -63,3 +71,8 @@ kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 <../port/portmkfile
 
 main.$O:	include/ureg.h
+
+frozen.h:D: $MODFILES
+	echo $STRUCTS > frozen.h
+	echo '#define InitFrozen \\' >> frozen.h
+	echo $CALLS >> frozen.h

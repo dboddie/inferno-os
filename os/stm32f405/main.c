@@ -79,6 +79,7 @@ void main(void)
     clockinit();                // in clock.c
     printinit();                // in port/devcons.c
 
+    initfrozen();
 //poolsummary();
 print("%ulx %ulx %ulx %ulx %ulx\n", etext, bdata, edata, end, m);
 print("r12=%ux\n", get_r12());
@@ -92,7 +93,7 @@ print("r12=%ux\n", get_r12());
     kbdinit();
 
     procinit();                 /* in port/proc.c */
-    links();                    /* in the generated efikamx.c file */
+    links();
     chandevreset();
 
     eve = strdup("inferno");

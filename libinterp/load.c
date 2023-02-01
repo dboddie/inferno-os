@@ -9,7 +9,7 @@
 Module*	modules;
 int	dontcompile;
 
-static int
+int
 operand(uchar **p)
 {
 	int c;
@@ -42,7 +42,7 @@ operand(uchar **p)
 	return 0;	
 }
 
-static ulong
+ulong
 disw(uchar **p)
 {
 	ulong v;
@@ -177,6 +177,13 @@ parsemod(char *path, uchar *code, ulong length, Dir *dir)
 			goto bad;
 		}
 		break;
+	case 0xFD15:
+            {
+                uchar *sstart = istream;
+                while (*istream++)
+                    ;
+                return loadfrozen(m, sstart);
+            }
 	}
 
 	m->rt = operand(isp);
@@ -246,7 +253,7 @@ parsemod(char *path, uchar *code, ulong length, Dir *dir)
 			ip->d.i.s = operand(isp);
 			break;
 		}
-		ip++;		
+		ip++;
 	}
 
 	m->ntype = hsize;
@@ -567,25 +574,27 @@ freemod(Module *m)
 			freetype(m->type[i]);
 		free(m->type);
 	}
-	free(m->name);
-	free(m->prog);
-	free(m->path);
 	free(m->pctab);
-	if(m->ldt != nil){
-		for(i2 = m->ldt; *i2 != nil; i2++){
-			for(i1 = *i2; i1->name != nil; i1++)
-				free(i1->name);
-			free(*i2);
+	if(!m->frozen) {
+		free(m->name);
+		free(m->prog);
+		free(m->path);
+		if(m->ldt != nil){
+			for(i2 = m->ldt; *i2 != nil; i2++){
+				for(i1 = *i2; i1->name != nil; i1++)
+					free(i1->name);
+				free(*i2);
+			}
+			free(m->ldt);
 		}
-		free(m->ldt);
-	}
-	if(m->htab != nil){
-		for(h = m->htab; h->etab != nil; h++){
-			for(e = h->etab; e->s != nil; e++)
-				free(e->s);
-			free(h->etab);
+		if(m->htab != nil){
+			for(h = m->htab; h->etab != nil; h++){
+				for(e = h->etab; e->s != nil; e++)
+					free(e->s);
+				free(h->etab);
+			}
+			free(m->htab);
 		}
-		free(m->htab);
 	}
 	free(m);
 }
