@@ -18,7 +18,7 @@ INSTALLDIR=$ROOT/Inferno/$OBJTYPE/bin
 
 MODFILES=`ls frozen/*mod.s`
 STRUCTS=${MODFILES:frozen/%.s=extern FrozenMod\ %;\\n}
-CALLS=${MODFILES:frozen/%.s=addfrozenmod(\&%);\\\n}
+CALLS=${MODFILES:frozen/%.s=addfrozenmod(\&%);'\\'\\n}
 
 OBJ=\
 	l.$O\
@@ -71,7 +71,7 @@ kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES frozen.h
 
 main.$O:	include/ureg.h
 
-frozen.h:D: $MODFILES
+frozen.h:V:
 	echo $STRUCTS > frozen.h
 	echo '#define InitFrozen \\' >> frozen.h
 	echo $CALLS >> frozen.h
