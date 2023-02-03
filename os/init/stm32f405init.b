@@ -1,6 +1,6 @@
 implement Init;
 
-# Thumb-2
+# STM32F405, Cortex-M4, Thumb-2
 
 include "draw.m";
 include "sys.m";
