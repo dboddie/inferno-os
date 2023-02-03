@@ -39,14 +39,12 @@ OBJ=\
 	$OTHERS\
 	$CONF.root.$O\
 	frozen.$O\
-	$MODOBJ
 
 LIBNAMES=${LIBS:%=lib%.a}
 LIBDIRS=$LIBS
 
 # Strip off the devices prefix of any object paths.
-NOPREFIXOBJ=${OBJ:devices/%=%}
-NOPREFIXOBJ=${NOPREFIXOBJ:frozen/%=%}
+NOPREFIXOBJ=${OBJ:devices/%=%} ${MODOBJ:frozen/%=%}
 
 HFILES=\
 	mem.h\
@@ -60,9 +58,10 @@ CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
 LDFLAGS=-H0 -l -s -a
 KERNDATE=`{$NDATE}
 
-default:V: frozen.h kernel
+default:V: frozen.c kernel
 
 kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
+	echo $NOPREFIXOBJ
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
 	$LD $LDFLAGS -o $target -R0 -T$loadaddr -D$dataaddr $NOPREFIXOBJ $CONF.$O $LIBFILES
 
@@ -70,7 +69,10 @@ kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 
 main.$O:	include/ureg.h
 
-frozen.h:V:
+MODSRC=${MODOBJ:%.$O=%.s}
+
+frozen.c:V:
 	(cd freeze; mk $MKFLAGS install)
 	mkdir -p frozen
 	$SHELLNAME mkfrozen $CONF
+	$AS $ASFLAGS $MODSRC
