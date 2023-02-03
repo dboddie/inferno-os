@@ -449,7 +449,7 @@ newmodule(Module *m, int vm, int scale, int origin)
 		return nil;
 	}
 /* print("newmodule %x %s %s %d %d %d\n", m, m->name, m->path, m->mtime, m->qid.path, m->qid.vers); */
-	if(m->compiled)
+	if(m->compiled || m->frozen)
 		dsize = m->nprog * sizeof(r->bucket[0]);
 	else
 		dsize = (msize(m->prog)/sizeof(Inst)) * sizeof(r->bucket[0]);

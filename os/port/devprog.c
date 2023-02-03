@@ -433,7 +433,7 @@ progsize(Prog *p)
 	size = 0;
 	if(m->MP != H)
 		size += hmsize(D2H(m->MP));
-	if(m->prog != nil)
+	if(m->prog != nil && !m->m->frozen)
 		size += msize(m->prog);
 
 	fp = p->R.FP;
@@ -443,7 +443,7 @@ progsize(Prog *p)
 		if(f->mr != nil) {
 			if(f->mr->MP != H)
 				size += hmsize(D2H(f->mr->MP));
-			if(f->mr->prog != nil)
+			if(f->mr->prog != nil && !f->mr->m->frozen)
 				size += msize(f->mr->prog);
 		}
 		if(f->t == nil)
