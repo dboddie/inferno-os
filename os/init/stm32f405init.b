@@ -69,6 +69,10 @@ init(context: ref Draw->Context, nil: list of string)
 #    for (i := 0; i < nr; i++)
 #        sys->print("%s\n", b[i].name);
 
+    fd := sys->open("/dev/sysname", sys->OWRITE);
+    b := array of byte "stm32f405";
+    sys->write(fd, b, len b);
+
     args: list of string;
     sh->init(context, args);
 
