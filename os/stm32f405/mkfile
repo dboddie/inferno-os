@@ -16,8 +16,9 @@ INSTALLDIR=$ROOT/Inferno/$OBJTYPE/bin
 
 <| $SHELLNAME ../port/mkdevlist $CONF
 
-# Run the mkfrozen script to define MODFILES.
-<| $SHELLNAME mkfrozen $CONF
+# Create a directory to hold frozen modules and run the mkfrozen script to
+# create them, defining MODFILES as a side effect.
+<| $SHELLNAME listfrozen $CONF
 
 OBJ=\
 	l.$O\
@@ -59,7 +60,7 @@ CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
 LDFLAGS=-H0 -l -s -a
 KERNDATE=`{$NDATE}
 
-default:V: kernel
+default:V: frozen.h kernel
 
 kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
@@ -68,3 +69,8 @@ kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 <../port/portmkfile
 
 main.$O:	include/ureg.h
+
+frozen.h:V:
+	(cd freeze; mk $MKFLAGS install)
+	mkdir -p frozen
+	$SHELLNAME mkfrozen $CONF

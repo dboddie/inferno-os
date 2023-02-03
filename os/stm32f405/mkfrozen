@@ -1,6 +1,5 @@
 $AWK '
 BEGIN{
-    abc="Hello"
     path_re="/[^.]+.fdis$"
     name_re="[^/]+.fdis$"
     stem_re="[^.]+"
