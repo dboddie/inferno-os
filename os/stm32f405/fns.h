@@ -83,6 +83,7 @@ void	armtimerset(int);
 void	links(void);
 int	fpiarm(Ureg*);
 void	mdelay(uint);
+void	initfrozen(void);
 
 char*	getconf(char*);
 char *	getethermac(void);

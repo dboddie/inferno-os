@@ -16,9 +16,8 @@ INSTALLDIR=$ROOT/Inferno/$OBJTYPE/bin
 
 <| $SHELLNAME ../port/mkdevlist $CONF
 
-MODFILES=`ls frozen/*mod.s`
-STRUCTS=${MODFILES:frozen/%.s=extern FrozenMod\ %;\\n}
-CALLS=${MODFILES:frozen/%.s=addfrozenmod(\&%);'\\'\\n}
+# Run the mkfrozen script to define MODFILES.
+<| $SHELLNAME mkfrozen $CONF
 
 OBJ=\
 	l.$O\
@@ -39,7 +38,7 @@ OBJ=\
 	$OTHERS\
 	$CONF.root.$O\
 	frozen.$O\
-	${MODFILES:%.s=%.$O}
+	$MODOBJ
 
 LIBNAMES=${LIBS:%=lib%.a}
 LIBDIRS=$LIBS
@@ -62,16 +61,10 @@ KERNDATE=`{$NDATE}
 
 default:V: kernel
 
-kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES frozen.h
-	echo $ROOT/mkfiles/mkfile-$SYSTARG-$OBJTYPE
+kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
 	$LD $LDFLAGS -o $target -R0 -T$loadaddr -D$dataaddr $NOPREFIXOBJ $CONF.$O $LIBFILES
 
 <../port/portmkfile
 
 main.$O:	include/ureg.h
-
-frozen.h:V:
-	echo $STRUCTS > frozen.h
-	echo '#define InitFrozen \\' >> frozen.h
-	echo $CALLS >> frozen.h
