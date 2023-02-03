@@ -153,6 +153,7 @@ parsemod(char *path, uchar *code, ulong length, Dir *dir)
 	m->mtime = dir->mtime;
 	m->origmp = H;
 	m->pctab = nil;
+        m->frozen = 0;
 
 	switch(operand(isp)) {
 	default:
@@ -569,32 +570,32 @@ freemod(Module *m)
 	Except *e;
 	Import *i1, **i2;
 
+	if(!m->frozen)
+		free(m->prog);
+
 	if(m->type != nil) {
 		for(i = 0; i < m->ntype; i++)
 			freetype(m->type[i]);
 		free(m->type);
 	}
 	free(m->pctab);
-	if(!m->frozen) {
-		free(m->name);
-		free(m->prog);
-		free(m->path);
-		if(m->ldt != nil){
-			for(i2 = m->ldt; *i2 != nil; i2++){
-				for(i1 = *i2; i1->name != nil; i1++)
-					free(i1->name);
-				free(*i2);
-			}
-			free(m->ldt);
+	free(m->name);
+	free(m->path);
+	if(m->ldt != nil){
+		for(i2 = m->ldt; *i2 != nil; i2++){
+			for(i1 = *i2; i1->name != nil; i1++)
+				free(i1->name);
+			free(*i2);
 		}
-		if(m->htab != nil){
-			for(h = m->htab; h->etab != nil; h++){
-				for(e = h->etab; e->s != nil; e++)
-					free(e->s);
-				free(h->etab);
-			}
-			free(m->htab);
+		free(m->ldt);
+	}
+	if(m->htab != nil){
+		for(h = m->htab; h->etab != nil; h++){
+			for(e = h->etab; e->s != nil; e++)
+				free(e->s);
+			free(h->etab);
 		}
+		free(m->htab);
 	}
 	free(m);
 }

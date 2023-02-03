@@ -302,7 +302,7 @@ process(char *path, int fdisfd, uchar *code, ulong length, Dir *dir, char *prefi
 	}
 	print("\n");
 
-	/* Types - just include raw data and process it at load-time. */
+	/* Just include the rest as raw data and process it at load-time. */
 
 	/* Record the start of the type data. */
 	uchar *tstart = istream;
@@ -333,8 +333,6 @@ process(char *path, int fdisfd, uchar *code, ulong length, Dir *dir, char *prefi
 		istream += tnp;
 		m->type[id] = pt;
 	}
-        uchar *tend = istream;
-	writedata(tstart, tend, prefix, "types");
 
 	if(dsize != 0) {
 		pt = m->type[0];
@@ -349,9 +347,6 @@ process(char *path, int fdisfd, uchar *code, ulong length, Dir *dir, char *prefi
 
 	/* Data - just include the raw data in an array and leave processing
 	   until later. */
-
-	/* Record the start of the data. */
-	uchar *dstart = istream;
 
 	for(;;) {
 		uchar sm = *istream++;
@@ -391,8 +386,6 @@ process(char *path, int fdisfd, uchar *code, ulong length, Dir *dir, char *prefi
 			break;
 		}
 	}
-        uchar *dend = istream;
-	writedata(dstart, dend, prefix, "data");
 
 	/* Module name - should be usable as it is. */
 	mod = istream;
@@ -410,11 +403,6 @@ process(char *path, int fdisfd, uchar *code, ulong length, Dir *dir, char *prefi
 	while(*istream++)
 	    c++;
 
-	/* Links - include the data in structures for processing later. */
-        stringlist *ls, *lsp;
-        ls = lsp = newstringlist();
-
-	print("TEXT %s_links(SB), 0, $-4\n", prefix);
 	l = m->ext = (Link*)malloc((lsize+1)*sizeof(Link));
 	if(l == nil){
 		fprint(2, exNomem);
@@ -428,19 +416,10 @@ process(char *path, int fdisfd, uchar *code, ulong length, Dir *dir, char *prefi
 		if(de != -1)
 			pt = m->type[de];
 
-		uchar *fn_name = istream;
 		while(*istream++)
 			;
-		print("WORD $0x%08ux\n", pc);
-		print("WORD $0x%08ux\n", de);
-		print("WORD $0x%08ux\n", v);
-                lsp = appendstring(lsp, fn_name);
-                print("WORD $%s_links_str%d(SB)\n", prefix, i);
 	}
 	l->name = nil;
-	print("\n");
-
-        writestringlist(ls, prefix, "links");
 
 	/* Imports - these should be usable as generated. */
 
@@ -454,42 +433,17 @@ process(char *path, int fdisfd, uchar *code, ulong length, Dir *dir, char *prefi
 
 		nl = operand(isp);
 		if (nl > 0) {
-                    int k = 0;
-                    ls = lsp = newstringlist();
 		    for(i = 0; i < nl; i++, i2++){
 			    n = operand(isp);
-			    print("TEXT %s_imports%d(SB), 0, $-4\n", prefix, i);
 			    for(j = 0; j < n; j++, i1++){
-				    int sig = disw(isp);
-				    char *iname = istream;
+				    disw(isp);
 				    while(*istream++)
 					    ;
-                                    print("WORD $0x%08ux\n", sig);
-                                    lsp = appendstring(lsp, iname);
-                                    print("WORD $%s_imports_str%d(SB)\n", prefix, k++);
 			    }
-                            print("WORD $0\nWORD $0\n");
 		    }
-                    writestringlist(ls, prefix, "imports");
 		    istream++;
-		    print("TEXT %s_importlist(SB), 0, $-4\n", prefix);
-		    for (i = 0; i < nl; i++)
-			print("WORD $%s_imports%d(SB)\n", prefix, i);
-                    print("WORD $0\n");
-		} else {
-		    print("TEXT %s_importlist(SB), 0, $-4\n", prefix);
-                    print("WORD $0\n");
                 }
-	} else {
-	    print("TEXT %s_importlist(SB), 0, $-4\n", prefix);
-            print("WORD $0\n");
         }
-
-        print("\n");
-
-	/* Handlers - include as raw data. */
-
-        uchar *hstart = istream;
 
 	if(m->rt & HASEXCEPT){
 		int j, nh;
@@ -534,10 +488,7 @@ process(char *path, int fdisfd, uchar *code, ulong length, Dir *dir, char *prefi
 		}
 		istream++;
 	}
-        writedata(hstart, istream, prefix, "handlers");
-
-        print("TEXT %s_modname(SB), 0, $-4\n", prefix);
-        writestring(m->name);
+        writedata(tstart, istream, prefix, "data");
 
         /* Strip leading directories and prepend a slash. */
         char *p = path;
@@ -548,7 +499,7 @@ process(char *path, int fdisfd, uchar *code, ulong length, Dir *dir, char *prefi
         int pl = strlen(p);
         char *np = malloc(sizeof(pl + 2));
         *np = '/';
-        strncpy(np + 1, p, pl);
+        strcpy(np + 1, p);
 
         print("/* %s */\n", np);
         print("TEXT %s_modpath(SB), 0, $-4\n", prefix);
@@ -575,13 +526,8 @@ process(char *path, int fdisfd, uchar *code, ulong length, Dir *dir, char *prefi
         print("WORD $%#lux /* entry */\n", entry);
         print("WORD $%#lux /* entryt */\n", entryt);
         print("WORD $%s_inst(SB)\n", prefix);
-        print("WORD $%s_types(SB)\n", prefix);
         print("WORD $%s_data(SB)\n", prefix);
-        print("WORD $%s_modname(SB)\n", prefix);
         print("WORD $%s_modpath(SB)\n", prefix);
-        print("WORD $%s_links(SB)\n", prefix);
-        print("WORD $%s_importlist(SB)\n", prefix);
-        print("WORD $%s_handlers(SB)\n", prefix);
 
 	return m;
 bad:

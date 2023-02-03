@@ -370,13 +370,8 @@ struct FrozenMod
 	ulong	entry;
 	ulong	entryt;
 	Inst*	inst;
-	uchar*	types;          /* raw type data */
 	uchar*	data;           /* raw data items */
-	char* name;
-	char* path;
-	LinkData* links;
-	Import** imports;
-	uchar* handlers;
+	char*	path;
 };
 
 struct FrozenMods
