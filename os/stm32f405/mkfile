@@ -57,7 +57,7 @@ CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
 LDFLAGS=-H0 -l -s -a
 KERNDATE=`{$NDATE}
 
-default:V: frozen.c kernel
+default:V: mkfreeze mkfrozendir frozen.h frozen.c kernel
 
 kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
@@ -67,13 +67,24 @@ kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 
 main.$O:	include/ureg.h
 
+mkfreeze:V:
+	echo Making freeze
+	(cd freeze; mk $MKFLAGS install)
+
+mkfrozendir:V:
+	echo Making frozen
+	mkdir -p frozen
+
 MODSRC=${MODOBJ:%.$O=%.s}
 
-frozen.c:V:
-	(cd freeze; mk $MKFLAGS install)
-	mkdir -p frozen
+frozen.h:V:
 	$SHELLNAME mkfrozen $CONF
+
+frozen.c: $MODSRC
 	$AS $ASFLAGS $MODSRC
+
+frozen/%.s:
+	echo $target
 
 %.fdis:Q:
 	# $target is built by the frozen.c rule that builds frozen.h
