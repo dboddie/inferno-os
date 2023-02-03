@@ -177,7 +177,7 @@ disw(uchar **p)
 }
 
 Module*
-process(char *path, uchar *code, ulong length, Dir *dir, char *prefix)
+process(char *path, int fdisfd, uchar *code, ulong length, Dir *dir, char *prefix)
 {
 	Inst *ip;
 	Type *pt;
@@ -245,7 +245,7 @@ process(char *path, uchar *code, ulong length, Dir *dir, char *prefix)
 	print("TEXT %s_inst(SB), 0, $-4\n", prefix);
 	ip = m->prog;
 	for(i = 0; i < isize; i++) {
-                int target = 0;
+                int target = -1;
 		ip->op = *istream++;
 		ip->add = *istream++;
 		ip->reg = 0;
@@ -290,9 +290,10 @@ process(char *path, uchar *code, ulong length, Dir *dir, char *prefix)
 			break;
 		}
 
+                print("// %02ux %02ux %04ux %08ux %08ux\n", ip->op, ip->add, ip->reg, (int)ip->s.imm, (int)ip->d.imm);
 		print("WORD $0x%04ux%02ux%02ux\n", ip->reg, ip->add, ip->op);
                 print("WORD $0x%08ux\n", (int)(ip->s.imm));
-                if (target != 0)
+                if (target != -1)
 		    print("WORD $%s_inst+%d(SB)\n", prefix, target * sizeof(Inst));
                 else
 		    print("WORD $0x%08ux\n", (int)(ip->d.imm));
@@ -413,7 +414,7 @@ process(char *path, uchar *code, ulong length, Dir *dir, char *prefix)
         stringlist *ls, *lsp;
         ls = lsp = newstringlist();
 
-	print("TEXT %s_links(SB), 0, $-4\n", m->name);
+	print("TEXT %s_links(SB), 0, $-4\n", prefix);
 	l = m->ext = (Link*)malloc((lsize+1)*sizeof(Link));
 	if(l == nil){
 		fprint(2, exNomem);
@@ -537,9 +538,31 @@ process(char *path, uchar *code, ulong length, Dir *dir, char *prefix)
 
         print("TEXT %s_modname(SB), 0, $-4\n", prefix);
         writestring(m->name);
+
+        /* Strip leading directories and prepend a slash. */
+        char *p = path;
+        while (*p) {
+            if (*p != '.' && *p != '/') break;
+            p++;
+        }
+        int pl = strlen(p);
+        char *np = malloc(sizeof(pl + 2));
+        *np = '/';
+        strncpy(np + 1, p, pl);
+
+        print("/* %s */\n", np);
         print("TEXT %s_modpath(SB), 0, $-4\n", prefix);
-        writestring(path);
+        writestring(np);
         print("\n");
+
+        /* Write the fdis file containing the magic number and the module name. */
+        int magic = 0x15fd00c0;
+        char null = 0;
+        write(fdisfd, &magic, 4);
+        write(fdisfd, np, strlen(np));
+        write(fdisfd, &null, 1);
+        close(fdisfd);
+        free(np);
 
 	/* Write out module information. */
         print("TEXT %smod(SB), 0, $-4\n", prefix);
@@ -569,13 +592,15 @@ bad:
 void
 main(int argc, char *argv[])
 {
-    if (argc != 3) {
-	fprint(2, "Usage: freeze <prefix> <dis file>\n");
+    if (argc != 4) {
+	fprint(2, "Usage: freeze <prefix> <dis file> <fdis file>\n");
+        fprint(2, "Writes an assembly file on stdout.\n");
 	return;
     }
 
     char *prefix = argv[1];
     char *fname = argv[2];
+    char *fdisname = argv[3];
 
     Dir *dir = dirstat(fname);
     if (dir == nil) {
@@ -585,7 +610,13 @@ main(int argc, char *argv[])
 
     int fd = open(fname, OREAD);
     if (fd < 0) {
-	fprint(2, "Failed to open file: %s\n", fname);
+	fprint(2, "Failed to open file '%s' for reading\n", fname);
+	return;
+    }
+
+    int ffd = create(fdisname, OWRITE, 0666);
+    if (ffd < 0) {
+	fprint(2, "Failed to open file '%s' for writing\n", fdisname);
 	return;
     }
 
@@ -603,7 +634,7 @@ main(int argc, char *argv[])
     }
 
     /* ### The file name needs to be converted to a full path. */
-    process(fname, code, dir->length, dir, prefix);
+    process(fname, ffd, code, dir->length, dir, prefix);
 
 done:
     if (fd >= 0) close(fd);
