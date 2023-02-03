@@ -303,12 +303,12 @@ bad:
 */
 
 Module*
-loadfrozen(Module *m, uchar *name)
+loadfrozen(Module *m, uchar *path)
 {
     FrozenMods *fm;
 
     for (fm = frozen; fm != nil; fm = fm->link) {
-        if (strcmp((char *)name, fm->mod->name) == 0)
+        if (strcmp((char *)path, fm->mod->path) == 0)
             return _loadfrozen(m, fm->mod);
     }
     free(m);
