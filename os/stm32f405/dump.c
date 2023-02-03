@@ -8,4 +8,12 @@
 
 void dumpstack(void)
 {
+    ulong sp = getsp();
+    for (int i = 0; i < 512; i+=4) {
+        wrhex(*(int *)(sp + i));
+        if (i % 16 == 12)
+            newline();
+        else
+            wrch(' ');
+    }
 }
