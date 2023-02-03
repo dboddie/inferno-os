@@ -52,7 +52,6 @@ HFILES=\
 	fns.h\
 	io.h\
 	fpi.h\
-	frozen.h\
 
 CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
 LDFLAGS=-H0 -l -s -a
@@ -61,7 +60,6 @@ KERNDATE=`{$NDATE}
 default:V: frozen.c kernel
 
 kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
-	echo $NOPREFIXOBJ
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
 	$LD $LDFLAGS -o $target -R0 -T$loadaddr -D$dataaddr $NOPREFIXOBJ $CONF.$O $LIBFILES
 
@@ -76,3 +74,6 @@ frozen.c:V:
 	mkdir -p frozen
 	$SHELLNAME mkfrozen $CONF
 	$AS $ASFLAGS $MODSRC
+
+%.fdis:Q:
+	# $target is built by the frozen.c rule that builds frozen.h
