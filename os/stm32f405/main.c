@@ -81,7 +81,7 @@ void main(void)
 
     initfrozen();
 //poolsummary();
-print("%ulx %ulx %ulx %ulx %ulx\n", etext, bdata, edata, end, m);
+print("etext=%ulx bdata=%ulx edata=%ulx end=%ulx mach=%ulx\n", etext, bdata, edata, end, m);
 print("r12=%ux\n", get_r12());
 
     print("Total memory available: %ldK\n",conf.npage*BY2PG/1024);
