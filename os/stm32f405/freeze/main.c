@@ -497,7 +497,7 @@ process(char *path, int fdisfd, uchar *code, ulong length, Dir *dir, char *prefi
             p++;
         }
         int pl = strlen(p);
-        char *np = malloc(sizeof(pl + 2));
+        char *np = malloc(pl + 2);
         *np = '/';
         strcpy(np + 1, p);
 
