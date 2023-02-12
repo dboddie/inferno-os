@@ -1,19 +1,12 @@
 #include "stm32f405.h"
 
-void enable_GPIO_A(void)
-{
-    /* Enable GPIO A on the AHB1 bus */
-    RCC *rcc = (RCC *)RCC_CR;
-    rcc->ahb1enr |= RCC_AHB1_ENABLE_GPIO_A;
-}
-
 void setup_led(void)
 {
     enable_GPIO_A();
     GPIO *gpioa = (GPIO *)GPIO_A;
     /* Set the pin mode using the pair of bits for PA15 and the speed to high */
-    gpioa->moder = GPIO_Output << 30;
-    gpioa->ospeedr = GPIO_HighSpeed << 30;
+    gpioa->moder = (gpioa->moder & 0x3fffffff) | (GPIO_Output << 30);
+    gpioa->ospeedr = (gpioa->ospeedr & 0x3fffffff) | (GPIO_HighSpeed << 30);
 }
 
 void toggle_led(void)
