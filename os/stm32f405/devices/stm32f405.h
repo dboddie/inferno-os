@@ -16,6 +16,11 @@ typedef struct {
     uint afrh;
 } GPIO;
 
+enum GPIO_OutputType {
+    GPIO_PushPull = 0,
+    GPIO_OpenDrain = 1
+};
+
 enum GPIO_Mode {
     GPIO_Input = 0,
     GPIO_Output = 1,
@@ -38,6 +43,7 @@ enum GPIO_Pull {
 
 #define GPIO_A   0x40020000
 #define GPIO_B   0x40020400
+#define GPIO_C   0x40020800
 
 typedef struct {
     uint cr;
@@ -57,6 +63,7 @@ typedef struct {
     uint ahb3enr;
     uint padding3;
     uint apb1enr;
+    uint apb2enr;
 } RCC;
 
 #define RCC_CR   0x40023800
@@ -96,6 +103,8 @@ enum RCC_CFGR_SW {
 
 #define RCC_APB1_ENABLE_USART3  0x00040000
 #define RCC_APB1_ENABLE_I2C1    0x00200000
+
+#define RCC_APB2_SPI1 0x00001000
 
 typedef struct {
     uint control;
@@ -167,28 +176,40 @@ enum I2C_Constants {
     I2C1_sr2_busy       = 0x2
 };
 
-extern void setup_system_clock(void);
-extern void setup_led(void);
-extern int get_led(void);
-extern void set_led(int on);
-extern void toggle_led(void);
-extern void start_timer(void);
-extern void wait_ms(int);
+#define SPI1 0x40013000
 
-extern void enable_GPIO_A(void);
-extern void enable_GPIO_B(void);
-extern void enable_GPIO_C(void);
+typedef struct {
+    uint cr1;
+    uint cr2;
+    uint sr;
+    uint dr;
+    uint crcpr;
+    uint rxcrcr;
+    uint txcrcr;
+    uint i2scfgr;
+    uint i2spr;
+} SPI;
 
-extern void setup_usart(void);
-extern int rdch_wait(void);
-extern int rdch(void);
-extern void wrch(int c);
-extern void wrstr(char *s);
-extern void wrhex(int value);
-extern void write_dec(int value);
-extern void newline(void);
-
-extern void setup_i2c(void);
+enum SPI_Constants {
+    SPI_bidimode = 0x8000,      /* Control register 1 flags */
+    SPI_bdioe    = 0x4000,
+    SPI_crcen    = 0x2000,
+    SPI_crcnext  = 0x1000,
+    SPI_dff      = 0x800,
+    SPI_rxonly   = 0x400,
+    SPI_ssm      = 0x200,
+    SPI_ssi      = 0x100,
+    SPI_lsbfirst = 0x80,
+    SPI_spe      = 0x40,
+    SPI_br_shift = 3,
+    SPI_br_mask  = 0x7,
+    SPI_mstr     = 0x4,
+    SPI_cpol     = 0x2,
+    SPI_cpha     = 0x1,
+    SPI_bsy      = 0x80,        /* Status register flags */
+    SPI_txe      = 0x02,
+    SPI_rxne     = 0x01
+};
 
 /* Interrupts (NVIC) */
 typedef struct {

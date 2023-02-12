@@ -1,5 +1,5 @@
 /*
- *  LEDs device file
+ *  UC8159 device file
  */
 #include    "u.h"
 #include    "../port/lib.h"
@@ -16,55 +16,58 @@ enum{
 };
 
 static
-Dirtab ledstab[]={
+Dirtab uc8159tab[]={
     ".",    {Qdir, 0, QTDIR}, 0, 0555, /* entry for "." must be first if devgen used */
-    "leds", {Qdata, 0},       0, 0666,
+    "uc8159", {Qdata, 0},       0, 0666,
 };
 
+extern void UC8159_test(void);
+
 static void
-ledsinit(void)
+uc8159init(void)
 {
-    setup_led();
+    UC8159_init();
+    UC8159_test();
 }
 
 static Chan*
-ledsattach(char* spec)
+uc8159attach(char* spec)
 {
-    return devattach('L', spec);
+    return devattach('u', spec);
 }
 
 static Walkqid*
-ledswalk(Chan *c, Chan *nc, char **name, int nname)
+uc8159walk(Chan *c, Chan *nc, char **name, int nname)
 {
-    return devwalk(c, nc, name, nname, ledstab, nelem(ledstab), devgen);
+    return devwalk(c, nc, name, nname, uc8159tab, nelem(uc8159tab), devgen);
 }
 
 static int
-ledsstat(Chan* c, uchar *db, int n)
+uc8159stat(Chan* c, uchar *db, int n)
 {
-    return devstat(c, db, n, ledstab, nelem(ledstab), devgen);
+    return devstat(c, db, n, uc8159tab, nelem(uc8159tab), devgen);
 }
 
 static Chan*
-ledsopen(Chan* c, int omode)
+uc8159open(Chan* c, int omode)
 {
-    return devopen(c, omode, ledstab, nelem(ledstab), devgen);
+    return devopen(c, omode, uc8159tab, nelem(uc8159tab), devgen);
 }
 
 static void
-ledsclose(Chan* c)
+uc8159close(Chan* c)
 {
     USED(c);
 }
 
 static long
-ledsread(Chan* c, void* a, long n, vlong offset)
+uc8159read(Chan* c, void* a, long n, vlong offset)
 {
     char lbuf[2];
 
     switch((ulong)c->qid.path){
     case Qdir:
-        return devdirread(c, a, n, ledstab, nelem(ledstab), devgen);
+        return devdirread(c, a, n, uc8159tab, nelem(uc8159tab), devgen);
     case Qdata:
 	snprint(lbuf, 2, "%1d", get_led());
 	return readstr(offset, a, n, lbuf);
@@ -76,7 +79,7 @@ ledsread(Chan* c, void* a, long n, vlong offset)
 }
 
 static long
-ledswrite(Chan* c, void* a, long n, vlong offset)
+uc8159write(Chan* c, void* a, long n, vlong offset)
 {
     USED(a, offset);
     Cmdbuf *cb;
@@ -110,22 +113,22 @@ ledswrite(Chan* c, void* a, long n, vlong offset)
     return n;
 }
 
-Dev ledsdevtab = {     /* defaults in dev.c */
-    'L',
-    "leds",
+Dev uc8159devtab = {     /* defaults in dev.c */
+    'u',
+    "uc8159",
 
     devreset,
-    ledsinit,
+    uc8159init,
     devshutdown,
-    ledsattach,
-    ledswalk,
-    ledsstat,
-    ledsopen,
+    uc8159attach,
+    uc8159walk,
+    uc8159stat,
+    uc8159open,
     devcreate,
-    ledsclose,
-    ledsread,
+    uc8159close,
+    uc8159read,
     devbread,
-    ledswrite,
+    uc8159write,
     devbwrite,
     devremove,
     devwstat,
