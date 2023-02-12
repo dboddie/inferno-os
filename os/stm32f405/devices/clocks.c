@@ -63,7 +63,7 @@ void start_timer(void)
 }
 
 /* With a 42 MHz clock, a count of 42 is 1 microsecond, 42000 is 1ms. */
-void wait_ms(int delay_ms)
+void _wait_ms(int delay_ms)
 {
     SysTick *tick = (SysTick *)SYSTICK;
     int initial = tick->current;
@@ -78,4 +78,15 @@ void wait_ms(int delay_ms)
         next = initial - diff;
 
     while (tick->current > next);
+}
+
+void wait_ms(int delay_ms)
+{
+    SysTick *tick = (SysTick *)SYSTICK;
+    int limit_ms = tick->reload / 42000;
+    while (delay_ms > limit_ms) {
+        _wait_ms(limit_ms);
+        delay_ms -= limit_ms;
+    }
+    _wait_ms(delay_ms);
 }
