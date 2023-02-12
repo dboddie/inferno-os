@@ -39,10 +39,10 @@ void setup_usart(void)
     GPIO *gpiob = (GPIO *)GPIO_B;
     /* Set the pin modes for pins 10 (TX) and 11 (RX) to alternate function 7
        as described in the datasheet (stm32f405rg-1851084.pdf) */
-    gpiob->moder = (GPIO_Alternate << 20) | (GPIO_Alternate << 22);
-    gpiob->afrh = (7 << 8) | (7 << 12);
+    gpiob->moder = (gpiob->moder & 0xff0fffff) | (GPIO_Alternate << 20) | (GPIO_Alternate << 22);
+    gpiob->afrh = (gpiob->afrh & 0xffff00ff) | (7 << 8) | (7 << 12);
     /* Set the speed */
-    gpiob->ospeedr = (GPIO_HighSpeed << 20) | (GPIO_HighSpeed << 22);
+    gpiob->ospeedr = (gpiob->ospeedr & 0xff0fffff) | (GPIO_HighSpeed << 20) | (GPIO_HighSpeed << 22);
 
     /* usartdiv = div_mantissa + (div_fraction / 8 * (2 - over8)) */
     /* baud rate = fCK / (8 * (2 - over8) * usartdiv) */
