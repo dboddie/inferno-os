@@ -25,10 +25,10 @@ init(context: ref Draw->Context, nil: list of string)
     sys->print("**\n** Inferno\n** Vita Nuova\n**\n");
 
 #    sys->bind("#^", "/chan", sys->MBEFORE);
-    sys->bind("#c", "/dev", sys->MREPL);
+    sys->bind("#c", "/dev", sys->MAFTER);
     sys->bind("#L", "/dev", sys->MAFTER);   # status LED
 #    sys->bind("#t", "/dev", sys->MAFTER);
-    sys->bind("#u", "/dev", sys->MAFTER);   # UC8159 e-ink driver
+    sys->bind("#u", "/dev/ink", sys->MAFTER);   # UC8159 e-ink driver
     sys->bind("#e", "/env", sys->MREPL | sys->MCREATE);
     sys->bind("#p", "/prog", sys->MREPL);
     sys->bind("#d", "/fd", sys->MREPL);
