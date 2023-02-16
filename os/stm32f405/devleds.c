@@ -78,7 +78,6 @@ ledsread(Chan* c, void* a, long n, vlong offset)
 static long
 ledswrite(Chan* c, void* a, long n, vlong offset)
 {
-    USED(a, offset);
     Cmdbuf *cb;
 
     switch((ulong)c->qid.path){

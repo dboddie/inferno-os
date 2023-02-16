@@ -13,12 +13,20 @@
 enum{
     Qdir,
     Qdata,
+    Qstatus,
 };
+
+typedef struct {
+    QLock;
+} UC8159dev;
+
+static UC8159dev uc8159lock;
 
 static
 Dirtab uc8159tab[]={
     ".",    {Qdir, 0, QTDIR}, 0, 0555, /* entry for "." must be first if devgen used */
-    "uc8159", {Qdata, 0},       0, 0666,
+    "data", {Qdata, 0},       0, 0222,
+    "status", {Qstatus, 0},       0, 0444,
 };
 
 extern void UC8159_test(void);
@@ -27,7 +35,6 @@ static void
 uc8159init(void)
 {
     UC8159_init();
-    UC8159_test();
 }
 
 static Chan*
@@ -68,8 +75,10 @@ uc8159read(Chan* c, void* a, long n, vlong offset)
     switch((ulong)c->qid.path){
     case Qdir:
         return devdirread(c, a, n, uc8159tab, nelem(uc8159tab), devgen);
-    case Qdata:
-	snprint(lbuf, 2, "%1d", get_led());
+    case Qstatus:
+        qlock(&uc8159lock);
+	snprint(lbuf, 2, "%02ux", UC8159_get_status());
+        qunlock(&uc8159lock);
 	return readstr(offset, a, n, lbuf);
     default:
         n=0;
@@ -78,34 +87,32 @@ uc8159read(Chan* c, void* a, long n, vlong offset)
     return n;
 }
 
+static int sent = 0;
+
 static long
 uc8159write(Chan* c, void* a, long n, vlong offset)
 {
-    USED(a, offset);
-    Cmdbuf *cb;
+    USED(offset);
+    int i = 0;
+    uchar *p = (uchar *)a;
 
     switch((ulong)c->qid.path){
     case Qdata:
-        if(offset != 0)
-            error(Ebadarg);
+        if (sent == 0)
+            UC8159_start();
 
-        cb = parsecmd(a, n);
-        /* Add an error handling block. */
-        if (waserror()) {
-            free(cb);
-            nexterror();
+        for (; i < n; i++, p++) {
+            /* Send the two pixels together (highest 4 bits for left pixel). */
+            UC8159_send_parameter(*p);
+
+            sent++;
+            if (sent == 128000) {
+                UC8159_finish();
+                sent = 0;
+                break;
+            }
         }
-        if (cb->nf != 1)
-            error(Ebadarg); /* Report an error using the error handler. */
 
-        int v = atoi(cb->f[0]);
-        if (v < 0 || v > 1)
-            error(Ebadarg);
-
-        set_led(v);
-
-	poperror();
-        free(cb);
         break;
     default:
         error(Ebadusefd);

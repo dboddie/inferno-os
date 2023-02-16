@@ -172,24 +172,13 @@ void show_response(int n)
     newline();
 }
 
-void UC8159_test(void)
+void UC8159_start(void)
 {
     UC8159_send_command(UC8159_DataStartTransmission, 0);
-    int l = 320 * 400;
-    int y = 0, c = 0, i = 0;
+}
 
-    while (i < l) {
-        /* Each byte contains a pair of pixels (bits 4-7 then bits 0-3). */
-        int r = UC8159_send_parameter((c << 4) | c);
-        i += 2;
-        if (i % 640 == 0) {
-            y++;
-            if (y % 50 == 0)
-                c = (c + 1) & 7;
-        }
-    }
-    print("Data transmitted\n");
-
+void UC8159_finish(void)
+{
     //UC8159.send_command(UC8159_DataStop, 0)
 
     UC8159_send_command(UC8159_PowerOn, 0);
@@ -200,6 +189,10 @@ void UC8159_test(void)
 
     UC8159_send_command(UC8159_PowerOff, 0);
     UC8159_busy_wait(200);
+}
 
-    print("OK\n");
+int UC8159_get_status(void)
+{
+    UC8159_send_command(UC8159_GetStatus, 1);
+    return UC8159_responses[0];
 }
