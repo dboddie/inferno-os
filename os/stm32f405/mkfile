@@ -57,7 +57,7 @@ CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
 LDFLAGS=-H0 -l -s -a
 KERNDATE=`{$NDATE}
 
-default:V: mkfreeze mkfrozendir frozen.h frozen.c kernel
+default:V: appl mkfreeze mkfrozendir frozen.h frozen.c kernel
 
 kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
@@ -88,3 +88,6 @@ frozen/%.s:
 
 %.fdis:Q:
 	# $target is built by the frozen.c rule that builds frozen.h
+
+appl:V:
+	limbo -o $ROOT/dis/makecol.dis appl/makecol.b

@@ -20,7 +20,7 @@ init(nil: ref Draw->Context, args: list of string)
         return;
     }
 
-    f := sys->open("/dev/data", sys->OWRITE);
+    f := sys->open("/dev/ink/data", sys->OWRITE);
     if (f == nil) {
         sys->fprint(sys->fildes(2), "can't write data\n");
         return;
