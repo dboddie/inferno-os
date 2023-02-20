@@ -91,3 +91,5 @@ frozen/%.s:
 
 appl:V:
 	limbo -o $ROOT/dis/makecol.dis appl/makecol.b
+	limbo -o $ROOT/dis/banner.dis appl/banner.b
+	limbo -o $ROOT/dis/banner16.dis appl/banner16.b
