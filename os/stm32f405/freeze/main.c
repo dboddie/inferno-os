@@ -99,6 +99,8 @@ operand(uchar **p)
 	return 0;	
 }
 
+static int target;
+
 int
 brpatchsrc(Inst *ip, Module *m)
 {
@@ -138,7 +140,7 @@ brpatchsrc(Inst *ip, Module *m)
 	case ISPAWN:
 		if(ip->d.imm < 0 || ip->d.imm >= m->nprog)
 			return 0;
-		//ip->d.imm = (WORD)&m->prog[ip->d.imm];
+		target = ip->d.imm;
 		break;
 	}
 	return 1;
@@ -245,7 +247,7 @@ process(char *path, int fdisfd, uchar *code, ulong length, Dir *dir, char *prefi
 	print("TEXT %s_inst(SB), 0, $-4\n", prefix);
 	ip = m->prog;
 	for(i = 0; i < isize; i++) {
-                int target = -1;
+                target = -1;
 		ip->op = *istream++;
 		ip->add = *istream++;
 		ip->reg = 0;
@@ -281,7 +283,6 @@ process(char *path, int fdisfd, uchar *code, ulong length, Dir *dir, char *prefi
 				print("bad branch addr");
 				goto bad;
 			}
-                        target = ip->d.imm;
 			break;
 		case DST(AIND|AFP):
 		case DST(AIND|AMP):
