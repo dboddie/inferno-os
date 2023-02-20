@@ -32,7 +32,7 @@ init(nil: ref Draw->Context, args: list of string)
     for (i := 0; i < 8; i++) {
         cb := byte c;
         for (j := 0; j < BUFSIZE; j++)
-            b[j] = cb;
+            b[j] = cb | (cb << 4);
 
         for (j = 0; j < 100; j++)
             if (sys->write(f, b, BUFSIZE) != BUFSIZE) return;
