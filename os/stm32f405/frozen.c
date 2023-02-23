@@ -11,7 +11,7 @@ void
 initfrozen(void)
 {
     /* Initialise frozen modules using the generated macro defined in frozen/frozen.h. */
-    print("initialising frozen modules\n");
+//    print("initialising frozen modules\n");
     #ifdef InitFrozen
     InitFrozen
     #endif
