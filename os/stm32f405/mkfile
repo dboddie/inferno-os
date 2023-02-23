@@ -80,7 +80,7 @@ MODSRC=${MODOBJ:%.$O=%.s}
 frozen.h:V:
 	$SHELLNAME mkfrozen $CONF
 
-frozen.c: $MODSRC
+frozen.c:V: $MODSRC
 	$AS $ASFLAGS $MODSRC
 
 frozen/%.s:
