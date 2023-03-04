@@ -135,42 +135,47 @@ init(nil: ref Draw->Context, args: list of string)
     b := array[BUFSIZE] of byte;
     c := 0;
 
-    for (y := 0; y < 400; y += 8) {
+    for (y := 0; y < 400; y += 16) {
 
         for (dy := 0; dy < 8; dy++) {
             i := 0;
 
-            for (col := 0; col < 80; col++)
+            for (r := 0; r < 2; r++)
             {
-                n: int;
-                if (col < len text)
-                    n = text[col];
-                else
-                    n = 32;
+                for (col := 0; col < 40; col++)
+                {
+                    n: int;
+                    if (col < len text)
+                        n = text[col];
+                    else
+                        n = 32;
 
-                if (n < ' ' || n > '~') n = 32;
+                    if (n < ' ' || n > '~') n = 32;
 
-                # Select the 32 bits for the top or bottom half of the glyph.
-                g := glyphs[((n - 32) * 2) + (dy / 4)];
+                    # Select the 32 bits for the top or bottom half of the glyph.
+                    g := glyphs[((n - 32) * 2) + (dy / 4)];
 
-                # Obtain the bits for the current row and write the pixels.
-                bits := g >> (8 * (dy % 4));
+                    # Obtain the bits for the current row and write the pixels.
+                    bits := g >> (8 * (dy % 4));
 
-                for (mask := 1; mask != 16r100; mask <<= 2) {
-                    v := byte 16r11;
+                    for (mask := 1; mask != 16r100; mask <<= 2) {
+                        v := byte 16r11;
+                        if ((bits & (mask >> 1)) != 0)
+                            v |= byte 16r22;
 
-                    if ((bits & mask) != 0)
-                        v |= byte (2 << 4);
+                        b[i++] = v;
 
-                    if ((bits & (mask >> 1)) != 0)
-                        v |= v | byte 2;
+                        v = byte 16r11;
+                        if ((bits & mask) != 0)
+                            v |= byte 16r22;
 
-                    b[i++] = v;
-                }
+                        b[i++] = v;
+                    }
 
-                if (i == BUFSIZE) {
-                    if (sys->write(f, b, BUFSIZE) != BUFSIZE) return;
-                    i = 0;
+                    if (i == BUFSIZE) {
+                        if (sys->write(f, b, BUFSIZE) != BUFSIZE) return;
+                        i = 0;
+                    }
                 }
             }
         }
