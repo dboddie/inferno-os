@@ -20,12 +20,6 @@ init(nil: ref Draw->Context, args: list of string)
         return;
     }
 
-    f := sys->fildes(1);
-    if (f == nil) {
-        sys->fprint(sys->fildes(2), "can't write data\n");
-        return;
-    }
-
     b := array[BUFSIZE] of byte;
     c := 0;
 
@@ -35,7 +29,7 @@ init(nil: ref Draw->Context, args: list of string)
             b[j] = cb | (cb << 4);
 
         for (j = 0; j < 100; j++)
-            if (sys->write(f, b, BUFSIZE) != BUFSIZE) return;
+            if (sys->write(stdout, b, BUFSIZE) != BUFSIZE) return;
 
         c = (c + 1) % 7;
     }

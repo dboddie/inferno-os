@@ -135,8 +135,10 @@ init(nil: ref Draw->Context, args: list of string)
 
         nr := 0;
         for (; nr < 40; nr++) {
-            if (sys->read(sys->fildes(0), text[nr:], 1) <= 0) break;
-            if (int text[nr] < 32) break;
+            if (sys->read(sys->fildes(0), text[nr:], 1) <= 0)
+                break;
+            else if (int text[nr] < 32)
+                break;
         }
         while (nr < 40) text[nr++] = byte 32;
 
