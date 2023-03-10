@@ -1,3 +1,5 @@
+#include "devices/stm32f405.h"
+
 extern void enablefpu(void);
 
 extern void setup_system_clock(void);
@@ -25,8 +27,8 @@ extern void enable_GPIO_A(void);
 extern void enable_GPIO_B(void);
 extern void enable_GPIO_C(void);
 
-extern void setup_spi(void);
-extern int spi_send_byte(int b);
+extern void setup_spi(int iface);
+extern int spi_send_byte(SPI *spi, int b);
 
 extern void setup_i2c(void);
 

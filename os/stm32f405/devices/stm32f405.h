@@ -105,6 +105,7 @@ enum RCC_CFGR_SW {
 #define RCC_APB1_ENABLE_I2C1    0x00200000
 
 #define RCC_APB2_SPI1 0x00001000
+#define RCC_APB1_SPI3 0x00008000
 
 typedef struct {
     uint control;
@@ -177,6 +178,7 @@ enum I2C_Constants {
 };
 
 #define SPI1 0x40013000
+#define SPI3 0x40003c00
 
 typedef struct {
     uint cr1;

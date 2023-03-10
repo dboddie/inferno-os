@@ -36,7 +36,7 @@ extern void print(char *, ...);
 void UC8159_init(void)
 {
     enable_GPIO_B();
-    setup_spi();
+    setup_spi(1);
     UC8159_setup_dc_reset_busy();
 
     /* Increase the baud rate of transfers to the screen. */
@@ -128,11 +128,11 @@ int UC8159_send_command(int cmd, int responses)
     /* Pull CS and D/C low, send the command byte, then pull them high. */
     GPIO *gpioc = (GPIO *)GPIO_C;
     gpioc->odr &= ~(UC8159_CS | UC8159_DC);
-    spi_send_byte(cmd);
+    spi_send_byte((SPI *)SPI1, cmd);
     gpioc->odr |= UC8159_DC;
     int i = 0, res = 0;
     while (i < responses) {
-        res = spi_send_byte(0xff);
+        res = spi_send_byte((SPI *)SPI1, 0xff);
         UC8159_responses[i] = (unsigned char)(res & 0xff);
         i++;
     }
@@ -158,7 +158,7 @@ int UC8159_send_parameter(int par)
     /* Pull CS low, leaving D/C high, send the byte, then pull CS high. */
     GPIO *gpioc = (GPIO *)GPIO_C;
     gpioc->odr &= ~UC8159_CS;
-    int res = spi_send_byte(par);
+    int res = spi_send_byte((SPI *)SPI1, par);
     gpioc->odr |= UC8159_CS;
 
     return res;
