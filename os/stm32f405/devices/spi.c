@@ -1,4 +1,3 @@
-#include "stm32f405.h"
 #include "fns.h"
 
 static int spi_init = 0;
@@ -49,6 +48,42 @@ void setup_spi1(void)
 
 void setup_spi3(void)
 {
+    /* The SPI3 pins can be accessed via GPIO C, using PA10-12 in alternate
+       function 6. PC3 is used for CS. */
+    enable_GPIO_C();
+
+    /* Set the pin modes for PC10 [SCK], PC11 [MISO] and PC12 [MOSI] to
+       alternate function 6 as described in the datasheet. */
+    int pins = 0x1c00, pins2 = 0x3f00000, pins4 = 0xfff00;
+    GPIO *gpioc = (GPIO *)GPIO_C;
+    /* Alternative functions for pins 10-12 are 4 bits each in the high register. */
+    gpioc->afrh = (gpioc->afrh & ~pins4) | 0x66600;
+    /* Pin modes are 2 bits each in the mode register. */
+    gpioc->moder = (gpioc->moder & ~pins2) | (GPIO_Alternate << 24) |
+                   (GPIO_Alternate << 22) | (GPIO_Alternate << 20);
+    /* Output types are single bits in the output type register (clear for push-pull). */
+    gpioc->otyper &= ~pins;
+    /* Speeds are 2 bits each in the output speed register. */
+    gpioc->ospeedr = (gpioc->ospeedr & ~pins2) | (GPIO_VeryHighSpeed << 24) |
+                     (GPIO_VeryHighSpeed << 22) | (GPIO_VeryHighSpeed << 20);
+
+    /* Set the pin mode for PC3. */
+    int cspin = 0x08, cspin2 = 0xc0;
+    /* Pin modes are 2 bits each in the mode register. */
+    gpioc->moder = (gpioc->moder & ~cspin2) | (GPIO_Output << 6);
+    /* Pull modes are 2 bits each in the pull direction register (clear for no pull). */
+    gpioc->pupdr &= ~cspin2;
+    /* Output types are single bits in the output type register (clear for push-pull). */
+    gpioc->otyper &= ~cspin;
+    /* Speeds are 2 bits each in the output speed register. */
+    gpioc->ospeedr = (gpioc->ospeedr & ~cspin2) | (GPIO_VeryHighSpeed << 6);
+
+    /* Set the clock phase [0] and polarity [0], master, baud rate divider
+       [6 (128)], SPI enable [1], MSB first [0], SSI and SSM enabled,
+       full duplex [0], 8-bit data [DFF=0] */
+    SPI *spi3 = (SPI *)SPI3;
+    spi3->cr1 = SPI_mstr | (6 << SPI_br_shift) | SPI_ssi | SPI_ssm | SPI_spe;
+    spi3->cr2 = 0;
 }
 
 void setup_spi(int iface)

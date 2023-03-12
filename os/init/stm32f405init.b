@@ -29,6 +29,7 @@ init(context: ref Draw->Context, nil: list of string)
     sys->bind("#L", "/dev", sys->MAFTER);   # status LED
 #    sys->bind("#t", "/dev", sys->MAFTER);
     sys->bind("#u", "/dev/ink", sys->MAFTER);   # UC8159 e-ink driver
+    sys->bind("#F", "/dev", sys->MAFTER);   # W25Q128 flash driver
     sys->bind("#e", "/env", sys->MREPL | sys->MCREATE);
     sys->bind("#p", "/prog", sys->MREPL);
     sys->bind("#d", "/fd", sys->MREPL);

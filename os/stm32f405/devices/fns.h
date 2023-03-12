@@ -28,6 +28,7 @@ extern void enable_GPIO_B(void);
 extern void enable_GPIO_C(void);
 
 extern void setup_spi(int iface);
+extern void spi_set_frequency_divider(SPI *spi, int divider);
 extern int spi_send_byte(SPI *spi, int b);
 
 extern void setup_i2c(void);
@@ -37,3 +38,5 @@ extern void UC8159_start(void);
 extern void UC8159_finish(void);
 extern int UC8159_get_status(void);
 extern int UC8159_send_parameter(int);
+
+extern void W25Q128_init(void);
