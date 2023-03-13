@@ -15,7 +15,7 @@ const char W25Q128_GlobalUnlock[3] = {0x01, 0x00, 0x98};
 #define W25Q128_times_chip 200000
 #define W25Q128_times_pageprogram 4
 
-char W25Q128_response[3] = {0x00, 0x00, 0x00};
+unsigned char W25Q128_response[3] = {0x00, 0x00, 0x00};
 
 #define W25Q128_PageProgram 0x02
 #define W25Q128_ReadData 0x03
@@ -55,7 +55,7 @@ int W25Q128_send_command(const char cmd[])
 
     for (int i = 0; i < rd; i++) {
         res = spi_send_byte((SPI *)SPI3, 0xff);
-        W25Q128_response[i] = res;
+        W25Q128_response[i] = (unsigned char)res;
     }
 
     spi3_change_cs(1);
@@ -74,6 +74,12 @@ void W25Q128_print_response(const char cmd[])
         wrhex(W25Q128_response[i]);
     }
     newline();
+}
+
+int W25Q128_get_info(void)
+{
+    W25Q128_send_command(W25Q128_DeviceID);
+    return W25Q128_response[0] | (W25Q128_response[1] << 8);
 }
 
 int W25Q128_busy_wait(int timeout)
@@ -198,10 +204,4 @@ int W25Q128_unlock(void)
 
     W25Q128_send_command(W25Q128_GlobalUnlock);
     return 1;
-}
-
-void W25Q128_test(void)
-{
-    W25Q128_send_command(W25Q128_DeviceID);
-    W25Q128_print_response(W25Q128_DeviceID);
 }

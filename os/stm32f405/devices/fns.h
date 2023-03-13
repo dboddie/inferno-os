@@ -40,3 +40,5 @@ extern int UC8159_get_status(void);
 extern int UC8159_send_parameter(int);
 
 extern void W25Q128_init(void);
+extern void W25Q128_read_data(int addr, char *a, int l);
+extern int W25Q128_get_info(void);
