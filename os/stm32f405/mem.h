@@ -41,3 +41,5 @@ Bank 1: Static data | dynamic data | free
 #define MEMORY_TOP      0x20020000      /* End of memory Inferno can use */
 #define STACK_TOP       (CCM_BASE + KSTKSIZE - 4)
 #define MACHADDR        (STACK_TOP + 4) /*! Mach structure */
+
+#define MAXRPC (IOHDRSZ+512)
