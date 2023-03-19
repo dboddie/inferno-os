@@ -4,6 +4,7 @@
 #CONFLIST=micromod-stm32f405
 CONF=stm32f405.conf
 CONFLIST=stm32f405.conf
+DATA2S=data2texts
 loadaddr=0x08000000
 # Put data at the start of RAM.
 dataaddr=0x20000000
