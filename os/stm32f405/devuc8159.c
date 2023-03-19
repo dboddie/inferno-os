@@ -29,8 +29,6 @@ Dirtab uc8159tab[]={
     "status", {Qstatus, 0},       0, 0444,
 };
 
-extern void UC8159_test(void);
-
 static void
 uc8159init(void)
 {
