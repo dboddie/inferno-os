@@ -51,8 +51,6 @@ static void poolsizeinit(void)
     poolsize(imagmem, (nb*image_pool_pcnt)/100, 1);
 }
 
-extern char bdata[];
-
 void main(void)
 {
     setup_system_clock();
@@ -80,15 +78,6 @@ void main(void)
     printinit();                // in port/devcons.c
 
     initfrozen();
-//poolsummary();
-//print("etext=%ulx bdata=%ulx edata=%ulx end=%ulx mach=%ulx\n", etext, bdata, edata, end, m);
-//print("r12=%ux\n", get_r12());
-
-//    print("Total memory available: %ldK\n",conf.npage*BY2PG/1024);
-//    print("Bank 0: %ld bytes from %ulx to %ulx\n", CCM_MEMORY_TOP - conf.base0,
-//          conf.base0, (ulong)CCM_MEMORY_TOP);
-//    print("Bank 1: %ld bytes from %ulx to %ulx\n", conf.topofmem - conf.base1,
-//          conf.base1, conf.topofmem);
 
     kbdinit();
 
