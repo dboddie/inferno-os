@@ -4,12 +4,12 @@ int getcpacr(void)
 {
     return *(int *)CPACR_ADDR;
 }
-
+*/
 int getcpuid(void)
 {
     return *(int *)CPUID_ADDR;
 }
-*/
+
 void enablefpu(void)
 {
     /* Enable CP10 and CP11 coprocessors - see page 7-71 of the Arm Cortex-M4
