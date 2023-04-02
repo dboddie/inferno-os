@@ -691,6 +691,7 @@ Text.typex(t : self ref Text, r : int, echomode : int)
 	}
 	if(t.what!=Body && r=='\n')
 		return;
+
 	case r {
 		Dat->Kscrolldown=>
 			if(t.what == Body){
@@ -705,9 +706,29 @@ Text.typex(t : self ref Text, r : int, echomode : int)
 			}
 			return;		
 		Kdown or Keyboard->Down =>
-			n = t.frame.maxlines/3;
-			q0 = t.org+frcharofpt(t.frame, (t.frame.r.min.x, t.frame.r.min.y+n*t.frame.font.height));
-			t.setorigin(q0, FALSE);
+#			n = t.frame.maxlines/3;
+#			q0 = t.org+frcharofpt(t.frame, (t.frame.r.min.x, t.frame.r.min.y+n*t.frame.font.height));
+#			t.setorigin(q0, FALSE);
+			t.commit(TRUE);
+			q0 = t.q0;
+			nnb = 0;
+			if(t.q0>0 && t.readc(t.q0-1)!='\n')
+				nnb = t.bswidth(16r15);
+			while(q0<t.file.buf.nc && t.readc(q0)!='\n')
+				q0++;
+			if (q0 == t.file.buf.nc) {
+				t.show(q0, q0, TRUE);
+				return;
+			}
+			q0++;
+			while(nnb>=0 && q0<t.file.buf.nc) {
+				if (t.readc(q0)=='\n')
+					break;
+				nnb--;
+				if (nnb >= 0)
+					q0++;
+			}
+			t.show(q0, q0, TRUE);
 			return;
 		Keyboard->Pgdown =>
 			n = 2*t.frame.maxlines/3;
@@ -715,23 +736,42 @@ Text.typex(t : self ref Text, r : int, echomode : int)
 			t.setorigin(q0, FALSE);
 			return;
 		Kup or Keyboard->Up =>
-			n = t.frame.maxlines/3;
-			q0 = t.backnl(t.org, n);
-			t.setorigin(q0, FALSE);
+#			n = t.frame.maxlines/3;
+#			q0 = t.backnl(t.org, n);
+#			t.setorigin(q0, FALSE);
+			t.commit(TRUE);
+			nnb = 0;
+			if(t.q0>0 && t.readc(t.q0-1)!='\n')
+				nnb = t.bswidth(16r15);
+			q1 = nnb;
+			if(t.q0-nnb > 1  && t.readc(t.q0-nnb-1)=='\n')
+				nnb++;
+			q0 = t.q0-nnb;
+			t.show(q0, q0, TRUE);
+
+			nnb = t.bswidth(16r15);
+			if (nnb <= 1)
+				return;
+			q0  = q0-nnb;
+			while (q1>0 && t.readc(q0)!='\n') {
+				q1--;
+				q0++;
+			}
+			t.show(q0, q0, TRUE);
 			return;
 		Keyboard->Pgup =>
 			n = 2*t.frame.maxlines/3;
 			q0 = t.backnl(t.org, n);
 			t.setorigin(q0, FALSE);
 			return;
-		Keyboard->Home =>
-			t.commit(TRUE);
-			t.show(0, 0, FALSE);
-			return;
-		Kend or Keyboard->End =>
-			t.commit(TRUE);
-			t.show(t.file.buf.nc, t.file.buf.nc, FALSE);
-			return;
+#		Keyboard->Home =>
+#			t.commit(TRUE);
+#			t.show(0, 0, FALSE);
+#			return;
+#		Kend or Keyboard->End =>
+#			t.commit(TRUE);
+#			t.show(t.file.buf.nc, t.file.buf.nc, FALSE);
+#			return;
 		Kleft or Keyboard->Left =>
 			t.commit(TRUE);
 			if(t.q0 != t.q1)
@@ -746,7 +786,7 @@ Text.typex(t : self ref Text, r : int, echomode : int)
 			else if(t.q1 != t.file.buf.nc)
 				t.show(t.q1+1, t.q1+1, TRUE);
 			return;
-		1 =>  	# ^A: beginning of line
+		1 or Keyboard->Home =>  	# ^A: beginning of line
 			t.commit(TRUE);
 			# go to where ^U would erase, if not already at BOL
 			nnb = 0;
@@ -754,18 +794,57 @@ Text.typex(t : self ref Text, r : int, echomode : int)
 				nnb = t.bswidth(16r15);
 			t.show(t.q0-nnb, t.q0-nnb, TRUE);
 			return;
-		5 =>  	# ^E: end of line
+		5 or Kend or Keyboard->End =>  	# ^E: end of line
 			t.commit(TRUE);
 			q0 = t.q0;
 			while(q0<t.file.buf.nc && t.readc(q0)!='\n')
 				q0++;
 			t.show(q0, q0, TRUE);
 			return;
+		16r03 => # ^C: copy
+			t.commit(TRUE);
+                        exec->cut(t, t, TRUE, FALSE);
+                        return;
+		16r13 => # ^S: save/put
+			t.commit(TRUE);
+			exec->put(t.w.body, nil, nil, 0);
+			return;
+		16r19 => # ^Y: redo
+			t.commit(TRUE);
+			exec->undo(t, FALSE);
+			return;
+		16r1a => # ^Z: undo
+			t.commit(TRUE);
+			exec->undo(t, TRUE);
+			return;
 	}
 	if(t.what == Body){
 		seq++;
 		t.file.mark();
 	}
+        # cut/paste must be done after the seq++ and file mark
+	case(r){
+        16r18 => # ^X: cut
+		t.commit(TRUE);
+		if(t.what == Body){
+			seq++;
+			t.file.mark();
+		}
+		exec->cut(t, t, TRUE, TRUE);
+		t.show(t.q0, t.q0, 1);
+		t.q1 = t.q0;
+		return;
+        16r16 => # ^V: paste
+		t.commit(TRUE);
+		if(t.what == Body){
+			seq++;
+			t.file.mark();
+		}
+		exec->paste(t, t, TRUE, TRUE);
+		t.show(t.q0, t.q1, 1);
+		t.q1 = t.q1;
+		return;
+        }
 	if(t.q1 > t.q0){
 		if(t.ncache != 0)
 			error("text.type");
