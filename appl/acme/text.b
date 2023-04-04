@@ -744,15 +744,15 @@ Text.typex(t : self ref Text, r : int, echomode : int)
 			if(t.q0>0 && t.readc(t.q0-1)!='\n')
 				nnb = t.bswidth(16r15);
 			q1 = nnb;
-			if(t.q0-nnb > 1  && t.readc(t.q0-nnb-1)=='\n')
+			if(t.q0-nnb > 1 && t.readc(t.q0-nnb-1)=='\n')
 				nnb++;
 			q0 = t.q0-nnb;
 			t.show(q0, q0, TRUE);
 
 			nnb = t.bswidth(16r15);
-			if (nnb <= 1)
+			if (t.q0 > 1 && nnb <= 1)
 				return;
-			q0  = q0-nnb;
+			q0 = q0-nnb;
 			while (q1>0 && t.readc(q0)!='\n') {
 				q1--;
 				q0++;
