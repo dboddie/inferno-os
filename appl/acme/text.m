@@ -58,6 +58,7 @@ Textm : module {
 		doubleclick : fn(t : self ref Text, p : int, q : int) : (int, int);
 		clickmatch : fn(t : self ref Text, p : int, q : int, r : int, n : int) : (int, int);
 		columnate : fn(t : self ref Text, d : array of ref Dat->Dirlist, n : int);
+		nextword : fn(t : self ref Text) : int;
 	};
 
 	framescroll : fn(f : ref Framem->Frame, dl : int);

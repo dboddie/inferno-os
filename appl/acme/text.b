@@ -673,6 +673,31 @@ Text.bswidth(t : self ref Text, c : int) : int
 	return t.q0-q;
 }
 
+Text.nextword(t : self ref Text) : int
+{
+	q, eq : int;
+	r : int;
+	skipping : int;
+
+	q = t.q0;
+	skipping = TRUE;
+	while(q<t.file.buf.nc){
+		r = t.readc(q);
+		if(r == '\n'){
+			if(q == t.q0)
+				++q;
+			break;
+		}
+		eq = isalnum(r);
+		if(eq && skipping)	# found one; stop skipping
+			skipping = FALSE;
+		else if(!eq && !skipping)
+			break;
+		++q;
+	}
+	return q-t.q0;
+}
+
 Text.typex(t : self ref Text, r : int, echomode : int)
 {
 	q0, q1 : int;
@@ -732,8 +757,10 @@ Text.typex(t : self ref Text, r : int, echomode : int)
 			return;
 		Keyboard->Pgdown =>
 			n = 2*t.frame.maxlines/3;
-			q0 = t.org+frcharofpt(t.frame, (t.frame.r.min.x, t.frame.r.min.y+n*t.frame.font.height));
-			t.setorigin(q0, FALSE);
+#			q0 = t.org+frcharofpt(t.frame, (t.frame.r.min.x, t.frame.r.min.y+n*t.frame.font.height));
+#			t.setorigin(q0, FALSE);
+			q0 = t.forwnl(t.q0, n);
+			t.show(q0, q0, TRUE);
 			return;
 		Kup or Keyboard->Up =>
 #			n = t.frame.maxlines/3;
@@ -762,7 +789,8 @@ Text.typex(t : self ref Text, r : int, echomode : int)
 		Keyboard->Pgup =>
 			n = 2*t.frame.maxlines/3;
 			q0 = t.backnl(t.org, n);
-			t.setorigin(q0, FALSE);
+#			t.setorigin(q0, FALSE);
+			t.show(q0, q0, TRUE);
 			return;
 #		Keyboard->Home =>
 #			t.commit(TRUE);
@@ -779,12 +807,23 @@ Text.typex(t : self ref Text, r : int, echomode : int)
 			else if(t.q0 != 0)
 				t.show(t.q0-1, t.q0-1, TRUE);
 			return;
+		16r14 => # ctrl-left (clashes with ^T)
+			t.commit(TRUE);
+			if(t.q0>0 && t.readc(t.q0-1)!='\n')
+				nnb = t.bswidth(16r17);
+			t.show(t.q0-nnb, t.q0-nnb, TRUE);
+			return;
 		Kright or Keyboard->Right =>
 			t.commit(TRUE);
 			if(t.q0 != t.q1)
 				t.show(t.q1, t.q1, TRUE);
 			else if(t.q1 != t.file.buf.nc)
 				t.show(t.q1+1, t.q1+1, TRUE);
+			return;
+		16r15 => # ctrl-right (clashes with ^U)
+			t.commit(TRUE);
+			nnb = t.nextword();
+			t.show(t.q0+nnb, t.q0+nnb, TRUE);
 			return;
 		1 or Keyboard->Home =>  	# ^A: beginning of line
 			t.commit(TRUE);
@@ -867,7 +906,7 @@ Text.typex(t : self ref Text, r : int, echomode : int)
 				t.commit(TRUE);
 		}
 		return;
-	16r08 or 16r15 or 16r17 =>
+	16r08 or 16r17 =>
 		# ^H: erase character or ^U: erase line or ^W: erase word 
 		if(t.q0 == 0)
 			return;
