@@ -23,7 +23,7 @@ CFLAGS=		-g\
 
 ANSICPP=
 LD=		cc -m32
-LDFLAGS=
+LDFLAGS=	-z execstack
 
 SYSLIBS=
 

@@ -31,24 +31,24 @@ ALWAYS=\
 #	Utils we build on Posix and Nt, which already exist on Plan 9.
 #
 NOTPLAN9=\
-	5a\
-	5c\
-	5l\
+#	5a\
+#	5c\
+#	5l\
 	8a\
 	8c\
 	8l\
-	qa\
-	qc\
-	ql\
-	va\
-	vc\
-	vl\
-	ka\
-	kc\
-	kl\
-	ia\
-	ic\
-	il\
+#	qa\
+#	qc\
+#	ql\
+#	va\
+#	vc\
+#	vl\
+#	ka\
+#	kc\
+#	kl\
+#	ia\
+#	ic\
+#	il\
 	mk\
 	ksize\
 	kstrip\
