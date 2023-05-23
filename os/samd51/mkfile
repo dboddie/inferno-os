@@ -1,0 +1,96 @@
+<../../mkconfig
+
+CONF=samd51.conf
+CONFLIST=samd51.conf
+DATA2S=data2texts
+loadaddr=0x4000
+# Put data at the start of RAM.
+dataaddr=0x20000800
+
+SYSTARG=$OSTARG
+OBJTYPE=thumb
+INSTALLDIR=$ROOT/Inferno/$OBJTYPE/bin
+
+<$ROOT/mkfiles/mkfile-$SYSTARG-$OBJTYPE
+
+<| $SHELLNAME ../port/mkdevlist $CONF
+
+# Create a directory to hold frozen modules and run the mkfrozen script to
+# create them, defining MODFILES as a side effect.
+<| $SHELLNAME listfrozen $CONF
+
+OBJ=\
+	l.$O\
+	main.$O\
+	clock.$O\
+	dump.$O\
+	thumb2.$O\
+	trap.$O\
+	devices/clocks.$O\
+	devices/gpio.$O\
+	devices/sys.$O\
+#	$IP\
+	$DEVS\
+#	$ETHERS\
+	$LINKS\
+	$PORT\
+	$MISC\
+	$OTHERS\
+	$CONF.root.$O\
+	frozen.$O\
+
+LIBNAMES=${LIBS:%=lib%.a}
+LIBDIRS=$LIBS
+
+# Strip off the devices prefix of any object paths.
+NOPREFIXOBJ=${OBJ:devices/%=%} ${MODOBJ:frozen/%=%}
+
+HFILES=\
+	mem.h\
+	dat.h\
+	fns.h\
+	fpi.h\
+
+CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
+LDFLAGS=-H0 -l -s -t -a
+KERNDATE=`{$NDATE}
+
+#default:V: appl mkfreeze mkfrozendir frozen.h frozen.c kernel
+default:V: kernel
+
+kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
+	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
+	$LD $LDFLAGS -o $target -R0 -T$loadaddr -D$dataaddr $NOPREFIXOBJ $CONF.$O $LIBFILES
+
+<../port/portmkfile
+
+main.$O:	include/ureg.h
+
+mkfreeze:V:
+	echo Making freeze
+	(cd freeze; mk $MKFLAGS install)
+
+mkfrozendir:V:
+	echo Making frozen
+	mkdir -p frozen
+
+MODSRC=${MODOBJ:%.$O=%.s}
+
+#frozen.h:V:
+#	$SHELLNAME mkfrozen $CONF
+
+#frozen.c:V: $MODSRC
+#	$AS $ASFLAGS $MODSRC
+
+frozen/%.s:
+	echo $target
+
+%.fdis:Q:
+	# $target is built by the frozen.c rule that builds frozen.h
+
+appl:V:
+#	limbo -o $ROOT/dis/makecol.dis appl/makecol.b
+#	limbo -o $ROOT/dis/banner.dis appl/banner.b
+#	limbo -o $ROOT/dis/banner16.dis appl/banner16.b
+#	limbo -o $ROOT/dis/blink.dis appl/blink.b
+#	limbo -o $ROOT/dis/ink.dis appl/ink.b
