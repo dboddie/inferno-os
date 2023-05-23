@@ -7,6 +7,7 @@
 #include    "dat.h"
 #include    "fns.h"
 #include    "../port/error.h"
+#include    "devices/samd51.h"
 
 extern char bdata[];
 
@@ -21,12 +22,33 @@ Dirtab sysinfotab[]={
     "sysinfo", {Qdata, 0},       0, 0666,
 };
 
+static void show_port(char group, int offset)
+{
+    print("%c       %08lux   %08lux\n", group, *(uint *)(PORT_dir + offset), *(uint *)(PORT_out + offset));
+    print("pinmux  ");
+    for (int i = 0; i < 16; i++) {
+        char v = *(uchar *)(PORT_pmux + offset + i);
+        char even = v & 0xf, odd = v >> 4;
+        print("%01x  %01x  ", even, odd);
+    }
+    print("\n");
+    print("alt     ");
+    for (int i = 0; i < 32; i++)
+        print("%02x ", *(uchar *)(PORT_pincfg + offset + i));
+    print("\n");
+}
+
 static void dbgsysinfo(void)
 {
     print("etext=%ulx bdata=%ulx edata=%ulx end=%ulx mach=%ulx\n", etext, bdata, edata, end, m);
     print("Total memory available: %ldK\n",conf.npage*BY2PG/1024);
     print("%ld bytes from %ulx to %ulx\n", conf.topofmem - conf.base0,
           conf.base0, conf.topofmem);
+    print("PORT  direction value\n");
+    show_port('A', 0);
+    show_port('B', 0x80);
+    show_port('C', 0x100);
+    show_port('D', 0x180);
 }
 
 static void

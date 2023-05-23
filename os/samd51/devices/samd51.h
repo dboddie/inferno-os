@@ -26,11 +26,11 @@ typedef struct {
 
 /* PORT registers */
 #define PORT_base   0x41008000
-#define PORT_dir 	  0x41008000
+#define PORT_dir 	0x41008000
 #define PORT_dirclr 0x41008004
 #define PORT_dirset 0x41008008
 #define PORT_dirtgl 0x4100800c
-#define PORT_out 	  0x41008010
+#define PORT_out 	0x41008010
 #define PORT_outclr 0x41008014
 #define PORT_outset 0x41008018
 #define PORT_outtgl 0x4100801c
