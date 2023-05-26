@@ -91,5 +91,5 @@ appl:V:
 #	limbo -o $ROOT/dis/makecol.dis appl/makecol.b
 #	limbo -o $ROOT/dis/banner.dis appl/banner.b
 #	limbo -o $ROOT/dis/banner16.dis appl/banner16.b
-#	limbo -o $ROOT/dis/blink.dis appl/blink.b
+	limbo -o $ROOT/dis/blink.dis appl/blink.b
 #	limbo -o $ROOT/dis/ink.dis appl/ink.b
