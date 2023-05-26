@@ -107,7 +107,7 @@ void    switcher(Ureg *);
 void    usage_fault(int);
 void    hard_fault(int);
 void    svcall(int);
-void    sercom5_rxc_intr(void);
+void    sercom1_rxc_intr(void);
 uint    get_r10(void);
 uint    get_r12(void);
 

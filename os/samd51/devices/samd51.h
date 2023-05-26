@@ -19,6 +19,8 @@ typedef struct {
 #define GCLK_PCHCTRL_chen 0x40
 #define GCLK_PCHCTRL_gen_mask 0x0f
 
+#define MCLK_APBA_mask 0x40000814
+#define MCLK_APBA_SERCOM1 0x2000
 #define MCLK_APBB_mask 0x40000818
 #define MCLK_APBB_PORT 0x10
 #define MCLK_APBD_mask 0x40000820

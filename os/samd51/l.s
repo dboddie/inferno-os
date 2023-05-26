@@ -133,13 +133,13 @@ TEXT _svcall(SB), THUMB, $-4
 TEXT _pendsv(SB), THUMB, $-4
     B ,_pendsv(SB)
 
-/* Vector routine for SERCOM5 RXC */
-TEXT _sercom5_rxc_intr(SB), THUMB, $-4
+/* Vector routine for SERCOM1 RXC */
+TEXT _sercom1_rxc_intr(SB), THUMB, $-4
     PUSH(0x1bff, 1)             /* Save registers R0-R9, R11-R12 and R14 */
 
     MOVW    $setR12(SB), R1
     MOVW    R1, R12             /* Reset static base (SB) */
-    BL ,sercom5_rxc_intr(SB)
+    BL ,sercom1_rxc_intr(SB)
 
     POP_LR_PC(0x1bff, 0, 1)     /* Pop registers R0-R9, R11-R12 and return */
 

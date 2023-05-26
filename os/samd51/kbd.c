@@ -14,7 +14,7 @@ void kbdinit(void)
     enable_usart_rxc_intr(0);
 }
 
-void sercom5_rxc_intr(void)
+void sercom1_rxc_intr(void)
 {
     int c = rdch();
     /* Filter backspace */

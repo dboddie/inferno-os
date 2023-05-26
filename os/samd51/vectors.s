@@ -9,9 +9,8 @@
 #define BUS_FAULT _bus_fault(SB)
 #define SVCALL _svcall(SB)
 #define PENDSV _pendsv(SB)
-#define SERCOM5_RXC_INT _sercom5_rxc_intr(SB)
-
-/* See page 372 of the STM32F405/415 Reference Manual RM0090 */
+#define SERCOM1_RXC_INT _sercom1_rxc_intr(SB)
+#define SERCOM5_RXC_INT _dummy(SB)
 
 TEXT vectors(SB), $0
     WORD    $STACKTOP
@@ -31,7 +30,8 @@ TEXT vectors(SB), $0
     WORD    $PENDSV
     WORD    $SYSTICK
 
-/* Handlers for peripherals start at 0x40 from the start of the vector table */
+/* Handlers for peripherals start at 0x40 from the start of the vector table.
+   See section 10.2 of the SAM D5x/E5x Family Data Sheet. */
 
     WORD    $DUMMY
     WORD    $DUMMY
@@ -100,7 +100,7 @@ TEXT vectors(SB), $0
     WORD    $DUMMY
     WORD    $DUMMY
 
-    WORD    $DUMMY
+    WORD    $SERCOM1_RXC_INT
     WORD    $DUMMY
     WORD    $DUMMY
     WORD    $DUMMY

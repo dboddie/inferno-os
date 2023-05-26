@@ -14,7 +14,7 @@ extern void wrch(int value);
 extern void wrhex(int value);
 extern void write_dec(int value);
 extern void wrstr(char *s);
-extern void sercom5_rxc_intr(void);
+extern void sercom1_rxc_intr(void);
 extern void usart_serwrite(char *, int);
 
 extern void enable_PORT(void);
