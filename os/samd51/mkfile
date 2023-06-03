@@ -88,6 +88,7 @@ frozen/%.s:
 	# $target is built by the frozen.c rule that builds frozen.h
 
 appl:V:
+	limbo -o $ROOT/dis/tiny/ls.dis $ROOT/appl/tiny/ls.b
 #	limbo -o $ROOT/dis/makecol.dis appl/makecol.b
 #	limbo -o $ROOT/dis/banner.dis appl/banner.b
 #	limbo -o $ROOT/dis/banner16.dis appl/banner16.b
