@@ -36,7 +36,7 @@ LIBNAMES=${LIBS:%=lib%.a}
 HFILES=\
 
 CFLAGS='-DROOT="'$ROOT'"' -DEMU -I. -I../port -I$ROOT/$SYSTARG/$OBJTYPE/include -I$ROOT/include -I$ROOT/libinterp $CTHREADFLAGS $CFLAGS $EMUOPTIONS
-SYSLIBS= $X11LIBS -lm
+SYSLIBS= $X11LIBS -lm -lpthread
 KERNDATE=`{$NDATE}
 
 default:V:	$O.$CONF
