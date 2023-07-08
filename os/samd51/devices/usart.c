@@ -135,16 +135,22 @@ void wrstr(char *s)
     }
 }
 
+void _wrhex(int n, int digits)
+{
+    int shift = 4 * digits;
+    while (shift != 0) {
+        shift -= 4;
+        int v = (n >> shift) & 0xf;
+        if (v < 10)
+            wrch(48 + v);
+        else
+            wrch(87 + v);
+    }
+}
+
 void wrhex(int value)
 {
-    int v = value;
-    for (int s = 28; s >= 0; s -= 4) {
-        int b = (v >> s) & 0xf;
-        if (b > 9)
-            wrch(87 + b);
-        else
-            wrch(48 + b);
-    }
+    _wrhex(value, 8);
 }
 
 void newline(void)

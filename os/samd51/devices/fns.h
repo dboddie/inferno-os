@@ -11,6 +11,7 @@ extern int rdch_ready(void);
 extern int rdch(void);
 extern int rdch_wait(void);
 extern void wrch(int value);
+extern void _wrhex(int n, int digits);
 extern void wrhex(int value);
 extern void write_dec(int value);
 extern void wrstr(char *s);
@@ -18,3 +19,4 @@ extern void sercom1_rxc_intr(void);
 extern void usart_serwrite(char *, int);
 
 extern void enable_PORT(void);
+extern void usb_init(void);

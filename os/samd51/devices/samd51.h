@@ -18,11 +18,15 @@ typedef struct {
 #define GCLK_PCHCTRL_base 0x40001c80
 #define GCLK_PCHCTRL_chen 0x40
 #define GCLK_PCHCTRL_gen_mask 0x0f
+#define GCLK_USB 10
 
+#define MCLK_AHB_mask 0x40000810
+#define MCLK_AHB_USB 0x400
 #define MCLK_APBA_mask 0x40000814
 #define MCLK_APBA_SERCOM1 0x2000
 #define MCLK_APBB_mask 0x40000818
 #define MCLK_APBB_PORT 0x10
+#define MCLK_APBB_USB 0x01
 #define MCLK_APBD_mask 0x40000820
 #define MCLK_APBD_SERCOM5 0x2
 
@@ -38,6 +42,21 @@ typedef struct {
 #define PORT_outtgl 0x4100801c
 #define PORT_in     0x41008020
 #define PORT_ctrl   0x41008024
+
+typedef struct {
+    int dir;
+    int dirclr;
+    int dirset;
+    int dirtgl;
+    int out;
+    int outclr;
+    int outset;
+    int outtgl;
+    int in;
+    int ctrl;
+    int wrconfig;
+    int evctrl;
+} PORT;
 
 #define PORT_pmux   0x41008030
 #define PORT_pincfg 0x41008040

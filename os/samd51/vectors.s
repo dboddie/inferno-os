@@ -11,6 +11,9 @@
 #define PENDSV _pendsv(SB)
 #define SERCOM1_RXC_INT _sercom1_rxc_intr(SB)
 #define SERCOM5_RXC_INT _dummy(SB)
+#define USB_INTR _usb_intr(SB)
+#define USB_TRCPT0 _usb_intr(SB)
+#define USB_TRCPT1 _usb_intr(SB)
 
 TEXT vectors(SB), $0
     WORD    $STACKTOP
@@ -135,10 +138,10 @@ TEXT vectors(SB), $0
     WORD    $DUMMY
     WORD    $DUMMY
 
+    WORD    $USB_INTR
     WORD    $DUMMY
-    WORD    $DUMMY
-    WORD    $DUMMY
-    WORD    $DUMMY
+    WORD    $USB_TRCPT0
+    WORD    $USB_TRCPT1
 
     WORD    $DUMMY
     WORD    $DUMMY
