@@ -29,7 +29,6 @@ OBJ=\
 	devices/clocks.$O\
 	devices/gpio.$O\
 	devices/sys.$O\
-	devices/usb.$O\
 #	$IP\
 	$DEVS\
 #	$ETHERS\

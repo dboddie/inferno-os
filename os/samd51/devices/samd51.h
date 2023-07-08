@@ -85,3 +85,5 @@ typedef struct {
 #define NVIC_ICER0 NVIC_ICER    // interrupts 0-31
 #define NVIC_ICER1 0xe000e184   // interrupts 32-63
 #define NVIC_ICER2 0xe000e188   // interrupts 64-95
+
+#define NVIC_IPR0 0xe000e400

@@ -2,6 +2,7 @@
 #include "usb.h"
 
 extern void* memcpy(void *s1, void *s2, long n);
+extern void usb_kbdput(char *chars, int l);
 
 #define USB_pin_DN 24
 #define USB_pin_DP 25
@@ -315,6 +316,13 @@ static void usb_enable_interrupts(void)
 {
     /* Interrupt line 80 for USB interrupts. */
     *(int *)NVIC_ISER2 |= (0xd << 16);
+
+    /* Set the interrupt priorities. */
+/*    char *ipr = (char *)NVIC_IPR0;
+    ipr[80] = 0;
+    ipr[82] = 0;
+    ipr[83] = 0;*/
+
     /* Enable only the EORST interrupt. */
     USB_device *dev = (USB_device *)USB_base;
     dev->intenclr = 0xffff;
@@ -527,12 +535,9 @@ static void usb_handle_out(void)
     USB_endpoint_desc *desc = usb_endp_desc(2, 0);
 
     int osize = desc->pcksize & USB_endp_pcksize_count_mask;
-    int addr = desc->addr;
+    char *chars = (char *)desc->addr;
 
-    /* Show the characters received. */
-    usb_debug_chars((char *)addr, osize);
-
-    memcpy(buffer, (void *)addr, osize);
+    usb_kbdput(chars, osize);
 
     if (epstatus & USB_epstatus_bk0ready) {
         ep->statusclr = USB_epstatus_bk0ready;
