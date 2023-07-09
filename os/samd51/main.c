@@ -22,22 +22,6 @@ extern int image_pool_pcnt;
 
 int apsr_flags = 0;
 
-void _debug(void)
-{
-    print("AHB_mask=%.8x\r\n", *(int *)MCLK_AHB_mask);
-    CMCC *cmcc = (CMCC *)CMCC_base;
-    print("CMCC_ctrl=%.8x\r\n", cmcc->ctrl);
-
-    print("control=%.8x\r\n", getcontrol());
-    print("primask=%.8x\r\n", getprimask());
-
-    print("SHPR3=%.8lux\r\n", *(int *)SHPR3);
-    print("ICTR=%.8lux\r\n", *(int *)ICTR);
-
-    int *ipr0 = (int *)NVIC_IPR0;
-    print("IPR20=%.8lux\r\n", ipr0[20]);
-}
-
 void confinit(void)
 {
     conf.topofmem = MEMORY_TOP;
@@ -91,8 +75,6 @@ void main(void)
     timersinit();               // in port/portclock.c
     clockinit();                // in clock.c
     printinit();                // in port/devcons.c
-
-    _debug();
 
     initfrozen();
 

@@ -507,8 +507,8 @@ static void usb_handle_in(void)
         memcpy(ep1_bank1_array, buffer, buflen);
         usb_send_bytes(1, ep1_bank1_array, buflen);
 
-        /* Show the characters sent. */
-        usb_debug_chars(ep1_bank1_array, buflen);
+        /* Show the characters sent.
+        usb_debug_chars(ep1_bank1_array, buflen); */
     } else {
         /* Request a stall for the next transaction, but leave the bank ready. */
         ep->statusset = USB_epstatus_stallrq1;
@@ -555,7 +555,7 @@ static void usb_handle_setup(int size)
 {
     USB_endpoint *endp;
     USB_endpoint_desc *desc;
-    usb_debug_bytes(ctl_out_array, size);
+/*    usb_debug_bytes(ctl_out_array, size);*/
 
     /* Check what the packet contains. */
     USB_setup *pkt = (USB_setup *)ctl_out_array;

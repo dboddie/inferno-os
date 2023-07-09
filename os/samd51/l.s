@@ -30,7 +30,6 @@ _start_loop:
 
 _end_start_loop:
 
-    SVC(0)
     BL  ,introff(SB)
 
     B   ,main(SB)

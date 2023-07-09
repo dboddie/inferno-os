@@ -236,19 +236,10 @@ void dummy(int sp)
 
 void svcall(void)
 {
-/*
-    enable_PORT();
-    set_led(1);
-
-introff();
-    int v = getcontrol();
-    if (v & 1)
-        setcontrol(v ^ 1);
-
     setprimask(0);
-intron();
-*/
+
     *(int *)SHPR3 = (*(int *)SHPR3 & 0xffffff) | (1 << 24);
+
     /* Set the interrupt priorities. This processor apparently has an
        ICTR.INTLINESNUM value of 4, corresponding to 160 interrupt lines. */
     char *ipr = (char *)NVIC_IPR0;
