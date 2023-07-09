@@ -70,7 +70,7 @@ void main(void)
     trapinit();                 // in trap.c
 
 //    uartconsinit();
-    serwrite = usart_serwrite;
+    serwrite = usb_serwrite;
 
     timersinit();               // in port/portclock.c
     clockinit();                // in clock.c

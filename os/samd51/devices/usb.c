@@ -168,8 +168,8 @@ static char ep1_bank1_array[64];
 static char ep2_bank0_array[64];
 static char ep3_bank1_array[8];
 /* Implementation-specific properties */
-static char buffer[64];
-static int buflen;
+static char serial_buffer[256];
+static int bufstart, bufend;
 /* Transfer properties */
 static int data_bits, parity, stop_bits, data_rate;
 
@@ -500,16 +500,7 @@ static void usb_handle_in(void)
     USB_endpoint *ep = usb_endp_addr(1);
     int epv = ep->intflag;
 
-    if (epv & USB_epint_stall1) {
-        /* Don't request another stall. */
-        ep->statusclr = USB_epstatus_stallrq1;
-
-        memcpy(ep1_bank1_array, buffer, buflen);
-        usb_send_bytes(1, ep1_bank1_array, buflen);
-
-        /* Show the characters sent.
-        usb_debug_chars(ep1_bank1_array, buflen); */
-    } else {
+    if ((epv & USB_epint_stall1) == 0) {
         /* Request a stall for the next transaction, but leave the bank ready. */
         ep->statusset = USB_epstatus_stallrq1;
         ep->statusclr = USB_epstatus_dtglin;
@@ -546,6 +537,9 @@ static void usb_handle_out(void)
 static void usb_handle_int(void)
 {
     wrstr("**int**\r\n");
+    USB_endpoint *ep = usb_endp_addr(3);
+    int epv = ep->intflag;
+    ep->intflag = epv;
 }
 
 /* Handle a setup request supplied in the control endpoint's OUT array with the */
@@ -689,4 +683,28 @@ static void usb_debug_chars(char *chars, int size)
     }
     wrch('\'');
     newline();
+}
+
+void usb_serwrite(char *s, int n)
+{
+    usart_serwrite(s, n);
+    int i = 0, j = 0;
+    char c;
+    USB_endpoint *ep = usb_endp_addr(1);
+
+    while ((i < n) && (j < 64)) {
+        c = s[i++];
+        ep1_bank1_array[j++] = c;
+        if (j == 64)
+            break;
+
+        if (c == '\n')
+            ep1_bank1_array[j++] = '\r';
+    }
+
+    ep->statusclr = USB_epstatus_stallrq1;
+    ep->statusset = USB_epstatus_bk1ready;
+
+    USB_endpoint_desc *desc = usb_endp_desc(1, 1);
+    desc->pcksize = USB_endp_pcksize_size_64B | j;
 }
