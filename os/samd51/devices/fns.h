@@ -20,3 +20,4 @@ extern void usart_serwrite(char *, int);
 
 extern void enable_PORT(void);
 extern void usb_init(void);
+extern void usb_intr(void);

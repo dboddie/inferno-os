@@ -1,5 +1,6 @@
 /* Include constants and GPIO functions */
 #include "fns.h"
+#include "thumb2.h"
 
 /* SERCOM1 is on AHB-APB bridge A at 0x40003400. */
 #define SERCOM1_base 0x40003400
@@ -101,11 +102,13 @@ void enable_usart_rxc_intr(int enable)
 {
     if (enable) {
         NVIC *nvic = (NVIC *)NVIC_ISER;
-        nvic->iser32_63 |= (20 << 4);
+        /* Lines 50-53 are used for SERCOM1 interrupts, with RXC (bit 3 in
+           SERCOM_intflag) being exposed on line 53. */
+        nvic->iser32_63 |= (1 << 21);
         *(unsigned char *)SERCOM_intset = SERCOM_intset_rxc;
     } else {
         NVIC_clear *nvic_clr = (NVIC_clear *)NVIC_ICER;
-        nvic_clr->icer32_63 |= (20 << 4);
+        nvic_clr->icer32_63 |= (1 << 21);
         *(unsigned char *)SERCOM_intclr = SERCOM_intclr_rxc;
     }
 }

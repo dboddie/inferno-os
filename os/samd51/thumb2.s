@@ -123,6 +123,11 @@ TEXT getprimask(SB), THUMB, $-4
     MRS(0, MRS_PRIMASK)
     RET
 
+TEXT setprimask(SB), THUMB, $-4
+    MSR(0, MRS_PRIMASK)
+    ISB
+    RET
+
 TEXT getcontrol(SB), THUMB, $-4
     MRS(0, MRS_CONTROL)
     RET
@@ -130,6 +135,12 @@ TEXT getcontrol(SB), THUMB, $-4
 TEXT setcontrol(SB), THUMB, $-4
     MSR(0, MRS_CONTROL)
     ISB
+    RET
+
+/* System call */
+
+TEXT callsv(SB), THUMB, $-4
+    SVC(0)
     RET
 
 /* ulong _tas(ulong*); */

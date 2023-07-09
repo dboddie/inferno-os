@@ -12,13 +12,6 @@ TEXT _start(SB), THUMB, $-4
     MOVW    $STACK_TOP, R1
     MOVW    R1, SP
 
-    MOVW    $0x41008008, R1
-    MOVW    $(1 << 23), R2
-    MOVW    R2, (R1)
-
-    MOVW    $0x41008014, R1
-    MOVW    R2, (R1)
-
     /* Copy initial values of data from after the end of the text section to
        the beginning of the data section. */
     MOVW    $etext(SB), R1
@@ -37,6 +30,7 @@ _start_loop:
 
 _end_start_loop:
 
+    SVC(0)
     BL  ,introff(SB)
 
     B   ,main(SB)
@@ -55,6 +49,15 @@ TEXT _systick(SB), THUMB, $-4
        are saved on the stack. R0 is stored lowest at the address pointed to
        by the stack pointer. */
 
+    MOVW    $0xffffffff, R1
+    MOVW    $SHPR3, R0
+    MOVW    R1, (R0)
+/*
+    MOVW    $in_usb(SB), R0
+    MOVW    (R0), R0
+    CMP     $0, R0
+    BNE     _systick_exit
+*/
     MOVW    28(SP), R0          /* Read xPSR */
     MOVW    R0, R2
     MOVW    $0x060fffff, R1
@@ -75,6 +78,11 @@ TEXT _systick(SB), THUMB, $-4
     MOVW    $0x07ffffff, R0
     AND     R2, R0
     MOVW    R0, 28(SP)
+
+    /* Mask USB interrupts
+    MOVW    $NVIC_ICER2, R0
+    MOVW    $(0xd << 16), R2
+    MOVW    R2, (R0) */
 
     MOVW    $_preswitch(SB), R0
     ORR     $1, R0
@@ -114,6 +122,7 @@ TEXT _hard_fault(SB), THUMB, $-4
 
 TEXT _usage_fault(SB), THUMB, $-4
 /*     MRS(0, MRS_MSP)     Pass the main stack pointer (MSP) to a C function. */
+    /* Push R4-R12 onto the stack then call the handler with the new SP. */
     PUSH(0x1ff0, 0)
     MOVW    SP, R0
     B ,usage_fault(SB)
@@ -128,7 +137,13 @@ TEXT _bus_fault(SB), THUMB, $-4
     B ,_bus_fault(SB)
 
 TEXT _svcall(SB), THUMB, $-4
-    B ,_svcall(SB)
+    PUSH(0x1bff, 1)             /* Save registers R0-R9, R11-R12 and R14 */
+
+    MOVW    $setR12(SB), R1
+    MOVW    R1, R12             /* Reset static base (SB) */
+    BL ,svcall(SB)
+
+    POP_LR_PC(0x1bff, 0, 1)     /* Pop registers R0-R9, R11-R12 and return */
 
 TEXT _pendsv(SB), THUMB, $-4
     B ,_pendsv(SB)
@@ -140,6 +155,16 @@ TEXT _sercom1_rxc_intr(SB), THUMB, $-4
     MOVW    $setR12(SB), R1
     MOVW    R1, R12             /* Reset static base (SB) */
     BL ,sercom1_rxc_intr(SB)
+
+    POP_LR_PC(0x1bff, 0, 1)     /* Pop registers R0-R9, R11-R12 and return */
+
+/* Vector routine for USB interrupts */
+TEXT _usb_intr(SB), THUMB, $-4
+    PUSH(0x1bff, 1)             /* Save registers R0-R9, R11-R12 and R14 */
+
+    MOVW    $setR12(SB), R1
+    MOVW    R1, R12             /* Reset static base (SB) */
+    BL ,usb_intr(SB)
 
     POP_LR_PC(0x1bff, 0, 1)     /* Pop registers R0-R9, R11-R12 and return */
 

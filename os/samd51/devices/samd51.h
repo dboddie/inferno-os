@@ -22,6 +22,7 @@ typedef struct {
 
 #define MCLK_AHB_mask 0x40000810
 #define MCLK_AHB_USB 0x400
+#define MCLK_AHB_CMCC 0x100
 #define MCLK_APBA_mask 0x40000814
 #define MCLK_APBA_SERCOM1 0x2000
 #define MCLK_APBB_mask 0x40000818
@@ -70,20 +71,17 @@ typedef struct {
     unsigned int iser64_95;
 } NVIC;
 
-#define NVIC_ISER 0xe000e100
-#define NVIC_ISER0 NVIC_ISER    // interrupts 0-31
-#define NVIC_ISER1 0xe000e104   // interrupts 32-63
-#define NVIC_ISER2 0xe000e108   // interrupts 64-95
-
 typedef struct {
     unsigned int icer0_31;
     unsigned int icer32_63;
     unsigned int icer64_95;
 } NVIC_clear;
 
-#define NVIC_ICER 0xe000e180
-#define NVIC_ICER0 NVIC_ICER    // interrupts 0-31
-#define NVIC_ICER1 0xe000e184   // interrupts 32-63
-#define NVIC_ICER2 0xe000e188   // interrupts 64-95
+/* Cache controller */
+typedef struct {
+    int type;
+    int cfg;
+    int ctrl;
+} CMCC;
 
-#define NVIC_IPR0 0xe000e400
+#define CMCC_base 0x03000000

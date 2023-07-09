@@ -1,4 +1,5 @@
 #include "fns.h"
+#include "../thumb2.h"
 #include "usb.h"
 
 extern void* memcpy(void *s1, void *s2, long n);
@@ -315,13 +316,7 @@ static void usb_attach_device(int enable)
 static void usb_enable_interrupts(void)
 {
     /* Interrupt line 80 for USB interrupts. */
-    *(int *)NVIC_ISER2 |= (0xd << 16);
-
-    /* Set the interrupt priorities. */
-/*    char *ipr = (char *)NVIC_IPR0;
-    ipr[80] = 0;
-    ipr[82] = 0;
-    ipr[83] = 0;*/
+    *(int *)NVIC_ISER2 = (0xd << 16);
 
     /* Enable only the EORST interrupt. */
     USB_device *dev = (USB_device *)USB_base;
@@ -331,7 +326,7 @@ static void usb_enable_interrupts(void)
     dev->intflag = 0xffff;
 }
 
-void _usb_intr(void)
+void usb_intr(void)
 {
     USB_device *dev = (USB_device *)USB_base;
     int v = dev->intflag;
@@ -347,7 +342,6 @@ void _usb_intr(void)
     dev->intflag = v;
 
     int epintsmy = dev->epintsmry;
-
     if (epintsmy == 0)
         return;
 
@@ -383,6 +377,7 @@ static void usb_init_control_endp(void)
     USB_endpoint_desc *desc = usb_endp_desc(0, 0);
     /* OUT endpoint handles 64 byte packets - also reset byte count to zero. */
     desc->pcksize = USB_endp_pcksize_size_64B;
+
     /* IN endpoint handles 64 byte packets - also reset byte count to zero. */
     desc = usb_endp_desc(0, 1);
     desc->pcksize = USB_endp_pcksize_size_64B;
@@ -616,7 +611,6 @@ static void usb_handle_setup(int size)
                 int descIndex = pkt->value & 0xff;
                 int descType = pkt->value >> 8;
                 int descLength;
-                print("%.2lux %.2lux\r\n", pkt->value & 0xff, pkt->value >> 8);
 
                 if (descType == USB_DESCTYPE_DEVICE) {
                     descLength = 18;

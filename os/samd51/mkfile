@@ -52,7 +52,7 @@ HFILES=\
 	fpi.h\
 
 CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
-LDFLAGS=-H0 -l -s -t
+LDFLAGS=-H0 -l -s -t -a
 KERNDATE=`{$NDATE}
 
 default:V: appl mkfreeze mkfrozendir frozen.h frozen.c kernel

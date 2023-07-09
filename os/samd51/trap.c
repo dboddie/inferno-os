@@ -20,6 +20,9 @@ void trapinit(void)
 
     /* Enable division by zero trapping. */
     *(int *)CCR_ADDR |= CCR_DIV_0_TRP | CCR_UNALIGN_TRP;
+
+    /* The cache controller can be configured here.
+    CMCC *cmcc = (CMCC *)CMCC_base; */
 }
 
 void showregs(int sp, int below)
@@ -229,4 +232,27 @@ void dummy(int sp)
     poolshow();
 
     for (;;) {}
+}
+
+void svcall(void)
+{
+/*
+    enable_PORT();
+    set_led(1);
+
+introff();
+    int v = getcontrol();
+    if (v & 1)
+        setcontrol(v ^ 1);
+
+    setprimask(0);
+intron();
+*/
+    *(int *)SHPR3 = (*(int *)SHPR3 & 0xffffff) | (1 << 24);
+    /* Set the interrupt priorities. This processor apparently has an
+       ICTR.INTLINESNUM value of 4, corresponding to 160 interrupt lines. */
+    char *ipr = (char *)NVIC_IPR0;
+    ipr[80] = 1;
+    ipr[82] = 1;
+    ipr[83] = 1;
 }

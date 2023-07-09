@@ -159,4 +159,17 @@
 /* ARMv7-M Architecture Reference Manual, B1.4.2 */
 #define EPSR_T 0x01000000
 
+#define NVIC_ISER 0xe000e100
+#define NVIC_ISER0 NVIC_ISER    // interrupts 0-31
+#define NVIC_ISER1 0xe000e104   // interrupts 32-63
+#define NVIC_ISER2 0xe000e108   // interrupts 64-95
+
+#define NVIC_ICER 0xe000e180
+#define NVIC_ICER0 NVIC_ICER    // interrupts 0-31
+#define NVIC_ICER1 0xe000e184   // interrupts 32-63
+#define NVIC_ICER2 0xe000e188   // interrupts 64-95
+
+#define NVIC_IPR0 0xe000e400
+#define ICTR 0xe000e004
+
 #endif
