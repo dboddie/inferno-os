@@ -84,7 +84,7 @@ static const char CDC_CS_ACM_Interface_Desc[] = {
     0x04,   /* length */
     0x24,   /* type: CS_INTERFACE */
     0x02,   /* subtype: ACM functional descriptor */
-    0x06    /* bmCapabilities: Table 28, Universal Serial Bus Class Definitions
+    0x02    /* bmCapabilities: Table 28, Universal Serial Bus Class Definitions
                for Communications Devices*/
 };
 
@@ -706,5 +706,6 @@ void usb_serwrite(char *s, int n)
     ep->statusset = USB_epstatus_bk1ready;
 
     USB_endpoint_desc *desc = usb_endp_desc(1, 1);
+    desc->addr = (int)ep1_bank1_array;
     desc->pcksize = USB_endp_pcksize_size_64B | j;
 }

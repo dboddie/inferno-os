@@ -32,6 +32,7 @@ TEXT splhi(SB), THUMB, $-4
 	STR_imm(14, 6, 0)   /* m->splpc */
 
         MRS(0, MRS_PRIMASK) /* load the previous interrupt disabled state */
+        AND $1, R0
         RSB $1, R0, R0
 	CPS(1, CPS_I)       /* disable interrupts */
 	RET
@@ -39,6 +40,7 @@ TEXT splhi(SB), THUMB, $-4
 /* Enable interrupts and return the previous state. */
 TEXT spllo(SB), THUMB, $-4
         MRS(0, MRS_PRIMASK) /* load the previous interrupt disabled state */
+        AND $1, R0
         RSB $1, R0, R0
 	CPS(0, CPS_I)       /* enable interrupts */
 	RET
@@ -60,6 +62,7 @@ splx_disable:
 
 TEXT islo(SB), THUMB, $-4
         MRS(0, MRS_PRIMASK) /* load the interrupt disabled state */
+        AND $1, R0
         RSB $1, R0, R0
 	RET
 

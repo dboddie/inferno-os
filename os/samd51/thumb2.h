@@ -170,6 +170,7 @@
 #define NVIC_ICER2 0xe000e188   // interrupts 64-95
 
 #define NVIC_IPR0 0xe000e400
+#define NVIC_IPR20 0xe000e450
 #define ICTR 0xe000e004
 
 #endif
