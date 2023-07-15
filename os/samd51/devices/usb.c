@@ -500,16 +500,23 @@ static void usb_handle_in(void)
     USB_endpoint *ep = usb_endp_addr(1);
     int epv = ep->intflag;
 
+    /* Clear the interrupt to acknowledge it. */
+    ep->intflag = epv;
+
+    wrstr("handle_in ");
+    wrhex(epv); wrch(' '); wrhex(ep->status); newline();
+
     if ((epv & USB_epint_stall1) == 0) {
         /* Request a stall for the next transaction, but leave the bank ready. */
+        USB_endpoint_desc *desc = usb_endp_desc(1, 1);
+        wrstr("Sent: ");
+        wrhex(desc->pcksize & USB_endp_pcksize_count_mask);
+        newline();
         ep->statusset = USB_epstatus_stallrq1;
         ep->statusclr = USB_epstatus_dtglin;
     }
 
     ep->statusset = USB_epstatus_bk1ready;
-
-    /* Clear the interrupt to acknowledge it. */
-    ep->intflag = epv;
 }
 
 static void usb_handle_out(void)
@@ -536,10 +543,25 @@ static void usb_handle_out(void)
 
 static void usb_handle_int(void)
 {
+    /* Apparently, this is supposed to send a setup packet back to the host
+       with request type 0xa1 (d2h, class, recipient=interface)
+       request 0x00 (network connection), 0x01 (response available)
+       or 0x20 (serial state).
+       (See the drivers/usb/gadget/function/f_acm.c implementation in Linux
+       and the Class-Specific Notifications table in the USB CDC specification.) */
+
     wrstr("**int**\r\n");
     USB_endpoint *ep = usb_endp_addr(3);
     int epv = ep->intflag;
     ep->intflag = epv;
+
+    if ((epv & USB_epint_stall1) == 0) {
+        /* Request a stall for the next transaction, but leave the bank ready. */
+        ep->statusset = USB_epstatus_stallrq1;
+        ep->statusclr = USB_epstatus_dtglin;
+    }
+
+    ep->statusset = USB_epstatus_bk1ready;
 }
 
 /* Handle a setup request supplied in the control endpoint's OUT array with the */
@@ -568,8 +590,9 @@ static void usb_handle_setup(int size)
 
         endp = (USB_endpoint *)usb_endp_addr(3);
         endp->cfg = USB_epcfg_int << USB_epcfg_in_shift;
-        endp->intenset = USB_epint_trcpt1;
-        endp->statusset = USB_epstatus_bk1ready;
+        endp->statusclr = USB_epstatus_bk1ready;
+/*        endp->intenset = USB_epint_trcpt1;
+        endp->statusset = USB_epstatus_bk1ready;*/
         usb_send_zlp(0);
         return;
 
@@ -702,7 +725,9 @@ void usb_serwrite(char *s, int n)
             ep1_bank1_array[j++] = '\r';
     }
 
+    ep->intflag = USB_epint_stall1;
     ep->statusclr = USB_epstatus_stallrq1;
+    ep->statusclr = USB_epstatus_dtglin;
     ep->statusset = USB_epstatus_bk1ready;
 
     USB_endpoint_desc *desc = usb_endp_desc(1, 1);
