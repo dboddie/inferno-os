@@ -48,6 +48,9 @@ TEXT _systick(SB), THUMB, $-4
        are saved on the stack. R0 is stored lowest at the address pointed to
        by the stack pointer. */
 
+    MOVW    $0xffffffff, R1
+    MOVW    $SHPR3, R0
+    MOVW    R1, (R0)
 /*
     MOVW    $in_usb(SB), R0
     MOVW    (R0), R0
