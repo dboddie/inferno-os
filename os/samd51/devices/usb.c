@@ -164,12 +164,13 @@ static char ctl_out_array[64];
 static int usb_request;
 static int device_address;
 /* Reserve buffers for the endpoint data. */
-static char ep1_bank1_array[64];
+static char ep1_bank1_array[4][64];
+static int ep1_offsets[4];
+static int ep1_buffer = 0;
+static int ep1_sending = 0;
 static char ep2_bank0_array[64];
 static char ep3_bank1_array[8];
-/* Implementation-specific properties */
-static char serial_buffer[256];
-static int bufstart, bufend;
+static int usb_ready = 0, usb_sending = 0;
 /* Transfer properties */
 static int data_bits, parity, stop_bits, data_rate;
 
@@ -503,19 +504,30 @@ static void usb_handle_in(void)
     /* Clear the interrupt to acknowledge it. */
     ep->intflag = epv;
 
-    wrstr("handle_in ");
-    wrhex(epv); wrch(' '); wrhex(ep->status); newline();
+    /* Reset the offset for the buffer just sent. */
+    ep1_offsets[ep1_sending] = 0;
 
-    if ((epv & USB_epint_stall1) == 0) {
-        /* Request a stall for the next transaction, but leave the bank ready. */
+    int next_buffer = (ep1_sending + 1) & 0x3;
+    int size = ep1_offsets[next_buffer];
+    wrstr("intflag="); wrhex(epv); newline();
+
+    if (size > 0) {
         USB_endpoint_desc *desc = usb_endp_desc(1, 1);
-        wrstr("Sent: ");
-        wrhex(desc->pcksize & USB_endp_pcksize_count_mask);
-        newline();
+        ep1_sending = next_buffer;
+        desc->addr = (int)ep1_bank1_array[next_buffer];
+        desc->pcksize = USB_endp_pcksize_size_64B | size;
+        wrstr("queuing buf="); wrhex(ep1_sending); newline();
+        usb_sending = 2;
+
+    } else {
+        /* Request a stall for the next transaction. */
         ep->statusset = USB_epstatus_stallrq1;
         ep->statusclr = USB_epstatus_dtglin;
+        usb_sending = 0;
     }
 
+    wrstr("usb_sending="); wrhex(usb_sending); newline();
+    /* Leave the bank ready, even if stalling. */
     ep->statusset = USB_epstatus_bk1ready;
 }
 
@@ -581,7 +593,7 @@ static void usb_handle_setup(int size)
         /* Configure the other endpoints. */
         endp = (USB_endpoint *)usb_endp_addr(1);
         endp->cfg = USB_epcfg_bulk << USB_epcfg_in_shift;
-        endp->intenset = USB_epint_trcpt1 | USB_epint_stall1;
+        endp->intenset = USB_epint_trfail1 | USB_epint_trcpt1 | USB_epint_stall1;
         endp->statusset = USB_epstatus_bk1ready | USB_epstatus_stallrq1;
 
         endp = (USB_endpoint *)usb_endp_addr(2);
@@ -594,6 +606,7 @@ static void usb_handle_setup(int size)
 /*        endp->intenset = USB_epint_trcpt1;
         endp->statusset = USB_epstatus_bk1ready;*/
         usb_send_zlp(0);
+        usb_ready = 1;
         return;
 
     } else if (pkt->type == 0x21) {
@@ -711,26 +724,53 @@ static void usb_debug_chars(char *chars, int size)
 void usb_serwrite(char *s, int n)
 {
     usart_serwrite(s, n);
-    int i = 0, j = 0;
+
+    /* Write the output to an output buffer. */
+    int i = 0, j;
     char c;
     USB_endpoint *ep = usb_endp_addr(1);
+    USB_endpoint_desc *desc = usb_endp_desc(1, 1);
+
+    char *buf = ep1_bank1_array[ep1_buffer];
+    j = ep1_offsets[ep1_buffer];
 
     while ((i < n) && (j < 64)) {
         c = s[i++];
-        ep1_bank1_array[j++] = c;
+        buf[j++] = c;
         if (j == 64)
             break;
 
         if (c == '\n')
-            ep1_bank1_array[j++] = '\r';
+            buf[j++] = '\r';
     }
 
-    ep->intflag = USB_epint_stall1;
-    ep->statusclr = USB_epstatus_stallrq1;
-    ep->statusclr = USB_epstatus_dtglin;
-    ep->statusset = USB_epstatus_bk1ready;
+    ep1_offsets[ep1_buffer] = j;
 
-    USB_endpoint_desc *desc = usb_endp_desc(1, 1);
-    desc->addr = (int)ep1_bank1_array;
-    desc->pcksize = USB_endp_pcksize_size_64B | j;
+    if (!usb_ready) return;
+
+    wrstr("islo="); wrhex(islo()); wrch(' ');
+    wrstr("usb_sending="); wrhex(usb_sending); wrch(' ');
+    wrstr("buf="); wrhex(ep1_buffer);
+    wrstr(" offset="); wrhex(j);
+    wrstr(" sending="); wrhex(ep1_sending);
+    wrstr(" intflag="); wrhex(ep->intflag);
+    wrstr(" status="); wrhex(ep->status); newline();
+
+    /* If interrupts are disabled when reaching here, it is possible that the
+       opportunity to queue sending is missed. */
+
+    if (!usb_sending) {
+        ep->intflag = USB_epint_stall1;
+        ep->statusclr = USB_epstatus_stallrq1 | USB_epstatus_dtglin;
+        ep->statusset = USB_epstatus_bk1ready;
+
+        desc->addr = (int)buf;
+        /* Set the byte count and reset the multi-packet count. */
+        desc->pcksize = USB_endp_pcksize_size_64B | j;
+        ep1_sending = ep1_buffer;
+
+        /* Use the other buffer next time. */
+        ep1_buffer = (ep1_buffer + 1) & 0x3;
+        usb_sending = 1;
+    }
 }
