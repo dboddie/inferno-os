@@ -809,8 +809,13 @@ Text.typex(t : self ref Text, r : int, echomode : int)
 			return;
 		16r14 => # ctrl-left (clashes with ^T)
 			t.commit(TRUE);
-			if(t.q0>0 && t.readc(t.q0-1)!='\n')
+			nnb = 0;
+			if(t.q0>0) {
+                            if(t.readc(t.q0-1)!='\n')
 				nnb = t.bswidth(16r17);
+                            else
+                                nnb = 1;
+                        }
 			t.show(t.q0-nnb, t.q0-nnb, TRUE);
 			return;
 		Kright or Keyboard->Right =>
