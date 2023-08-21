@@ -55,9 +55,6 @@ extern void set_led(int);
 
 void main(void)
 {
-    start_timer();
-    setup_usart();
-
     /* Mach is defined in dat.h, edata and end are in port/lib.h */
     memset(m, 0, sizeof(Mach));
     memset(edata, 0, end-edata);
@@ -71,6 +68,9 @@ void main(void)
     poolsizeinit();
 
     trapinit();                 // in trap.c
+
+    start_timer();
+    setup_usart();
 
 //    uartconsinit();
     serwrite = uart_serwrite;
