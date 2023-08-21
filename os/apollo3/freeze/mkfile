@@ -1,0 +1,13 @@
+<../../../mkconfig
+
+TARG=freeze
+
+OFILES=main.$O
+
+LIBS=bio 9
+
+BIN=$ROOT/$OBJDIR/bin
+
+<$ROOT/mkfiles/mkone-$SHELLTYPE
+
+CFLAGS='-I'$ROOT'/include' $CFLAGS
