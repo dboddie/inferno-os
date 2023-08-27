@@ -15,5 +15,3 @@ extern void wrhex(int value);
 extern void write_dec(int value);
 extern void wrstr(char *s);
 extern void uart_serwrite(char *, int);
-
-extern void enable_PORT(void);

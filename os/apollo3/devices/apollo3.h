@@ -10,8 +10,11 @@ typedef struct {
 #define PWR_DEVPWREN 0x40021008
 #define PWR_UART1 0x100
 #define PWR_UART0 0x80
+#define PWR_IOM4 0x20
 #define PWR_DEVPWRSTATUS 0x40021018
+#define PWR_HCPC 0x10               /* includes IOM 3,4,5 */
 #define PWR_HCPA 0x04               /* includes UARTs */
+#define PWR_MCUL 0x01               /* DMA and Fabrics */
 
 /* Clock control and masks */
 #define CLKGEN_CLKOUT 0x40004010
@@ -49,9 +52,13 @@ typedef struct {
 
 /* GPIO */
 #define GPIO_padregE 0x40010010
+#define GPIO_padregJ 0x40010024
+#define GPIO_padregK 0x40010028
 #define GPIO_padregM 0x40010030
 
 #define GPIO_cfgC 0x40010048
+#define GPIO_cfgE 0x40010050
+#define GPIO_cfgF 0x40010054
 #define GPIO_cfgG 0x40010058
 
 #define GPIO_padkey 0x40010060
@@ -64,4 +71,6 @@ typedef struct {
 #define GPIO_encA 0x400100b4
 
 #define GPIO_altpadcfgE 0x400100f0
+#define GPIO_altpadcfgJ 0x40010104
+#define GPIO_altpadcfgK 0x40010108
 #define GPIO_altpadcfgM 0x40010110
