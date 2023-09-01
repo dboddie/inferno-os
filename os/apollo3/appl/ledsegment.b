@@ -100,9 +100,6 @@ send_shape_to_device(dfd: ref sys->FD, offset, a, b, c, d, e, f, g, h: int)
     ba := array[8] of {byte a, byte b, byte c, byte d,
                        byte e, byte f, byte g, byte h};
 
-    sys->seek(dfd, big offset, sys->SEEKSTART);
-    sys->write(dfd, ba[:0], 0);
-
     sys->seek(dfd, big 0, sys->SEEKSTART);
     sys->write(dfd, ba, len ba);
 }
