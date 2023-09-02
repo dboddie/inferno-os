@@ -32,6 +32,9 @@
 #define IOM_INT_THR     0x2
 #define IOM_INT_CMDCMP  0x1
 
+#define IOM_CLKCFG_FSEL_MASK 0x700
+#define IOM_CLKCFG_FSEL_SHIFT 8
+
 #define IOM_SMOD1TYPE_I2CMASTER 0x20
 #define IOM_SMOD1EN 0x10
 #define IOM_SMOD0TYPE_SPIMASTER 0
@@ -68,3 +71,7 @@
 #define IOM_STATUS_IDLE 0x4
 #define IOM_STATUS_CMD 0x2
 /* The error status bit (0x1) is not used. */
+
+#define IOM_MSPICFG_FULLDUP 0x4
+#define IOM_MSPICFG_SPHA 0x2
+#define IOM_MSPICFG_SPOL 0x1

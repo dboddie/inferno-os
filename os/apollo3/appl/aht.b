@@ -25,6 +25,7 @@ init(nil: ref Draw->Context, args: list of string)
 
     b := read_data(dfd, 16r71, 1);
     status := int b[0];
+
     if ((status & 16r88) == 16r08) {
         wb := array[] of { byte 16r33, byte 16r00 };
         write_data(dfd, 16rac, wb);

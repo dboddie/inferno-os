@@ -6,7 +6,7 @@
 #include "../io.h"
 #include "../../port/error.h"
 #include "apollo3.h"
-#include "i2c.h"
+#include "iom.h"
 
 static void
 i2c_mask_set(int addr, int mask, int set)
