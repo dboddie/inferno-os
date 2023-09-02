@@ -78,7 +78,8 @@ frozen.h:V:
 	$SHELLNAME mkfrozen $CONF
 
 frozen.c:V: $MODSRC
-	$AS $ASFLAGS $MODSRC
+	# Only build frozen modules if they exist.
+	$MODSRC || $AS $ASFLAGS $MODSRC
 
 frozen/%.s:
 	echo $target
