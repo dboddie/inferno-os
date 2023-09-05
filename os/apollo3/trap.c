@@ -127,7 +127,17 @@ void kprocchild(Proc *p, void (*func)(void*), void *arg)
 
 void usage_fault(int sp)
 {
-    /* Entered with sp pointing to R4-R12, R0-R3, R12, R14, PC and xPSR. */
+    /* Entered with sp pointing to R4-R11, R0-R3, R12, R14, PC and xPSR. */
+    short ufsr = *(short *)UFSR_ADDR;
+    if (ufsr & UFSR_UNDEFINSTR) {
+        if (fpithumb2((Ereg *)sp)) {
+
+
+            return;
+        }
+        wrstr("***\r\n");
+    }
+
     wrstr("Usage fault at "); wrhex(*(int *)(sp + 60)); newline();
     wrstr("UFSR="); wrhex(*(short *)UFSR_ADDR); newline();
 //    wrstr("Instruction: "); wrhex(**(int **)(sp + 24)); newline();
@@ -157,7 +167,7 @@ void usage_fault(int sp)
     wrstr("r9="); wrhex(*(int *)(sp + 20)); wrch(' ');
     wrstr("r10="); wrhex(*(int *)(sp + 24)); wrch(' ');
     wrstr("r11="); wrhex(*(int *)(sp + 28)); newline();
-    wrstr("r12="); wrhex(*(int *)(sp + 32)); wrch(' ');
+    wrstr("exc_ret="); wrhex(*(int *)(sp + 32)); newline();
     wrstr("lr="); wrhex(*(int *)(sp + 56)); wrch(' ');
     wrstr("pc="); wrhex(*(int *)(sp + 60)); wrch(' ');
     wrstr("xPSR="); wrhex(*(int *)(sp + 64)); newline();
@@ -209,7 +219,7 @@ void hard_fault(int sp)
     for (;;) {}
 }
 
-void dummy(int sp)
+void trap_dummy(int sp)
 {
     wrstr("sp="); wrhex(sp); newline();
     wrstr("r0="); wrhex(*(int *)(sp)); newline();

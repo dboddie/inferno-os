@@ -81,7 +81,7 @@ void	setpower(int, int);
 void	clockcheck(void);
 void	armtimerset(int);
 void	links(void);
-int	fpiarm(Ureg*);
+int	fpithumb2(Ereg*);
 void	mdelay(uint);
 void	initfrozen(void);
 

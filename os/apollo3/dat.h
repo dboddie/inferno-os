@@ -4,6 +4,7 @@
 typedef struct ISAConf ISAConf;
 typedef struct Lock Lock;
 typedef struct Ureg Ureg;
+typedef struct Ereg Ereg;
 typedef struct Label Label;
 typedef struct FPenv FPenv;
 typedef struct I2Cdev I2Cdev;

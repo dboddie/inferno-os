@@ -26,6 +26,7 @@ OBJ=\
 	dump.$O\
 	thumb2.$O\
 	trap.$O\
+	fpithumb2.$O\
 	devices/clocks.$O\
 	devices/sys.$O\
 #	$IP\
@@ -51,7 +52,7 @@ HFILES=\
 	fpi.h\
 
 CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
-LDFLAGS=-H0 -l -s -t
+LDFLAGS=-H0 -l -s -t -f -a
 KERNDATE=`{$NDATE}
 
 default:V: appl mkfreeze mkfrozendir frozen.h frozen.c kernel
@@ -97,3 +98,4 @@ appl:V:
 	limbo -o $ROOT/dis/aht.dis appl/aht.b
 	limbo -o $ROOT/dis/makecol.dis appl/makecol.b
 	limbo -o $ROOT/dis/ledsegment.dis appl/ledsegment.b
+	limbo -o $ROOT/dis/floattest.dis appl/floattest.b
