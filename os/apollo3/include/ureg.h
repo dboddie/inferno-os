@@ -20,6 +20,11 @@ typedef struct Ureg {
 } Ureg;
 
 typedef struct Ereg {
+    /* Stacked in our exception handler */
+    union {
+        ulong sp;   /* interrupted sp */
+        ulong r13;
+    };
     ulong r4;
     ulong r5;
     ulong r6;
@@ -30,6 +35,7 @@ typedef struct Ereg {
     ulong r11;
     ulong exc_ret;
 
+    /* Automatically stacked by the CPU on exception */
     ulong r0;
     ulong r1;
     ulong r2;

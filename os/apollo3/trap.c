@@ -20,6 +20,8 @@ void trapinit(void)
 
     /* Enable division by zero trapping. */
     *(int *)CCR_ADDR |= CCR_DIV_0_TRP | CCR_UNALIGN_TRP;
+    /* Disable 8-byte stack alignment. */
+    *(int *)CCR_ADDR &= ~CCR_STKALIGN;
 }
 
 void showregs(int sp, int below)
@@ -59,6 +61,29 @@ void dumpregs(Ureg *uregs)
     wrstr("r12="); wrhex(get_r12()); wrch(' ');
     wrstr("sp="); wrhex((int)uregs); wrch(' ');
     wrstr("r14="); wrhex(uregs->r14); newline();
+}
+
+void dumperegs(Ereg *eregs)
+{
+    wrstr(" r0="); wrhex(eregs->r0); wrch(' ');
+    wrstr("r1="); wrhex(eregs->r1); wrch(' ');
+    wrstr(" r2="); wrhex(eregs->r2); wrch(' ');
+    wrstr("r3="); wrhex(eregs->r3); newline();
+    wrstr(" r4="); wrhex(eregs->r4); wrch(' ');
+    wrstr("r5="); wrhex(eregs->r5); wrch(' ');
+    wrstr(" r6="); wrhex(eregs->r6); wrch(' ');
+    wrstr("r7="); wrhex(eregs->r7); newline();
+    wrstr(" r8="); wrhex(eregs->r8); wrch(' ');
+    wrstr("r9="); wrhex(eregs->r9); wrch(' ');
+    wrstr("r10="); wrhex(eregs->r10); wrch(' ');
+    wrstr("r11="); wrhex(eregs->r11); newline();
+    wrstr("r12="); wrhex(get_r12()); wrch(' ');
+    wrstr("r13="); wrhex(eregs->sp); wrch(' ');
+    wrstr("sp="); wrhex((int)eregs); wrch(' ');
+    wrstr("r14="); wrhex(eregs->r14); newline();
+    wrstr("exc_ret="); wrhex(eregs->exc_ret); wrch(' ');
+    wrstr("pc="); wrhex(eregs->pc); wrch(' ');
+    wrstr("xpsr="); wrhex(eregs->xpsr); newline();
 }
 
 extern int apsr_flags;
@@ -130,12 +155,11 @@ void usage_fault(int sp)
     /* Entered with sp pointing to R4-R11, R0-R3, R12, R14, PC and xPSR. */
     short ufsr = *(short *)UFSR_ADDR;
     if (ufsr & UFSR_UNDEFINSTR) {
-        if (fpithumb2((Ereg *)sp)) {
-
-
+        if (fpithumb2((Ereg *)sp))
             return;
-        }
-        wrstr("***\r\n");
+
+        dumperegs((Ereg *)sp);
+        for (;;) {}
     }
 
     wrstr("Usage fault at "); wrhex(*(int *)(sp + 60)); newline();
@@ -146,32 +170,7 @@ void usage_fault(int sp)
     *(int *)(sp + 24) += 4;
     *(int *)(sp + 28) = 0x01000000;
 */
-    wrstr("last APSR="); wrhex(apsr_flags); newline();
-    wrstr("sp="); wrhex(sp); newline();
-    wrstr("r10="); wrhex(get_r10()); newline();
-    wrstr("r12="); wrhex(get_r12()); newline();
-
-    wrstr("sp="); wrhex(sp); newline();
-    wrstr("r10="); wrhex(get_r10()); wrch(' ');
-    wrstr("r12="); wrhex(get_r12()); newline();
-
-    wrstr("r0="); wrhex(*(int *)(sp + 36)); wrch(' ');
-    wrstr("r1="); wrhex(*(int *)(sp + 40)); wrch(' ');
-    wrstr("r2="); wrhex(*(int *)(sp + 44)); wrch(' ');
-    wrstr("r3="); wrhex(*(int *)(sp + 48)); newline();
-    wrstr("r4="); wrhex(*(int *)(sp)); wrch(' ');
-    wrstr("r5="); wrhex(*(int *)(sp + 4)); wrch(' ');
-    wrstr("r6="); wrhex(*(int *)(sp + 8)); wrch(' ');
-    wrstr("r7="); wrhex(*(int *)(sp + 12)); newline();
-    wrstr("r8="); wrhex(*(int *)(sp + 16)); wrch(' ');
-    wrstr("r9="); wrhex(*(int *)(sp + 20)); wrch(' ');
-    wrstr("r10="); wrhex(*(int *)(sp + 24)); wrch(' ');
-    wrstr("r11="); wrhex(*(int *)(sp + 28)); newline();
-    wrstr("exc_ret="); wrhex(*(int *)(sp + 32)); newline();
-    wrstr("lr="); wrhex(*(int *)(sp + 56)); wrch(' ');
-    wrstr("pc="); wrhex(*(int *)(sp + 60)); wrch(' ');
-    wrstr("xPSR="); wrhex(*(int *)(sp + 64)); newline();
-
+    dumperegs((Ereg *)sp);
     poolsummary();
     poolshow();
 

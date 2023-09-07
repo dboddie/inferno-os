@@ -52,7 +52,7 @@ struct FPenv
 {
 	ulong	status;
 	ulong   control;
-	ulong   regs[Maxfpregs][3];
+	ulong   regs[Maxfpregs][3]; // reserve enough space for Internals
 	int     fpistate;
         uintptr pc;
 };

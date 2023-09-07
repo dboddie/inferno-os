@@ -113,6 +113,7 @@
    ARMv7-M Architecture Reference Manual, B3.2.2 */
 #define CPUID_ADDR 0xe000ed00
 #define CCR_ADDR   0xe000ed14
+#define CCR_STKALIGN (1 << 9)
 #define CCR_DIV_0_TRP (1 << 4)
 #define CCR_UNALIGN_TRP (1 << 3)
 #define SHCSR_ADDR 0xe000ed24

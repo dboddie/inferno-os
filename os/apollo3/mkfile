@@ -26,6 +26,8 @@ OBJ=\
 	dump.$O\
 	thumb2.$O\
 	trap.$O\
+	fpi.$O\
+	fpimem.$O\
 	fpithumb2.$O\
 	devices/clocks.$O\
 	devices/sys.$O\

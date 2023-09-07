@@ -10,16 +10,13 @@ CMPD    1110 1110 1D11 0100     Vd 1011 E1M0     Vm             VCMP{E} Dd, Dm  
 DIVF    1110 1110 1D00 Vn       Vd 1010 N0M0     Vm             VDIV Sd, Sn, Sm     A7.7.223        ../../../utils/tl/thumb.c:1697
 DIVD    1110 1110 1D00 Vn       Vd 1011 N0M0     Vm             VDIV Dd, Dn, Dm     A7.7.223
 ======  ======================  ==============================  ==================  ==============  ==============================
-MOVF    1110 1101 UD01 Rn       Vd 1010 imm8----------          VLDR Sd, Rn, #imm   A7.7.233 (T2)   ../../../utils/tl/thumb.c:1735
-MOVD    1110 1101 UD01 Rn       Vd 1011 imm8----------          VLDR Dd, Rn, #imm   A7.7.233 (T1)   ../../../utils/tl/thumb.c:1735
-======  ======================  ==============================  ==================  ==============  ==============================
 MOVF    1110 1110 1D11 imm4H    Vd 1010 (0)0(0)0 imm4L          VMOV Sd, #imm       A7.7.236
 MOVD    1110 1110 1D11 imm4H    Vd 1011 (0)0(0)0 imm4L          VMOV Dd, #imm       A7.7.236
 MOVF    1110 1110 1D11 0000     Vd 1010 01M0     Vm             VMOV Sd, Sm         A7.7.237
 MOVD    1110 1110 1D11 0000     Vd 1011 01M0     Vm             VMOV Dd, Dm         A7.7.237
 ======  ======================  ==============================  ==================  ==============  ==============================
-MOVF    1110 1101 UD01 Rn       Vd 1010 imm8----------          VLDR Sd, Rn, #imm   A7.7.256        ../../../utils/tl/thumb.c:1231
-MOVD    1110 1101 UD01 Rn       Vd 1011 imm8----------          VLDR Dd, Rn, #imm   A7.7.256        ../../../utils/tl/thumb.c:1736
+MOVF    1110 1101 UD01 Rn       Vd 1010 imm8----------          VLDR Sd, Rn, #imm   A7.7.233 (T2)   ../../../utils/tl/thumb.c:1231
+MOVD    1110 1101 UD01 Rn       Vd 1011 imm8----------          VLDR Dd, Rn, #imm   A7.7.233 (T1)   ../../../utils/tl/thumb.c:1736
 MOVF    1110 1101 UD00 Rn       Vd 1010 imm8----------          VSTR Sd, Rn, #imm   A7.7.256        ../../../utils/tl/thumb.c:1225
 MOVD    1110 1101 UD00 Rn       Vd 1011 imm8----------          VSTR Dd, Rn, #imm   A7.7.256        ../../../utils/tl/thumb.c:1710
 ======  ======================  ==============================  ==================  ==============  ==============================
@@ -45,18 +42,23 @@ tl      Bits 7-0        Bits 31-16                      ARM syntax          Sect
 ======  ==============  ==============================  ==================  ==============  ==============================
 MOVWF   0-00 Vn         Rt 1010 N(0)(0)1 (0)(0)(0)(0)   VMOV Sd, Sm         A7.7.240        ../../../utils/tl/thumb.c:1673
 MOVFW   0-01 Vn         Rt 1010 N(0)(0)1 (0)(0)(0)(0)   VMOV Sd, Sm         A7.7.240        ../../../utils/tl/thumb.c:1676
+======  ==============  ==============================  ==================  ==============  ==============================
 MULF    0-10 Vn         Vd 1010 N0M0     Vm             VMUL Sd, Sn, Sm     A7.7.245        ../../../utils/tl/thumb.c:1308
 MULD    0-10 Vn         Vd 1011 N0M0     Vm             VMUL Dd, Dn, Dm     A7.7.245        ../../../utils/tl/thumb.c:1694
+======  ==============  ==============================  ==================  ==============  ==============================
 ADDF    0-11 Vn         Vd 1010 N0M0     Vm             VADD Sd, Sn, Sm     A7.7.222        ../../../utils/tl/thumb.c:1308
 ADDD    0-11 Vn         Vd 1011 N0M0     Vm             VADD Dd, Dn, Dm     A7.7.222        ../../../utils/tl/thumb.c:1689
 SUBF    0-11 Vn         Vd 1010 N1M0     Vm             VSUB Sd, Sn, Sm     A7.7.257        ../../../utils/tl/thumb.c:1307
 SUBD    0-11 Vn         Vd 1011 N1M0     Vm             VSUB Dd, Dn, Dm     A7.7.257        ../../../utils/tl/thumb.c:1692
+======  ==============  ==============================  ==================  ==============  ==============================
 DIVF    1-00 Vn         Vd 1010 N0M0     Vm             VDIV Sd, Sn, Sm     A7.7.223        ../../../utils/tl/thumb.c:1697
 DIVD    1-00 Vn         Vd 1011 N0M0     Vm             VDIV Dd, Dn, Dm     A7.7.223
-CMPF    1-11 0100       Vd 1010 E1M0     Vm             VCMP{E} Sd, Sm      A7.7.223 (T1)   ../../../utils/tl/thumb.c:1684
-CMPD    1-11 0100       Vd 1011 E1M0     Vm             VCMP{E} Dd, Dm      A7.7.223 (T1)
+======  ==============  ==============================  ==================  ==============  ==============================
 MOVF    1-11 imm4H      Vd 1010 (0)0(0)0 imm4L          VMOV Sd, #imm       A7.7.236
 MOVD    1-11 imm4H      Vd 1011 (0)0(0)0 imm4L          VMOV Dd, #imm       A7.7.236
+======  ==============  ==============================  ==================  ==============  ==============================
+CMPF    1-11 0100       Vd 1010 E1M0     Vm             VCMP{E} Sd, Sm      A7.7.223 (T1)   ../../../utils/tl/thumb.c:1684
+CMPD    1-11 0100       Vd 1011 E1M0     Vm             VCMP{E} Dd, Dm      A7.7.223 (T1)
 MOVF    1-11 0000       Vd 1010 01M0     Vm             VMOV Sd, Sm         A7.7.237
 MOVD    1-11 0000       Vd 1011 01M0     Vm             VMOV Dd, Dm         A7.7.237
 ======  ==============  ==============================  ==================  ==============  ==============================
@@ -77,13 +79,17 @@ MOVDF   1D11 11RM       Vd 1011 o1M0     Vm             VCVT{R} Dd, Dm      A7.7
 ======  ==============  ==============================  ==================  ==============  ==============================
 tl      Bits 7-0        Bits 31-16                      ARM syntax          Section         tl references
 ======  ==============  ==============================  ==================  ==============  ==============================
-MOVF    UD01 Rn         Vd 1010 imm8----------          VLDR Sd, Rn, #imm   A7.7.233 (T2)   ../../../utils/tl/thumb.c:1735
-MOVD    UD01 Rn         Vd 1011 imm8----------          VLDR Dd, Rn, #imm   A7.7.233 (T1)   ../../../utils/tl/thumb.c:1735
-MOVF    UD01 Rn         Vd 1010 imm8----------          VLDR Sd, Rn, #imm   A7.7.256        ../../../utils/tl/thumb.c:1231
-MOVD    UD01 Rn         Vd 1011 imm8----------          VLDR Dd, Rn, #imm   A7.7.256        ../../../utils/tl/thumb.c:1736
-MOVF    UD00 Rn         Vd 1010 imm8----------          VSTR Sd, Rn, #imm   A7.7.256        ../../../utils/tl/thumb.c:1225
-MOVD    UD00 Rn         Vd 1011 imm8----------          VSTR Dd, Rn, #imm   A7.7.256        ../../../utils/tl/thumb.c:1710
+MOVF    UD01 Rn         Vd 1010 imm8----------          VLDR Sd, Rn, #imm   A7.7.233 (T2)   ../../../utils/tl/thumb.c:1231
+MOVD    UD01 Rn         Vd 1011 imm8----------          VLDR Dd, Rn, #imm   A7.7.233 (T1)   ../../../utils/tl/thumb.c:1736
+MOVF    UD00 Rn         Vd 1010 imm8----------          VSTR Sd, Rn, #imm   A7.7.256 (T2)   ../../../utils/tl/thumb.c:1225
+MOVD    UD00 Rn         Vd 1011 imm8----------          VSTR Dd, Rn, #imm   A7.7.256 (T1)   ../../../utils/tl/thumb.c:1710
 ======  ==============  ==============================  ==================  ==============  ==============================
 
+Notes
+-----
 
-The math module is needed for floating point number formatting in the print functions.
+The math module is needed for floating point number formatting in the print
+functions.
+
+We need to think about how the emulated floating point registers are combined
+with the real ones, and whether the real or emulated ones need to be stacked.

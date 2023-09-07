@@ -112,10 +112,14 @@ TEXT _hard_fault(SB), THUMB, $-4
 
 TEXT _usage_fault(SB), THUMB, $-4
 /*     MRS(0, MRS_MSP)     Pass the main stack pointer (MSP) to a C function. */
-    PUSH(0x0ff0, 1)
+
+    MOVW    SP, R1      /* Record the interrupted stack pointer. */
+    ADD     $32, R1
+
+    PUSH(0x0ff2, 1)
     MOVW    SP, R0
     BL ,usage_fault(SB)
-    POP(0x0ff0, 1)
+    POP(0x0ff2, 1)
     RET
 
 TEXT _nmi(SB), THUMB, $-4
