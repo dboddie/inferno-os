@@ -22,6 +22,16 @@ void trapinit(void)
     *(int *)CCR_ADDR |= CCR_DIV_0_TRP | CCR_UNALIGN_TRP;
     /* Disable 8-byte stack alignment. */
     *(int *)CCR_ADDR &= ~CCR_STKALIGN;
+
+    /* Disable privileged access, use SP_main as the stack, disable FP
+       extension. */
+    setcontrol(0);
+    disablefpu();
+    /* Disable automatic stacking of FP registers during exceptions. */
+    *(int *)FPCCR_ADDR &= ~(FPCCR_ASPEN | FPCCR_LSPEN);
+    /* Enable the FPU again. */
+    enablefpu();
+    setcontrol(CONTROL_FPCA);
 }
 
 void showregs(int sp, int below)
@@ -154,10 +164,14 @@ void usage_fault(int sp)
 {
     /* Entered with sp pointing to R4-R11, R0-R3, R12, R14, PC and xPSR. */
     short ufsr = *(short *)UFSR_ADDR;
+    //wrstr("ufsr="); wrhex((int)ufsr); newline();
     if (ufsr & UFSR_UNDEFINSTR) {
-        if (fpithumb2((Ereg *)sp))
+        if (fpithumb2((Ereg *)sp)) {
+            *(short *)UFSR_ADDR |= UFSR_UNDEFINSTR;
+            *(short *)UFSR_ADDR &= ~UFSR_UNDEFINSTR;
+            wrstr("ufsr="); wrhex((int)*(short *)UFSR_ADDR); newline();
             return;
-
+        }
         dumperegs((Ereg *)sp);
         for (;;) {}
     }

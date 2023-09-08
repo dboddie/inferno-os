@@ -134,13 +134,18 @@
 #define MVFR0_ADDR 0xe000ef40
 #define MVFR1_ADDR 0xe000ef44
 
+#define FPCCR_ASPEN 0x80000000
+#define FPCCR_LSPEN 0x40000000
+
 /* MRS and MSR encodings, ARMv7-M Architecture Reference Manual, B5.1.1 */
 #define MRS_MSP 8
 #define MRS_PSP 9
 #define MRS_PRIMASK 16
 #define MRS_CONTROL 20
 
+#define CONTROL_NPRIV 1
 #define CONTROL_SPSEL 2
+#define CONTROL_FPCA 4
 
 /* System handler priority register 3 (SysTick is in top 4/8 bits) and
    equivalent for IRQs 36-39 (UART3 is 39, so in the top 4/8 bits). */
