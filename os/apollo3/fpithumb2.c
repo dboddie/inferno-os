@@ -87,17 +87,17 @@ VFPExpandImm32(uchar imm8)
 
     Sets the internal fields using bits of the expanded immediate constant.
 */
-static void
-VFPExpandImm64(ulong imm8, Internal *in)
+static ulong
+VFPExpandImm64(ulong imm8)
 {
-    in->s = (imm8 & 0x80) >> 7; // i7 -> sign
+    ulong n;
+    n = (imm8 & 0x80) << 24;    // i7 -> sign
     if (imm8 & 0x40)
-        in->e = 0x3fc00000;     // i6 -> exp
+        n |= 0x3fc00000;        // i6 -> exp
     else
-        in->e = 0x40000000;
-
-    in->h = ((imm8 & 0x3f) << 16);  // i5:4 -> exp, i3:0 -> frac
-    in->l = 0;
+        n |= 0x40000000;
+    n |= (imm8 & 0x3f) << 16;   // i5:4 -> exp, i3:0 -> frac
+    return n;
 }
 
 static ulong
@@ -285,17 +285,22 @@ fpithumb2(Ereg *eregs)
             return 0;
         case 0xb0:
             if ((w1 & 0x40) == 0) {     // MOVF|MOVD (A7.7.236)
-                Fd = w1 >> 12;
+                Fd = (w1 >> 12) & ~1;   // for doubles, use even registers
                 imm = ((w0 & 0xf) << 4) | (w1 & 0xf);
-                in = &FR(Fd);
-                VFPExpandImm64(imm, in);
+                eregs->s[Fd + 1] = VFPExpandImm64(imm);
+                eregs->s[Fd] = 0;
                 print("VMOV F%uld 0x%ulx\n", Fd, imm);
 //                print("%ud %d %ulx %ulx\n", in->s, in->e, in->l, in->h);
             } else if (w0 & 0x4) {      // CMPF|CMPD (A7.7.223)
-                Fd = (w1 >> 24);
-                Fm = (w1 & 0x0f);
-                xpsr_flags = fcmp(&FR(Fd), &FR(Fm));
-                print("VCMP F%uld F%uld\n", Fd, Fm);
+                Fd = (w1 >> 12);
+                if (w0 & 0x1) {
+                    xpsr_flags = fcmp(&FR(Fd), &fpconst[0]);
+                    print("VCMP F%uld #0.0\n", Fd);
+                } else {
+                    Fm = (w1 & 0x0f);
+                    xpsr_flags = fcmp(&FR(Fd), &FR(Fm));
+                    print("VCMP F%uld F%uld\n", Fd, Fm);
+                }
             } else {                    // MOVF|MOVD (A7.7.237)
                 Fd = (w1 >> 24);
                 Fm = (w1 & 0xf);

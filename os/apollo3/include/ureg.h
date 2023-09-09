@@ -48,4 +48,7 @@ typedef struct Ereg {
     };
     ulong pc;   /* interrupted addr */
     ulong xpsr;
+
+    ulong s[16];
+    ulong fpscr;
 } Ereg;
