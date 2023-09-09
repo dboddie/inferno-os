@@ -168,7 +168,6 @@ void usage_fault(int sp)
     if (ufsr & UFSR_UNDEFINSTR) {
         if (fpithumb2((Ereg *)sp)) {
             *(short *)UFSR_ADDR |= UFSR_UNDEFINSTR;
-            *(short *)UFSR_ADDR &= ~UFSR_UNDEFINSTR;
             wrstr("ufsr="); wrhex((int)*(short *)UFSR_ADDR); newline();
             return;
         }
