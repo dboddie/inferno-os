@@ -37,7 +37,7 @@ void UC8159_init(void)
     UC8159_setup_dc_reset_busy();
 
     /* Increase the baud rate of transfers to the screen. */
-    spi_set_frequency_divider(4);
+    spi_set_frequency_divider(8);
 
     UC8159_busy_wait(1000);
 
