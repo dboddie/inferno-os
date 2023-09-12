@@ -15,17 +15,7 @@
 // Define a macro for accessing emulated FP registers.
 #define FR(x) (*(Internal*)(ufp)->regs[(x)&7])
 
-static Internal fpconst[8] = {
-    /* s, e, l, h */
-    {0, 0x001, 0x00000000, 0x00000000}, /* 0.0 */
-    {0, 0x3FF, 0x00000000, 0x08000000},	/* 1.0 */
-    {0, 0x400, 0x00000000, 0x08000000},	/* 2.0 */
-    {0, 0x400, 0x00000000, 0x0C000000},	/* 3.0 */
-    {0, 0x401, 0x00000000, 0x08000000},	/* 4.0 */
-    {0, 0x401, 0x00000000, 0x0A000000},	/* 5.0 */
-    {0, 0x3FE, 0x00000000, 0x08000000},	/* 0.5 */
-    {0, 0x402, 0x00000000, 0x0A000000},	/* 10.0 */
-};
+static Internal zero_internal = {0, 0, 0, 0};
 
 enum {
 	N = 1<<31,
@@ -216,28 +206,28 @@ int
 fpithumb2(Ereg *eregs)
 {
     int n;
-
+/*
     if (up == nil)
         panic("fpithumb2 not in a process");
-
     FPenv *ufp = &up->env->fpu;
 
     if (ufp->fpistate != FPACTIVE) {
         ufp->fpistate = FPACTIVE;
         ufp->control = 0;
-        ufp->status = (0x01<<28)|(1<<12);   /* software emulation, alternative C flag */
-        for (n = 0; n < 8; n++)
-            FR(n) = fpconst[0];     // each register contains 0.0 to start with
+        ufp->status = (0x01<<28)|(1<<12);   // software emulation, alternative C flag
+        for (n = 0; n < 16; n++)
+            eregs->s[n] = 0;     // each register contains 0.0 to start with
     }
+*/
 
     print("pc=%lux %04ux %04ux\n", eregs->pc, *(ushort *)eregs->pc, *((ushort *)eregs->pc + 1));
 
     ushort w0 = *(ushort *)eregs->pc;
     ushort w1 = *(ushort *)(eregs->pc + 2);
     ulong imm, ea;
-    ulong Fd, Fm;   // just register numbers, either R, S or D
+    ulong Fd, Fm, Fn;   // just register numbers, either R, S or D
     ulong Rt, Rt2, Rn;
-    Internal *in;
+    Internal in1, in2, inr;
 
     if ((w0 == 0xeef1) && (w1 == 0xfa10)) {
         eregs->xpsr &= ~(N|C|Z|V);
@@ -249,13 +239,16 @@ fpithumb2(Ereg *eregs)
 
     switch (w0 & 0xff00) {
     case 0xee00:
-        switch (w0 & 0xb0) {
+        switch (w0 & 0xb0) {    // mask a register bit at 0x40
         case 0x00:
-            Rt = w1 >> 24;
-            if (w0 & 0x40) {    // MOVWD
+            Rt = w1 >> 12;
+            if (w0 & 0x40) {    // MOVWD (A7.7.242)
                 Rt2 = w0 & 0xf;
-                Fm = w1 & 0xf;
-                print("VMOV D%uld R%uld R%uld\n", Fm, Rt, Rt2);
+                // For doubles, use even registers.
+                Fm = (w1 & 0xf) << 1;
+                eregs->s[Fm] = REG(Rt);
+                eregs->s[Fm + 1] = REG(Rt2);
+                print("VMOV D%uld R%uld R%uld\n", Fm >> 1, Rt, Rt2);
             } else {
                 print("### 0xee0x MOVWF unsupported?\n");
                 return 0;
@@ -263,11 +256,13 @@ fpithumb2(Ereg *eregs)
             eregs->pc += 4;
             break;
         case 0x10:
-            Rt = w1 >> 24;
-            if (w0 & 0x40) {    // MOVDW
+            Rt = w1 >> 12;
+            if (w0 & 0x40) {    // MOVDW (A7.7.242)
                 Rt2 = w0 & 0xf;
-                Fm = w1 & 0xf;
-                print("VMOV R%uld R%uld D%uld \n", Rt, Rt2, Fm);
+                Fm = (w1 & 0xf) << 1;
+                REG(Rt) = eregs->s[Fm];
+                REG(Rt2) = eregs->s[Fm + 1];
+                print("VMOV R%uld R%uld D%uld\n", Rt, Rt2, Fm >> 1);
             } else {
                 print("### 0xee1x MOVFW unsupported?\n");
                 return 0;
@@ -275,37 +270,70 @@ fpithumb2(Ereg *eregs)
             eregs->pc += 4;
             break;
         case 0x20:              // MULF/MULD
-            print("<-- 0xee20 %lux\n", eregs->pc);
-            return 0;
+            if ((w1 & 0x100) == 0) {
+                print("### MULF unsupported?\n");
+                return 0;
+            }
+            Fd = (w1 >> 12) << 1;
+            Fm = (w1 & 0x0f) << 1;
+            Fn = (w0 & 0x0f) << 1;
+            fpid2i(&in1, &eregs->s[Fn]);
+            fpid2i(&in2, &eregs->s[Fm]);
+            fmul(in2, in1, &inr);
+            print("VMUL D%uld, D%uld, D%uld\n", Fd, Fn, Fm);
+            fpii2d(&eregs->s[Fd], &inr);
+            eregs->pc += 4;
+            break;
         case 0x30:              // ADDF|ADDD|SUBF|SUBD
-            print("<-- 0xee30 %lux\n", eregs->pc);
-            return 0;
+            if ((w1 & 0x100) == 0) {
+                print("### ADDF/SUBF unsupported?\n");
+                return 0;
+            }
+            Fd = (w1 >> 12) << 1;
+            Fm = (w1 & 0x0f) << 1;
+            Fn = (w0 & 0x0f) << 1;
+            fpid2i(&in1, &eregs->s[Fn]);
+            fpid2i(&in2, &eregs->s[Fm]);
+            if (w1 & 0x40) {    // SUBD
+                fsub(in2, in1, &inr);
+                print("VSUB D%uld, D%uld, D%uld\n", Fd, Fn, Fm);
+            } else {            // ADDD
+                fadd(in2, in1, &inr);
+                print("VADD D%uld, D%uld, D%uld\n", Fd, Fn, Fm);
+            }
+            fpii2d(&eregs->s[Fd], &inr);
+            eregs->pc += 4;
+            break;
         case 0x80:              // DIVF|DIVD
             print("<-- 0xee80 %lux\n", eregs->pc);
             return 0;
         case 0xb0:
+            Fd = (w1 >> 12) << 1;
+
             if ((w1 & 0x40) == 0) {     // MOVF|MOVD (A7.7.236)
-                Fd = (w1 >> 12) & ~1;   // for doubles, use even registers
                 imm = ((w0 & 0xf) << 4) | (w1 & 0xf);
+                // Expand the constant into the high register.
                 eregs->s[Fd + 1] = VFPExpandImm64(imm);
                 eregs->s[Fd] = 0;
                 print("VMOV F%uld 0x%ulx\n", Fd, imm);
 //                print("%ud %d %ulx %ulx\n", in->s, in->e, in->l, in->h);
             } else if (w0 & 0x4) {      // CMPF|CMPD (A7.7.223)
-                Fd = (w1 >> 12);
                 if (w0 & 0x1) {
-                    xpsr_flags = fcmp(&FR(Fd), &fpconst[0]);
-                    print("VCMP F%uld #0.0\n", Fd);
+                    fpid2i(&in1, &eregs->s[Fd]);
+                    xpsr_flags = fcmp(&in1, &zero_internal);
+                    print("VCMP F%uld #0.0\n", Fd >> 1);
                 } else {
-                    Fm = (w1 & 0x0f);
-                    xpsr_flags = fcmp(&FR(Fd), &FR(Fm));
-                    print("VCMP F%uld F%uld\n", Fd, Fm);
+                    Fm = (w1 & 0x0f) << 1;
+                    fpid2i(&in1, &eregs->s[Fd]);
+                    fpid2i(&in2, &eregs->s[Fm]);
+                    xpsr_flags = fcmp(&in1, &in2);
+                    print("VCMP F%uld F%uld\n", Fd >> 1, Fm >> 1);
                 }
             } else {                    // MOVF|MOVD (A7.7.237)
-                Fd = (w1 >> 24);
-                Fm = (w1 & 0xf);
-                print("VMOV F%uld F%uld\n", Fd, Fm);
-                FR(Fd) = FR(Fm);
+                Fm = (w1 & 0xf) << 1;
+                print("VMOV F%uld F%uld\n", Fd >> 1, Fm >> 1);
+                eregs->s[Fd] = eregs->s[Fm];
+                eregs->s[Fd + 1] = eregs->s[Fm + 1];
             }
             eregs->pc += 4;
             break;
@@ -316,7 +344,7 @@ fpithumb2(Ereg *eregs)
         break;
 
     case 0xed00:                // MOVF|MOVD (VLDR|VSTR)
-        Fd = ((w0 & 0x40) >> 2) | (w1 >> 24);
+        Fd = (w1 >> 12);
         Rn = (w0 & 0x0f);
         imm = (w1 & 0x0f) << 2; // word-aligned offset
         ea = REG(Rn);
@@ -326,31 +354,29 @@ fpithumb2(Ereg *eregs)
             ea -= imm;
 
         if (w0 & 0x10) {
-            if (w1 & 0x100)
-                fld(fpid2i, Fd, ea, 8, ufp);
-            else
-                fld(fpis2i, Fd, ea, 4, ufp);
+            if (w1 & 0x100) {
+                Fd = Fd << 1;
+                eregs->s[Fd] = *(ulong *)ea;
+                eregs->s[Fd + 1] = *(ulong *)(ea + 4);
+            } else {
+                print("### 0xed1x VLDR unsupported?\n");
+                return 0;
+            }
             print("VLDR F%uld R%uld, #%uld (ea=%lux)\n", Fd, Rn, imm, ea);
         } else {
-            if (w1 & 0x100)
-                fst(fpii2d, ea, Fd, 8, ufp);
-            else
-                fst(fpii2s, ea, Fd, 4, ufp);
+            if (w1 & 0x100) {
+                Fd = Fd << 1;
+                *(ulong *)ea = eregs->s[Fd];
+                *(ulong *)(ea + 4) = eregs->s[Fd + 1];
+            } else {
+                print("### 0xedxx VSTR unsupported?\n");
+                return 0;
+            }
             print("VSTR F%uld R%uld, #%uld (ea=%lux)\n", Fd, Rn, imm, ea);
         }
+        eregs->pc += 4;
+        break;
 
-        dumperegs(eregs);
-
-        in = &FR(Fd);
-        print("%ud %d %ulx %ulx\n", in->s, in->e, in->l, in->h);
-
-        print("sp=%lux r13=%lux %lux\n", (ulong)eregs, REG(13), (ulong)eregs + sizeof(Ereg));
-        ulong *ptr = (ulong *)REG(13);
-        for (int x = 0; x < 6; x++, ptr++)
-            print("  %lux: r13[%d] = %lux\n", (ulong)ptr, x, *ptr);
-        ptr = (ulong *)REG(13);
-        for (int x = 0; x < 6; x++, ptr++)
-            print("  %lux: r13[%d] = %lux\n", (ulong)ptr, x, *ptr);
     case 0xfe00:                // MOVFD|MOVDF
         print("<-- 0xfe %lux\n", eregs->pc);
         return 0;

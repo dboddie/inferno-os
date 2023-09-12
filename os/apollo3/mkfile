@@ -53,7 +53,7 @@ HFILES=\
 	fns.h\
 	fpi.h\
 
-CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
+CFLAGS=-wFV -I./include -I$ROOT/include -I$ROOT/libinterp
 LDFLAGS=-H0 -l -s -t -f -a
 KERNDATE=`{$NDATE}
 
