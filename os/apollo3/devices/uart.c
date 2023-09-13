@@ -119,3 +119,26 @@ int rdch_ready(void)
 {
     return (*(unsigned int *)UART0_FR & UART_FR_RXFE) == 0;
 }
+
+void wrdec(int value)
+{
+    char ch[10];
+    int v = value;
+    if (v < 0) {
+        wrch(45); v = -v;
+    } else if (v == 0) {
+        wrch('0');
+        return;
+    }
+
+    int s = 9;
+    for (; s >= 0 && v != 0; s--) {
+        int b = v % 10;
+        ch[s] = 48 + b;
+        v = v / 10;
+        if (v == 0) break;
+    }
+
+    for (; s < 10; s++)
+        wrch(ch[s]);
+}

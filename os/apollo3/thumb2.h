@@ -141,6 +141,7 @@
 #define MRS_MSP 8
 #define MRS_PSP 9
 #define MRS_PRIMASK 16
+#define MRS_FAULTMASK 19
 #define MRS_CONTROL 20
 
 #define CONTROL_NPRIV 1
@@ -149,6 +150,8 @@
 
 /* System handler priority register 3 (SysTick is in top 4/8 bits) and
    equivalent for IRQs 36-39 (UART3 is 39, so in the top 4/8 bits). */
+#define SHPR1 0xe000ed18
+#define SHPR2 0xe000ed1c
 #define SHPR3 0xe000ed20
 #define NVIC_IPR9 0xe000e424
 

@@ -15,6 +15,9 @@ extern void hzclock(Ureg *);
 
 void trapinit(void)
 {
+    // Interrupts need to be off at this point. This is done in the loader.
+    *(int *)SHPR3 = (*(int *)SHPR3 & 0x00ffffff) | 0xff000000;
+
     /* Enable the usage fault exception. */
     *(int *)SHCSR_ADDR |= SHCSR_USGFAULTENA;
 
@@ -27,8 +30,8 @@ void trapinit(void)
        extension. */
     setcontrol(0);
     disablefpu();
-    /* Disable automatic stacking of FP registers during exceptions. */
-    *(int *)FPCCR_ADDR &= ~(FPCCR_ASPEN | FPCCR_LSPEN);
+    *(int *)FPCCR_ADDR &= ~FPCCR_LSPEN;
+    *(int *)FPCCR_ADDR |= FPCCR_ASPEN;
     /* Enable the FPU again. */
     enablefpu();
     setcontrol(CONTROL_FPCA);
@@ -102,6 +105,7 @@ void switcher(Ureg *ureg)
 {
     int t;
 
+//    wrstr("> up="); wrhex((int)up); newline();
 //    wrch('.');
 //    wrstr(">> sp="); wrhex(getsp()); wrstr(" pc="); wrhex(*(ulong *)((ulong)ureg + 52)); newline();
 //    print("up=%.8lux\n", up);
@@ -133,6 +137,7 @@ void switcher(Ureg *ureg)
 //    wrstr("pc="); wrhex((uint)ureg->pc); wrstr(" r14="); wrhex((uint)ureg->lr); newline();
 //    wrstr("out\r\n");
 //    _dumpregs();
+//    wrstr("< up="); wrhex((int)up); newline();
 }
 
 void setpanic(void)
@@ -162,27 +167,37 @@ void kprocchild(Proc *p, void (*func)(void*), void *arg)
 
 void usage_fault(int sp)
 {
-    /* Entered with sp pointing to R4-R11, R0-R3, R12, R14, PC and xPSR. */
-    short ufsr = *(short *)UFSR_ADDR;
-    //wrstr("ufsr="); wrhex((int)ufsr); newline();
-    if (ufsr & UFSR_UNDEFINSTR) {
-        if (fpithumb2((Ereg *)sp)) {
+    /* Entered with sp pointing to an Ereg struct. */
+    Ereg *er = (Ereg *)sp;
+    wrstr("Usage fault at "); wrhex(er->pc); newline();
+/*
+    wrstr("CFSR="); wrhex(*(int *)CFSR_ADDR); newline();
+    wrstr("SHCSR="); wrhex(*(int *)SHCSR_ADDR); newline();
+    wrstr("FPCCR="); wrhex(*(int *)FPCCR_ADDR); newline();
+    wrstr("up="); wrhex((int)up); newline();
+    dumperegs(er);
+    dumpfpregs(er);
+*/
+    if ((*(short *)UFSR_ADDR) & UFSR_UNDEFINSTR) {
+        if (fpithumb2(er)) {
+/*
+            wrstr("CFSR="); wrhex(*(int *)CFSR_ADDR); newline();
+            wrstr("SHCSR="); wrhex(*(int *)SHCSR_ADDR); newline();
+            wrstr("FPCCR="); wrhex(*(int *)FPCCR_ADDR); newline();
+            wrstr("up="); wrhex((int)up); newline();
+            dumperegs(er);
+            dumpfpregs(er);
+            newline();
+*/
             *(short *)UFSR_ADDR |= UFSR_UNDEFINSTR;
-            wrstr("ufsr="); wrhex((int)*(short *)UFSR_ADDR); newline();
+            wrstr("<--\r\n");
             return;
         }
-        dumperegs((Ereg *)sp);
-        for (;;) {}
     }
 
-    wrstr("Usage fault at "); wrhex(*(int *)(sp + 60)); newline();
+    wrstr("Usage fault at "); wrhex(*(int *)(sp + 64)); newline();
     wrstr("UFSR="); wrhex(*(short *)UFSR_ADDR); newline();
-//    wrstr("Instruction: "); wrhex(**(int **)(sp + 24)); newline();
 
-/* Step past an FP instruction, setting Thumb mode execution.
-    *(int *)(sp + 24) += 4;
-    *(int *)(sp + 28) = 0x01000000;
-*/
     dumperegs((Ereg *)sp);
     poolsummary();
     poolshow();
@@ -192,38 +207,24 @@ void usage_fault(int sp)
 
 void hard_fault(int sp)
 {
-    /* Entered with sp pointing to R4-R12, R0-R3, R12, R14, PC and xPSR. */
-    wrstr("Hard fault at "); wrhex(*(int *)(sp + 60)); newline();
-/*    wrstr("UFSR="); wrhex(*(int *)UFSR_ADDR); newline();
-    wrstr("Instruction: "); wrhex(**(int **)(sp + 24)); newline();*/
+    Ereg *er = (Ereg *)sp;
+
+    wrstr("Hard fault at "); wrhex(er->pc); newline();
     int cfsr = *(int *)CFSR_ADDR;
     wrstr("CFSR="); wrhex(cfsr); newline();
+    int shcsr = *(int *)SHCSR_ADDR;
+    wrstr("SHCSR="); wrhex(shcsr); newline();
+    wrstr("FPCCR="); wrhex(*(int *)FPCCR_ADDR); newline();
+    wrstr("up="); wrhex((int)up); newline();
+
+    dumperegs(er);
+    dumpfpregs(er);
 
     if (cfsr & 0x200) {
         wrstr("BFAR="); wrhex(*(int *)BFAR_ADDR); newline();
     }
 
     wrstr("last APSR="); wrhex(apsr_flags); newline();
-    wrstr("sp="); wrhex(sp); newline();
-    wrstr("r10="); wrhex(get_r10()); wrch(' ');
-    wrstr("r12="); wrhex(get_r12()); newline();
-
-    wrstr("r0="); wrhex(*(int *)(sp + 36)); wrch(' ');
-    wrstr("r1="); wrhex(*(int *)(sp + 40)); wrch(' ');
-    wrstr("r2="); wrhex(*(int *)(sp + 44)); wrch(' ');
-    wrstr("r3="); wrhex(*(int *)(sp + 48)); newline();
-    wrstr("r4="); wrhex(*(int *)(sp)); wrch(' ');
-    wrstr("r5="); wrhex(*(int *)(sp + 4)); wrch(' ');
-    wrstr("r6="); wrhex(*(int *)(sp + 8)); wrch(' ');
-    wrstr("r7="); wrhex(*(int *)(sp + 12)); newline();
-    wrstr("r8="); wrhex(*(int *)(sp + 16)); wrch(' ');
-    wrstr("r9="); wrhex(*(int *)(sp + 20)); wrch(' ');
-    wrstr("r10="); wrhex(*(int *)(sp + 24)); wrch(' ');
-    wrstr("r11="); wrhex(*(int *)(sp + 28)); newline();
-    wrstr("r12="); wrhex(*(int *)(sp + 32)); wrch(' ');
-    wrstr("lr="); wrhex(*(int *)(sp + 56)); wrch(' ');
-    wrstr("pc="); wrhex(*(int *)(sp + 60)); wrch(' ');
-    wrstr("xPSR="); wrhex(*(int *)(sp + 64)); newline();
 
     poolsummary();
     poolshow();

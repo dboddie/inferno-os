@@ -13,5 +13,7 @@ init(nil: ref Draw->Context, args: list of string)
 {
     sys = load Sys Sys->PATH;
     x := 2.0;
+    i := int x;
 #    sys->print("%f\n", x);
+#    a := x + 3.0;
 }
