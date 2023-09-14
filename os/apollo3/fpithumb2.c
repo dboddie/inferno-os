@@ -8,7 +8,7 @@
 #include "thumb2.h"
 #include "fpi.h"
 
-//#define fpudebug
+#define fpudebug
 
 enum {
 	N = 1<<31,
@@ -38,21 +38,26 @@ void
 dumpfpregs(Ereg *er)
 {
     for (int i = 0; i < 16; i++) {
-        wrch(' '); wrstr("s"); wrdec(i); wrstr("="); wrhex(er->s[i]);
+        wrch(' '); wrstr("s"); wrdec(i); wrstr(" = "); wrhex(er->s[i]);
         if ((i & 3) == 3)
             newline();
     }
-    wrstr("fpscr="); wrhex(er->fpscr); newline();
+    wrstr("fpscr = "); wrhex(er->fpscr); newline();
 }
 
 void
 dumpfpreg(Ereg *er, int i)
 {
-    wrstr("D"); wrdec(i>>1); wrstr("=");
-    wrhex(er->s[i+1]); wrch(':'); wrhex(er->s[i]);
+    wrstr("D"); wrdec(i>>1); wrstr(" (F"); wrdec(i+1); wrstr(":F");
+    wrdec(i); wrstr(") = "); wrhex(er->s[i+1]); wrstr(" : "); wrhex(er->s[i]);
     newline();
 }
 
+void
+dumpreg(Ereg *er, int i, int v)
+{
+    wrstr("R"); wrdec(i); wrstr(" = "); wrdec(v); newline();
+}
 /*
     For 64-bit values, the resulting format is:
 
@@ -140,6 +145,10 @@ fpithumb2(Ereg *er)
         ufp->status = (0x01<<28)|(1<<12);	/* software emulation, alternative C flag */
         for (int n = 0; n < 16; n++)
             er->s[n] = 0;
+
+        for (int n = 0; n < 16; n++) {
+            wrdec(n); wrch(' '); wrhex(roff[n]); newline();
+        }
     }
 
     ushort w0 = *(ushort *)er->pc;
@@ -149,6 +158,8 @@ fpithumb2(Ereg *er)
     ulong Rt, Rt2, Rn;
     Internal in1, in2, inr;
 
+    /* Check for single precision instructions since these should be
+       implemented by the hardware. */
     if (((w1 & 0x0f00) == 0xa00) && ((w0 & 0xeeb7) != 0xeeb7)) {
         wrstr("Single precision FP undefined instruction at ");
         wrhex(er->pc); newline();
@@ -170,26 +181,28 @@ fpithumb2(Ereg *er)
             er->s[Fd] = 0;
 #ifdef fpudebug
             wrstr("VMOV D"); wrdec(Fd>>1); wrstr(", #0x"); wrhex(imm); newline();
+            dumpfpreg(er, Fd);
 #endif
 
         } else if ((w1 & 0xc0) == 0xc0) {
+            // CVT (A7.7.227)
             if ((w1 & 0xf00) == 0xb00) {
-                // MOVDF - Vd:D M:Vm - multiply the numbers by two in any case
-                Fd = ((w1 >> 12) << 2) | ((w0 & 0x40) >> 4);
-                Fm = ((w1 & 0xf) << 1) | (w1 & 0x20);
+                // MOVDF - Vd:D M:Vm
+                Fd = ((w1 >> 12) << 1) | ((w0 & 0x40) >> 6);
+                Fm = (w1 & 0xf) | ((w1 & 0x20) >> 1);
                 fpid2i(&in1, &er->s[Fm]);
                 fpii2s(&er->s[Fd], &in1);
 #ifdef fpudebug
-                wrstr("MOVDF D"); wrdec(Fm>>1); wrstr(" S"); wrdec(Fd>>1); newline();
+                wrstr("MOVDF D"); wrdec(Fm); wrstr(" S"); wrdec(Fd); newline();
 #endif
             } else {
-                // MOVFD - D:Vd Vm:M - multiply the numbers by two in any case
-                Fd = ((w1 >> 12) << 1) | ((w0 & 0x40) >> 1);
-                Fm = ((w1 & 0xf) << 2) | ((w1 & 0x20) >> 4);
+                // MOVFD - D:Vd Vm:M
+                Fd = (w1 >> 12) | ((w0 & 0x40) >> 2);
+                Fm = ((w1 & 0xf) << 1) | ((w1 & 0x20) >> 5);
                 fpis2i(&in1, &er->s[Fm]);
                 fpii2d(&er->s[Fd], &in1);
 #ifdef fpudebug
-                wrstr("MOVDF S"); wrdec(Fm>>1); wrstr(" D"); wrdec(Fd>>1); newline();
+                wrstr("MOVDF S"); wrdec(Fm); wrstr(" D"); wrdec(Fd); newline();
 #endif
             }
 
@@ -209,6 +222,7 @@ fpithumb2(Ereg *er)
                 xpsr_flags = fcmp(&in1, &in2);
 #ifdef fpudebug
                 wrstr("VCMP D"); wrdec(Fd>>1); wrstr(", D"); wrdec(Fm>>1); newline();
+                dumpfpreg(er, Fd); dumpfpreg(er, Fm); wrstr("xpsr_flags="); wrhex(xpsr_flags); newline();
 #endif
             }
             er->fpscr = (er->fpscr & 0x0fffffff) | xpsr_flags;
@@ -217,7 +231,7 @@ fpithumb2(Ereg *er)
             Fd = (w1 >> 12) << 1;
             Fm = (w1 & 0xf) << 1;
 #ifdef fpudebug
-            wrstr("VMOV D"); wrdec(Fd >> 1); wrstr(" D"); wrdec(Fm >> 1); newline();
+            wrstr("VMOV D"); wrdec(Fd>>1); wrstr(" D"); wrdec(Fm>>1); newline();
 #endif
             er->s[Fd] = er->s[Fm];
             er->s[Fd + 1] = er->s[Fm + 1];
@@ -260,7 +274,8 @@ fpithumb2(Ereg *er)
             fadd(in2, in1, &inr);
         }
         fpii2d(&er->s[Fd], &inr);
-//        dumpfpreg(er, Fd); dumpfpreg(er, Fn); dumpfpreg(er, Fm);
+        dumpfpreg(er, Fd); dumpfpreg(er, Fn); dumpfpreg(er, Fm);
+        //dumpfpregs(er);
         er->pc += 4;
         return 1;
     }
@@ -292,7 +307,7 @@ fpithumb2(Ereg *er)
         REG(Rt) = er->s[Fm];
         REG(Rt2) = er->s[Fm + 1];
 #ifdef fpudebug
-        wrstr("VMOV R"); wrdec(Rt); wrstr(", R"); wrdec(Rt2), wrstr(", D"); wrdec(Fm>>1); newline();
+        wrstr("VMOV (to ARM) R"); wrdec(Rt); wrstr(", R"); wrdec(Rt2), wrstr(", D"); wrdec(Fm>>1); newline();
 #endif
         er->pc += 4;
         return 1;
@@ -306,8 +321,10 @@ fpithumb2(Ereg *er)
         er->s[Fm] = REG(Rt);
         er->s[Fm + 1] = REG(Rt2);
 #ifdef fpudebug
-        wrstr("VMOV D"); wrdec(Fm>>1); wrstr(", R"); wrdec(Rt), wrstr(", R"); wrdec(Rt2); newline();
+        wrstr("VMOV (to FPU) D"); wrdec(Fm>>1); wrstr(", R"); wrdec(Rt), wrstr(", R"); wrdec(Rt2); newline();
 #endif
+        dumperegs(er);
+        dumpfpreg(er, Fm);
         er->pc += 4;
         return 1;
     }
@@ -315,7 +332,7 @@ fpithumb2(Ereg *er)
     case 0xed00:
     case 0xed80:
     {
-        Fd = (w1 >> 12);
+        Fd = (w1 >> 12) << 1;
         Rn = (w0 & 0x0f);
         imm = (w1 & 0x0f) << 2; // word-aligned offset
         ea = REG(Rn);
@@ -324,12 +341,11 @@ fpithumb2(Ereg *er)
         else
             ea -= imm;
 
-        Fd = Fd << 1;
         *(ulong *)ea = er->s[Fd];
         *(ulong *)(ea + 4) = er->s[Fd + 1];
 
 #ifdef fpudebug
-        wrstr("VSTR D"); wrdec(Fd); wrstr(", R"); wrdec(Rn); wrstr(", #0x"); wrhex(imm);
+        wrstr("VSTR D"); wrdec(Fd>>1); wrstr(", R"); wrdec(Rn); wrstr(", #0x"); wrhex(imm);
         wrstr(" ("); wrhex(ea); wrstr(")"); newline();
 #endif
         er->pc += 4;
@@ -339,7 +355,7 @@ fpithumb2(Ereg *er)
     case 0xed10:
     case 0xed90:
     {
-        Fd = (w1 >> 12);
+        Fd = (w1 >> 12) << 1;
         Rn = (w0 & 0x0f);
         imm = (w1 & 0x0f) << 2; // word-aligned offset
         ea = REG(Rn);
@@ -348,12 +364,11 @@ fpithumb2(Ereg *er)
         else
             ea -= imm;
 
-        Fd = Fd << 1;
         er->s[Fd] = *(ulong *)ea;
         er->s[Fd + 1] = *(ulong *)(ea + 4);
 
 #ifdef fpudebug
-        wrstr("VLDR D"); wrdec(Fd); wrstr(", R"); wrdec(Rn); wrstr(", #0x"); wrhex(imm);
+        wrstr("VLDR D"); wrdec(Fd>>1); wrstr(", R"); wrdec(Rn); wrstr(", #0x"); wrhex(imm);
         wrstr(" ("); wrhex(ea); wrstr(")"); newline();
 #endif
         er->pc += 4;

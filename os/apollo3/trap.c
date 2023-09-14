@@ -169,7 +169,7 @@ void usage_fault(int sp)
 {
     /* Entered with sp pointing to an Ereg struct. */
     Ereg *er = (Ereg *)sp;
-    wrstr("Usage fault at "); wrhex(er->pc); newline();
+//    wrstr("Usage fault at "); wrhex(er->pc); newline();
 /*
     wrstr("CFSR="); wrhex(*(int *)CFSR_ADDR); newline();
     wrstr("SHCSR="); wrhex(*(int *)SHCSR_ADDR); newline();
@@ -190,7 +190,7 @@ void usage_fault(int sp)
             newline();
 */
             *(short *)UFSR_ADDR |= UFSR_UNDEFINSTR;
-            wrstr("<--\r\n");
+//            wrstr("<-- "); wrhex(er->pc); newline();
             return;
         }
     }
