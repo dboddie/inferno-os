@@ -93,7 +93,14 @@ convert_test()
     sys->print("i := big x;\n");
     i := big x;
     sys->print("%bd\n", i);
-#    y := real i;
+
+    sys->print("y := real i;\n");
+    y := real i;
+
+    if (y == 2.0)
+        sys->print("y == 2.0\n");
+    else
+        sys->print("FAIL: y != 2.0\n");
 #    sys->print("%f\n", y);
 }
 

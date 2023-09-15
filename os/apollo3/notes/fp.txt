@@ -94,3 +94,13 @@ functions.
 
 We need to think about how the emulated floating point registers are combined
 with the real ones, and whether the real or emulated ones need to be stacked.
+
+Some double precision instructions are implemented: typically those that
+perform transfer between regular registers and FP registers.
+
+Some single precision instructions are not implemented: conversions between
+integer and floating point representations (VCVT - A7.7.225).
+
+Using only single precision instructions can cause the NOCP bit to be set
+instead of the UNDEFINSTR bit in the UFSR register upon an undefined single
+precision instruction.
