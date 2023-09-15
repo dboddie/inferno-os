@@ -145,10 +145,6 @@ fpithumb2(Ereg *er)
         ufp->status = (0x01<<28)|(1<<12);	/* software emulation, alternative C flag */
         for (int n = 0; n < 16; n++)
             er->s[n] = 0;
-
-        for (int n = 0; n < 16; n++) {
-            wrdec(n); wrch(' '); wrhex(roff[n]); newline();
-        }
     }
 
     ushort w0 = *(ushort *)er->pc;
@@ -185,26 +181,26 @@ fpithumb2(Ereg *er)
 #endif
 
         } else if ((w1 & 0xc0) == 0xc0) {
-            // CVT (A7.7.227)
-            if ((w1 & 0xf00) == 0xb00) {
-                // MOVDF - Vd:D M:Vm
-                Fd = ((w1 >> 12) << 1) | ((w0 & 0x40) >> 6);
-                Fm = (w1 & 0xf) | ((w1 & 0x20) >> 1);
-                fpid2i(&in1, &er->s[Fm]);
-                fpii2s(&er->s[Fd], &in1);
-#ifdef fpudebug
-                wrstr("MOVDF D"); wrdec(Fm); wrstr(" S"); wrdec(Fd); newline();
-#endif
-            } else {
-                // MOVFD - D:Vd Vm:M
-                Fd = (w1 >> 12) | ((w0 & 0x40) >> 2);
+            // CVT (A7.7.225)
+            if ((w0 & 0xbf) == 0xb8) {
+                Fd = (w1 >> 12) << 1;
                 Fm = ((w1 & 0xf) << 1) | ((w1 & 0x20) >> 5);
-                fpis2i(&in1, &er->s[Fm]);
-                fpii2d(&er->s[Fd], &in1);
 #ifdef fpudebug
-                wrstr("MOVDF S"); wrdec(Fm); wrstr(" D"); wrdec(Fd); newline();
+                wrstr("VCVT D"); wrdec(Fd>>1); wrstr(", S"); wrdec(Fm>>1); newline();
 #endif
-            }
+                fpiw2i(&in1, &er->s[Fm]);
+                fpii2d(&er->s[Fd], &in1);
+            } else if ((w0 & 0xbf) == 0xbd) {
+                Fd = (w1 >> 12);
+                Fm = (w1 & 0xf);
+                fpid2i(&in1, &er->s[Fm]);
+                fpii2w((Word *)&er->s[Fd], &in1);
+#ifdef fpudebug
+                wrstr("VCVT S"); wrdec(Fm); wrstr(" D"); wrdec(Fd); newline();
+#endif
+            } else
+                return 0;
+            dumpfpregs(er);
 
         } else if (w0 & 0x4) {
             // CMPD (A7.7.223)
@@ -232,6 +228,7 @@ fpithumb2(Ereg *er)
             Fm = (w1 & 0xf) << 1;
 #ifdef fpudebug
             wrstr("VMOV D"); wrdec(Fd>>1); wrstr(" D"); wrdec(Fm>>1); newline();
+            dumpfpreg(er, Fd); dumpfpreg(er, Fm);
 #endif
             er->s[Fd] = er->s[Fm];
             er->s[Fd + 1] = er->s[Fm + 1];
@@ -290,38 +287,37 @@ fpithumb2(Ereg *er)
         fpimul(&in2, &in1, &inr);
 #ifdef fpudebug
         wrstr("VMUL D"); wrdec(Fd>>1); wrstr(", D"); wrdec(Fn>>1); wrstr(", D"); wrdec(Fm>>1); newline();
+        dumpfpreg(er, Fd); dumpfpreg(er, Fm);
 #endif
         fpii2d(&er->s[Fd], &inr);
         er->pc += 4;
         return 1;
     }
-    // MOVDW (A7.7.242)
+    // MOVDW (A7.7.240)
     case 0xee10:
     {
         if ((w0 & 0x40) == 0)
             break;
 
         Rt = w1 >> 12;
-        Rt2 = w0 & 0xf;
-        Fm = (w1 & 0xf) << 1;
-        REG(Rt) = er->s[Fm];
-        REG(Rt2) = er->s[Fm + 1];
+        Fn = ((w0 & 0xf) << 1) | ((w1 & 0x80) >> 7);
+        REG(Rt) = er->s[Fn];
 #ifdef fpudebug
-        wrstr("VMOV (to ARM) R"); wrdec(Rt); wrstr(", R"); wrdec(Rt2), wrstr(", D"); wrdec(Fm>>1); newline();
+        wrstr("VMOV (to ARM) R"); wrdec(Rt); wrstr(", S"); wrdec(Fn); newline();
 #endif
+        dumperegs(er);
+        dumpfpreg(er, Fm);
         er->pc += 4;
         return 1;
     }
-    // MOVWD (A7.7.242)
+    // MOVWD (A7.7.240)
     case 0xee00:
     {
         Rt = w1 >> 12;
-        Rt2 = w0 & 0xf;
-        Fm = (w1 & 0xf) << 1;
+        Fn = ((w0 & 0xf) << 1) | ((w1 & 0x80) >> 7);
         er->s[Fm] = REG(Rt);
-        er->s[Fm + 1] = REG(Rt2);
 #ifdef fpudebug
-        wrstr("VMOV (to FPU) D"); wrdec(Fm>>1); wrstr(", R"); wrdec(Rt), wrstr(", R"); wrdec(Rt2); newline();
+        wrstr("VMOV (to FPU) S"); wrdec(Fn); wrstr(", R"); wrdec(Rt); newline();
 #endif
         dumperegs(er);
         dumpfpreg(er, Fm);
