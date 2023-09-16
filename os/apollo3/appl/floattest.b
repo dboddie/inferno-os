@@ -14,9 +14,9 @@ init(nil: ref Draw->Context, args: list of string)
 {
     sys = load Sys Sys->PATH;
 
-#    assign_test();
-#    add_test();
-#    compare_test();
+    assign_test();
+    add_test();
+    compare_test();
     convert_test();
 #    print_test();
 
@@ -41,7 +41,7 @@ add_test()
     if (a == 5.0)
         sys->print("a == 5.0\n");
     else
-        sys->print("a != 5.0\n");
+        sys->print("FAIL: a != 5.0\n");
 }
 
 compare_test()
@@ -97,8 +97,15 @@ convert_test()
     else
         sys->print("FAIL: i != 2\n");
 
+    sys->print("j := int x;\n");
+    j := int x;
+    if (j == 2)
+        sys->print("j == 2\n");
+    else
+        sys->print("FAIL: j != 2\n");
+
     i = big 2;
-    sys->print("%bd\n", i);
+    sys->print("i = %bd\n", i);
     sys->print("y := real i;\n");
     y := real i;
 
@@ -107,7 +114,15 @@ convert_test()
     else
         sys->print("FAIL: y != 2.0\n");
 
-#    sys->print("%f\n", y);
+    j = -2;
+    sys->print("j = %d\n", j);
+    sys->print("y := real j;\n");
+    y = real j;
+
+    if (y == -2.0)
+        sys->print("y == -2.0\n");
+    else
+        sys->print("FAIL: y != -2.0\n");
 }
 
 print_test()

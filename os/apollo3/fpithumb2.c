@@ -8,7 +8,7 @@
 #include "thumb2.h"
 #include "fpi.h"
 
-#define fpudebug
+//#define fpudebug
 
 enum {
 	N = 1<<31,
@@ -54,9 +54,15 @@ dumpfpreg(Ereg *er, int i)
 }
 
 void
-dumpreg(Ereg *er, int i, int v)
+dumpsfpreg(Ereg *er, int i)
 {
-    wrstr("R"); wrdec(i); wrstr(" = "); wrdec(v); newline();
+    wrstr("F"); wrdec(i); wrstr(" = "); wrhex(er->s[i]); newline();
+}
+
+void
+dumpreg(int i, int v)
+{
+    wrstr("R"); wrdec(i); wrstr(" = "); wrhex(v); newline();
 }
 /*
     For 64-bit values, the resulting format is:
@@ -131,12 +137,12 @@ fpithumb2(Ereg *er)
 {
     FPenv *ufp;
 
-//#ifdef fpudebug
+#ifdef fpudebug
     wrstr("pc="); wrhex(er->pc); wrch(' ');
     wrhex(*(ushort *)er->pc); wrch(' ');
     wrhex(*((ushort *)er->pc + 1));
     newline();
-//#endif
+#endif
 
     ufp = &up->env->fpu;
     if(ufp->fpistate != FPACTIVE) {
@@ -151,7 +157,7 @@ fpithumb2(Ereg *er)
     ushort w1 = *(ushort *)(er->pc + 2);
     ulong imm, ea;
     ulong Fd, Fm, Fn;   // just register numbers, either R, S or D
-    ulong Rt, Rt2, Rn;
+    ulong Rt, Rn;
     Internal in1, in2, inr;
 
     /* Check for single precision instructions since these should be
@@ -186,21 +192,25 @@ fpithumb2(Ereg *er)
                 Fd = (w1 >> 12) << 1;
                 Fm = ((w1 & 0xf) << 1) | ((w1 & 0x20) >> 5);
 #ifdef fpudebug
-                wrstr("VCVT D"); wrdec(Fd>>1); wrstr(", S"); wrdec(Fm>>1); newline();
+                wrstr("VCVT D"); wrdec(Fd>>1); wrstr(", S"); wrdec(Fm); newline();
+                dumpfpreg(er, Fd); dumpsfpreg(er, Fm);
+                dumpreg(1, REG(1));
 #endif
                 fpiw2i(&in1, &er->s[Fm]);
                 fpii2d(&er->s[Fd], &in1);
             } else if ((w0 & 0xbf) == 0xbd) {
-                Fd = (w1 >> 12);
+                Fd = (w1 >> 12) << 1;
                 Fm = (w1 & 0xf);
                 fpid2i(&in1, &er->s[Fm]);
                 fpii2w((Word *)&er->s[Fd], &in1);
 #ifdef fpudebug
-                wrstr("VCVT S"); wrdec(Fm); wrstr(" D"); wrdec(Fd); newline();
+                wrstr("VCVT S"); wrdec(Fm); wrstr(" D"); wrdec(Fd>>1); newline();
 #endif
             } else
                 return 0;
+#ifdef fpudebug
             dumpfpregs(er);
+#endif
 
         } else if (w0 & 0x4) {
             // CMPD (A7.7.223)
@@ -210,6 +220,7 @@ fpithumb2(Ereg *er)
                 xpsr_flags = fcmp(&in1, &zero_internal);
 #ifdef fpudebug
                 wrstr("VCMP D"); wrdec(Fd>>1); wrstr(", #0.0\r\n");
+                dumpfpreg(er, Fd);
 #endif
             } else {
                 Fm = (w1 & 0x0f) << 1;
@@ -271,7 +282,9 @@ fpithumb2(Ereg *er)
             fadd(in2, in1, &inr);
         }
         fpii2d(&er->s[Fd], &inr);
+#ifdef fpudebug
         dumpfpreg(er, Fd); dumpfpreg(er, Fn); dumpfpreg(er, Fm);
+#endif
         //dumpfpregs(er);
         er->pc += 4;
         return 1;
@@ -304,9 +317,9 @@ fpithumb2(Ereg *er)
         REG(Rt) = er->s[Fn];
 #ifdef fpudebug
         wrstr("VMOV (to ARM) R"); wrdec(Rt); wrstr(", S"); wrdec(Fn); newline();
-#endif
         dumperegs(er);
         dumpfpreg(er, Fm);
+#endif
         er->pc += 4;
         return 1;
     }
@@ -318,9 +331,9 @@ fpithumb2(Ereg *er)
         er->s[Fm] = REG(Rt);
 #ifdef fpudebug
         wrstr("VMOV (to FPU) S"); wrdec(Fn); wrstr(", R"); wrdec(Rt); newline();
-#endif
         dumperegs(er);
         dumpfpreg(er, Fm);
+#endif
         er->pc += 4;
         return 1;
     }
