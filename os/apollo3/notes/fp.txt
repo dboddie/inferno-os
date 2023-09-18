@@ -24,10 +24,10 @@ MOVD    1110 1101 UD00 Rn       Vd 1011 imm8----------          VSTR Dd, Rn, #im
 MOVFD   1110 1110 1D11 0111     Vd 1010 11M0     Vm             VCVT{R} Dd, Sm      A7.7.227                    ../../../utils/tl/thumb.c:1678
 MOVDF   1110 1110 1D11 0111     Vd 1011 11M0     Vm             VCVT{R} Sd, Dm      A7.7.227
 ======  ======================  ==============================  ==================  ==============  ==========  ==============================
-MOVWF   1110 1110 0000 Vn       Rt 1010 N(0)(0)1 (0)(0)(0)(0)   VMOV Sn, Rt         A7.7.240        Yes         ../../../utils/tl/thumb.c:1672
-MOVFW   1110 1110 0001 Vn       Rt 1010 N(0)(0)1 (0)(0)(0)(0)   VMOV Rt, Sn         A7.7.240        Yes         ../../../utils/tl/thumb.c:1674
-MOVWD   1110 1110 0100 Rt2      Rt 1010 00M1     Vm             VMOV Sn, Rt, Rt2    A7.7.242        No [1]      ../../../utils/tl/thumb.c:1676
-MOVDW   1110 1110 0101 Rt2      Rt 1010 00M1     Vm             VMOV Rt, Rt2, Sn    A7.7.242        No [1]      ../../../utils/tl/thumb.c:1678
+MOVWF   1110 1110 1D11 1000     Vd 1010 11M0     Vm             VCVT Sd, Sm         A7.7.225                    ../../../utils/tl/thumb.c:1711
+MOVFW   1110 1110 1D11 1101     Vd 1010 11M0     Vm             VCVT Sd, Sm         A7.7.225                    ../../../utils/tl/thumb.c:1714
+MOVWD   1110 1110 1D11 1000     Vd 1011 11M0     Vm             VCVT Dd, Sm         A7.7.225                    ../../../utils/tl/thumb.c:1717
+MOVDW   1110 1110 1D11 1101     Vd 1011 11M0     Vm             VCVT Sd, Dm         A7.7.225                    ../../../utils/tl/thumb.c:1720
 ======  ======================  ==============================  ==================  ==============  ==========  ==============================
 MULF    1110 1110 0D10 Vn       Vd 1010 N0M0     Vm             VMUL Sd, Sn, Sm     A7.7.245        Yes         ../../../utils/tl/thumb.c:1308
 MULD    1110 1110 0D10 Vn       Vd 1011 N0M0     Vm             VMUL Dd, Dn, Dm     A7.7.245        No          ../../../utils/tl/thumb.c:1694
@@ -43,10 +43,10 @@ SUBD    1110 1110 0D11 Vn       Vd 1011 N1M0     Vm             VSUB Dd, Dn, Dm 
 ======  ==============  ==============================  ==================  ==============  ==============================
 tl      Bits 7-0        Bits 31-16                      ARM syntax          Section         tl references
 ======  ==============  ==============================  ==================  ==============  ==============================
-MOVWF   0000 Vn         Rt 1010 N(0)(0)1 (0)(0)(0)(0)   VMOV Sn, Rt         A7.7.240        ../../../utils/tl/thumb.c:1673
-MOVFW   0001 Vn         Rt 1010 N(0)(0)1 (0)(0)(0)(0)   VMOV Rt, Sn         A7.7.240        ../../../utils/tl/thumb.c:1676
-MOVWD   0100 Rt2        Rt 1010 00M1     Vm             VMOV Sn, Rt, Rt2    A7.7.242        No [1]      ../../../utils/tl/thumb.c:1676
-MOVDW   0101 Rt2        Rt 1010 00M1     Vm             VMOV Rt, Rt2, Sn    A7.7.242        No [1]      ../../../utils/tl/thumb.c:1678
+MOVWF   1D11 1000       Vd 1010 11M0     Vm             VCVT Sd, Sm         A7.7.225        ../../../utils/tl/thumb.c:1711
+MOVFW   1D11 1101       Vd 1010 11M0     Vm             VCVT Sd, Sm         A7.7.225        ../../../utils/tl/thumb.c:1714
+MOVWD   1D11 1000       Vd 1011 11M0     Vm             VCVT Dd, Sm         A7.7.225        ../../../utils/tl/thumb.c:1717
+MOVDW   1D11 1101       Vd 1011 11M0     Vm             VCVT Sd, Dm         A7.7.225        ../../../utils/tl/thumb.c:1720
 ======  ==============  ==============================  ==================  ==============  ==============================
 MULF    0-10 Vn         Vd 1010 N0M0     Vm             VMUL Sd, Sn, Sm     A7.7.245        ../../../utils/tl/thumb.c:1308
 MULD    0-10 Vn         Vd 1011 N0M0     Vm             VMUL Dd, Dn, Dm     A7.7.245        ../../../utils/tl/thumb.c:1694
@@ -94,6 +94,10 @@ functions.
 
 We need to think about how the emulated floating point registers are combined
 with the real ones, and whether the real or emulated ones need to be stacked.
+In this implementation, we use the real registers to hold values because the
+FPU executes some instructions and will rely on the registers for data.
+Registers are stacked by the compiler, and in extended stack frames when
+exceptions occur.
 
 Some double precision instructions are implemented: typically those that
 perform transfer between regular registers and FP registers.
@@ -101,6 +105,17 @@ perform transfer between regular registers and FP registers.
 Some single precision instructions are not implemented: conversions between
 integer and floating point representations (VCVT - A7.7.225).
 
+The ARMv7-M architecture reference manual appears to be incorrect when
+describing VCVT (A7.7.225). The opc2 bits are shown in section A8.8.307 of
+the ARMv-AR manual (DDI0406c).
+
 Using only single precision instructions can cause the NOCP bit to be set
 instead of the UNDEFINSTR bit in the UFSR register upon an undefined single
 precision instruction.
+
+Replaced the undefinition of __LITTLE_ENDIAN in Inferno/thumb/include/lib9.h
+with a definition of the symbol.
+
+When a usage fault is promoted to a hard fault, it seems that the FPCA bit in
+the CONTROL register is cleared, causing confusion about the cause of the
+exception.
