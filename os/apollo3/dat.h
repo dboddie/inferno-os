@@ -32,7 +32,7 @@ struct Label
 };
 
 enum {
-        Maxfpregs       = 16,   /* 16 for Thumb-2, see Mach.fpnregs */
+        Maxfpregs       = 8,   /* use 8 of 16 doubles for Thumb-2, see Mach.fpnregs */
 	Nfpctlregs      = 16,
 };
 
