@@ -16,6 +16,8 @@ extern void hzclock(Ureg *);
 void trapinit(void)
 {
     // Interrupts need to be off at this point. This is done in the loader.
+
+//    *(int *)SHPR1 = (*(int *)SHPR1 & 0xff00ffff) | 0x00440000;
     *(int *)SHPR3 = (*(int *)SHPR3 & 0x00ffffff) | 0xff000000;
 
     /* Enable the usage fault exception. */
@@ -105,15 +107,19 @@ void switcher(Ureg *ureg)
 {
     int t;
 
-//    wrstr("> up="); wrhex((int)up); newline();
-//    wrch('.');
+//    wrstr("[switcher] > up="); wrhex((int)up); newline();
+//    wrstr("\x1b[1m@\x1b[m");
 //    wrstr(">> sp="); wrhex(getsp()); wrstr(" pc="); wrhex(*(ulong *)((ulong)ureg + 52)); newline();
 //    print("up=%.8lux\n", up);
 //    print("psr=%.8lux\n", ureg->psr);
 //    wrstr("in\r\n");
 //    _dumpregs();
 
-    if (up) up->pc = ureg->pc;
+    if (up) {
+        up->pc = ureg->pc;
+        up->env->fpu.fpscr = getfpscr();
+        savefpregs((double *)&up->env->fpu.regs);
+    }
 
     t = m->ticks;       /* CPU time per proc */
     up = nil;           /* no process at interrupt level */
@@ -131,6 +137,11 @@ void switcher(Ureg *ureg)
 
     if (rdch_ready())
         kbd_readc();
+
+    if (up) {
+        restorefpregs((double *)&up->env->fpu.regs);
+        setfpscr(up->env->fpu.fpscr);
+    }
 
 //    print("up=%.8lux\n", up);
 //    wrstr("<< sp="); wrhex(getsp()); wrstr(" pc="); wrhex(*(ulong *)((ulong)ureg + 52)); newline();
@@ -189,13 +200,15 @@ void usage_fault(int sp)
             dumpfpregs(er);
             newline();
 */
-            *(short *)UFSR_ADDR |= UFSR_UNDEFINSTR;
+//            *(short *)UFSR_ADDR |= UFSR_UNDEFINSTR;
+//            setcontrol(CONTROL_FPCA);
+//            wrstr("control="); wrhex(getcontrol()); newline();
 //            wrstr("<-- "); wrhex(er->pc); newline();
             return;
         }
     }
 
-    wrstr("Usage fault at "); wrhex(*(int *)(sp + 64)); newline();
+    wrstr("Usage fault at "); wrhex((int)er->pc); newline();
     wrstr("UFSR="); wrhex(*(short *)UFSR_ADDR); newline();
 
     dumperegs((Ereg *)sp);
@@ -210,12 +223,16 @@ void hard_fault(int sp)
     Ereg *er = (Ereg *)sp;
 
     wrstr("Hard fault at "); wrhex(er->pc); newline();
+    wrstr("HFSR="); wrhex(*(int *)HFSR_ADDR); newline();
     int cfsr = *(int *)CFSR_ADDR;
     wrstr("CFSR="); wrhex(cfsr); newline();
     int shcsr = *(int *)SHCSR_ADDR;
     wrstr("SHCSR="); wrhex(shcsr); newline();
     wrstr("FPCCR="); wrhex(*(int *)FPCCR_ADDR); newline();
+    wrstr("CONTROL="); wrhex(getcontrol()); newline();
     wrstr("up="); wrhex((int)up); newline();
+    wrstr("up->kstack="); wrhex((int)up->kstack); wrstr("..");
+    wrhex((int)up->kstack + KSTKSIZE); newline();
 
     dumperegs(er);
     dumpfpregs(er);
@@ -226,8 +243,17 @@ void hard_fault(int sp)
 
     wrstr("last APSR="); wrhex(apsr_flags); newline();
 
-    poolsummary();
-    poolshow();
+    int a = sp + sizeof(Ereg);
+    for (int i = 0; i < 128; i+=4) {
+        wrhex(*(int *)(a + i));
+        if ((i & 0xf) == 0xc)
+            newline();
+        else
+            wrch(' ');
+    }
+
+//    poolsummary();
+//    poolshow();
 
     for (;;) {}
 }

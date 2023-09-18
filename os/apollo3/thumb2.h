@@ -104,10 +104,10 @@
 /* ARM Architecture Reference Manual Thumb-2 Supplement, page A7-535 */
 #define VMSR(r) WORD $(0x0a10eee1 | (r)<<28) /* ARM to FP */
 
-/* ARM Architecture Reference Manual Thumb-2 Supplement, page A7-557 */
-#define VSTR(fp, Rn, offset) WORD $(0x0b00ed00 | (fp & 0xf) << 28 | ((offset >> 2) & 0xff) << 16 | (Rn))
-/* ARM Architecture Reference Manual Thumb-2 Supplement, page A7-521 */
-#define VLDR(fp, Rn, offset) WORD $(0x0b00ed10 | (fp & 0xf) << 28 | ((offset >> 2) & 0xff) << 16 | (Rn))
+/* ARMv7-M Architecture Reference Manual, A7.7.256 */
+#define VSTR(fp, Rn, offset) WORD $(0x0b00ed80 | (fp & 0xf) << 28 | ((offset >> 2) & 0xff) << 16 | (Rn))
+/* ARMv7-M Architecture Reference Manual, A7.7.233 */
+#define VLDR(fp, Rn, offset) WORD $(0x0b00ed90 | (fp & 0xf) << 28 | ((offset >> 2) & 0xff) << 16 | (Rn))
 
 /* System control and ID registers
    ARMv7-M Architecture Reference Manual, B3.2.2 */

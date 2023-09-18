@@ -58,6 +58,12 @@ TEXT _systick(SB), THUMB, $-4
     AND.S   $0xff, R0
     BNE     _systick_exit       /* Don't interrupt a currently active exception. */
 
+    MOVW    $CFSR_ADDR, R0
+    MOVW    (R0), R0
+    SRL     $16, R0
+    AND.S   $0x1, R0
+    BNE     _systick_exit       /* Don't interrupt a currently active exception. */
+
     MOVW    28(SP), R0          /* Read xPSR */
     MOVW    R0, R2
     MOVW    $0x060fffff, R1
@@ -122,16 +128,13 @@ TEXT _hard_fault(SB), THUMB, $-4
 TEXT _usage_fault(SB), THUMB, $-4
 /*     MRS(0, MRS_MSP)     Pass the main stack pointer (MSP) to a C function. */
 
-    CPS(1, CPS_I)
     MOVW    SP, R1      /* Record the interrupted stack pointer. */
     ADD     $0x68, R1   /* Includes FP registers. */
 
     PUSH(0x0ff2, 1)
     MOVW    SP, R0
     BL ,usage_fault(SB)
-    POP_LR_PC(0x0ff2, 1, 0)
-    CPS(0, CPS_I)
-    RET
+    POP(0x0ff2, 1)
 
 TEXT _nmi(SB), THUMB, $-4
     B ,_nmi(SB)

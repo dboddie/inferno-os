@@ -142,6 +142,8 @@ fpithumb2(Ereg *er)
     wrhex(*(ushort *)er->pc); wrch(' ');
     wrhex(*((ushort *)er->pc + 1));
     newline();
+//    dumperegs(er);
+//    dumpfpregs(er);
 #endif
 
     ufp = &up->env->fpu;
@@ -186,7 +188,7 @@ fpithumb2(Ereg *er)
             dumpfpreg(er, Fd);
 #endif
 
-        } else if ((w1 & 0xc0) == 0xc0) {
+        } else if (w0 & 0x08) {
             // CVT (A7.7.225)
             if ((w0 & 0xbf) == 0xb8) {
                 Fd = (w1 >> 12) << 1;

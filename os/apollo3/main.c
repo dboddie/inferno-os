@@ -72,6 +72,10 @@ void main(void)
     start_timer();
     setup_usart();
 
+wrstr("etext="); wrhex((int)etext); newline();
+wrstr("edata="); wrhex((int)edata); newline();
+wrstr("end="); wrhex((int)end); newline();
+
 //    uartconsinit();
     serwrite = uart_serwrite;
 

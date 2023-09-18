@@ -85,6 +85,8 @@ int	fpithumb2(Ereg*);
 void    dumpfpregs(Ereg*);
 void	mdelay(uint);
 void	initfrozen(void);
+void    savefpregs(double*);
+void    restorefpregs(double*);
 
 char*	getconf(char*);
 char *	getethermac(void);

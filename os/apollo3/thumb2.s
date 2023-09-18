@@ -88,6 +88,10 @@ TEXT getfpscr(SB), THUMB, $-4
         VMRS(0)
         RET
 
+TEXT setfpscr(SB), THUMB, $-4
+    VMSR(0)     /* R0 to FPSCR */
+    RET
+
 TEXT introff(SB), THUMB, $-4
     CPS(1, CPS_I)
     RET
@@ -97,8 +101,8 @@ TEXT intron(SB), THUMB, $-4
     RET
 
 TEXT coherence(SB), THUMB, $-4
-	ISB
         DSB
+	ISB
 	RET
 
 /* Stack selection */
@@ -449,3 +453,25 @@ TEXT restfp31(SB), $-4
     VLDR(31)
     RET
 */
+
+TEXT savefpregs(SB), THUMB, $-4
+    VSTR(0, 0, 0)
+    VSTR(1, 0, 8)
+    VSTR(2, 0, 16)
+    VSTR(3, 0, 24)
+    VSTR(4, 0, 32)
+    VSTR(5, 0, 40)
+    VSTR(6, 0, 48)
+    VSTR(7, 0, 56)
+    RET
+
+TEXT restorefpregs(SB), THUMB, $-4
+    VLDR(0, 0, 0)
+    VLDR(1, 0, 8)
+    VLDR(2, 0, 16)
+    VLDR(3, 0, 24)
+    VLDR(4, 0, 32)
+    VLDR(5, 0, 40)
+    VLDR(6, 0, 48)
+    VLDR(7, 0, 56)
+    RET
