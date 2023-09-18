@@ -14,11 +14,13 @@ init(nil: ref Draw->Context, args: list of string)
 {
     sys = load Sys Sys->PATH;
 
-    assign_test();
-    add_test();
-    compare_test();
-    convert_test();
-#    print_test();
+    for (;;) {
+        assign_test();
+        add_test();
+        compare_test();
+        convert_test();
+#        print_test();
+    }
 
     sys->print("Finished\n");
 }
@@ -130,5 +132,7 @@ print_test()
     sys->print("\nPrinting values\n\n");
     sys->print("x := 2.0;\n");
     x := 2.0;
+    sys->print("%f\n", x);
+    x = 1.0;
     sys->print("%f\n", x);
 }
