@@ -1,3 +1,4 @@
+#include "fns.h"
 #include "thumb2.h"
 
 int getcpuid(void)

@@ -73,11 +73,9 @@ int rdch(void)
     return *(unsigned int *)UART0_DR & 0xff;
 }
 
-extern void set_led(int);
-
 void wrch(int c)
 {
-    /* Wait until the transmit FIFO is empty. */
+    // Wait until the transmit FIFO is empty.
     while (((*(unsigned int *)UART0_FR) & UART_FR_TXFE) == 0);
     *(unsigned char *)UART0_DR = c & 0xff;
 }

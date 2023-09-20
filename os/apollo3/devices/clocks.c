@@ -20,6 +20,13 @@ void start_timer(void)
                            2=SysTick exception, 1=enable */
 }
 
+void pause_timer(void)
+{
+    SysTick *tick = (SysTick *)SYSTICK;
+    tick->control ^= 1;
+    wrstr("SYSTICK ctl="); wrhex(tick->control); newline();
+}
+
 /* With a 48 MHz clock, a count of 48 is 1 microsecond, 48000 is 1ms. */
 void _wait_ms(int delay_ms)
 {
