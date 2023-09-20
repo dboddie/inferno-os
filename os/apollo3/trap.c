@@ -92,7 +92,7 @@ void dumperegs(Ereg *eregs)
     wrstr("r9="); wrhex(eregs->r9); wrch(' ');
     wrstr("r10="); wrhex(eregs->r10); wrch(' ');
     wrstr("r11="); wrhex(eregs->r11); newline();
-    wrstr("r12="); wrhex(get_r12()); wrch(' ');
+    wrstr("r12="); wrhex(eregs->r12); wrch(' ');
     wrstr("r13="); wrhex(eregs->sp); wrch(' ');
     wrstr("sp="); wrhex((int)eregs); wrch(' ');
     wrstr("r14="); wrhex(eregs->r14); newline();
@@ -115,11 +115,7 @@ void switcher(Ureg *ureg)
 //    wrstr("in\r\n");
 //    _dumpregs();
 
-    if (up) {
-        up->pc = ureg->pc;
-        up->env->fpu.fpscr = getfpscr();
-        savefpregs((double *)&up->env->fpu.regs);
-    }
+    if (up) up->pc = ureg->pc;
 
     t = m->ticks;       /* CPU time per proc */
     up = nil;           /* no process at interrupt level */
@@ -137,11 +133,6 @@ void switcher(Ureg *ureg)
 
     if (rdch_ready())
         kbd_readc();
-
-    if (up) {
-        restorefpregs((double *)&up->env->fpu.regs);
-        setfpscr(up->env->fpu.fpscr);
-    }
 
 //    print("up=%.8lux\n", up);
 //    wrstr("<< sp="); wrhex(getsp()); wrstr(" pc="); wrhex(*(ulong *)((ulong)ureg + 52)); newline();
@@ -196,11 +187,12 @@ void usage_fault(int sp)
             wrstr("SHCSR="); wrhex(*(int *)SHCSR_ADDR); newline();
             wrstr("FPCCR="); wrhex(*(int *)FPCCR_ADDR); newline();
             wrstr("up="); wrhex((int)up); newline();
-            dumperegs(er);
+*/
+/*
             dumpfpregs(er);
             newline();
 */
-//            *(short *)UFSR_ADDR |= UFSR_UNDEFINSTR;
+            *(short *)UFSR_ADDR |= UFSR_UNDEFINSTR;
 //            setcontrol(CONTROL_FPCA);
 //            wrstr("control="); wrhex(getcontrol()); newline();
 //            wrstr("<-- "); wrhex(er->pc); newline();
@@ -216,6 +208,24 @@ void usage_fault(int sp)
     poolshow();
 
     for (;;) {}
+}
+
+void bus_fault(int sp)
+{
+    Ereg *er = (Ereg *)sp;
+
+    wrstr("Bus fault at "); wrhex(er->pc); newline();
+
+    dumperegs(er);
+    dumpfpregs(er);
+
+    for (;;) {}
+}
+
+void wrstack(void)
+{
+    wrstr("up->kstack="); wrhex((int)up->kstack); wrstr("..");
+    wrhex((int)up->kstack + KSTKSIZE); newline();
 }
 
 void hard_fault(int sp)

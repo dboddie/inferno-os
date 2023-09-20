@@ -14,13 +14,13 @@ init(nil: ref Draw->Context, args: list of string)
 {
     sys = load Sys Sys->PATH;
 
-    for (;;) {
-        assign_test();
-        add_test();
-        compare_test();
-        convert_test();
-#        print_test();
-    }
+#    for (;;) {
+#        assign_test();
+#        add_test();
+#        compare_test();
+#        convert_test();
+        print_test();
+#    }
 
     sys->print("Finished\n");
 }

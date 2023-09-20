@@ -49,7 +49,7 @@ void
 dumpfpreg(Ereg *er, int i)
 {
     wrstr("D"); wrdec(i>>1); wrstr(" (F"); wrdec(i+1); wrstr(":F");
-    wrdec(i); wrstr(") = "); wrhex(er->s[i+1]); wrstr(" : "); wrhex(er->s[i]);
+    wrdec(i); wrstr(") = 0x"); wrhex(er->s[i+1]); wrhex(er->s[i]);
     newline();
 }
 
@@ -186,6 +186,14 @@ fpithumb2(Ereg *er)
 #ifdef fpudebug
             wrstr("VMOV D"); wrdec(Fd>>1); wrstr(", #0x"); wrhex(imm); newline();
             dumpfpreg(er, Fd);
+            dumperegs(er);
+            if (imm == 0x60) {
+                wrhex((int)er); wrch(' '); wrhex(er->r13); wrch(' ');
+                wrhex(*(int *)(er->r13 + 0xb8)); wrch(' ');
+                wrhex(*(int *)(er->r13 + 0xbc)); wrch(' ');
+                wrhex(*(int *)(er->pc + 0x294)); wrch(' ');
+                wrhex(*(int *)(er->pc + 0x298)); newline();
+            }
 #endif
 
         } else if (w0 & 0x08) {
@@ -194,19 +202,23 @@ fpithumb2(Ereg *er)
                 Fd = (w1 >> 12) << 1;
                 Fm = ((w1 & 0xf) << 1) | ((w1 & 0x20) >> 5);
 #ifdef fpudebug
+                dumpfpreg(er, Fm);
                 wrstr("VCVT D"); wrdec(Fd>>1); wrstr(", S"); wrdec(Fm); newline();
-                dumpfpreg(er, Fd); dumpsfpreg(er, Fm);
-                dumpreg(1, REG(1));
+                dumpfpreg(er, Fd);
 #endif
                 fpiw2i(&in1, &er->s[Fm]);
                 fpii2d(&er->s[Fd], &in1);
             } else if ((w0 & 0xbf) == 0xbd) {
-                Fd = (w1 >> 12) << 1;
-                Fm = (w1 & 0xf);
+                Fd = (w1 >> 12) << 1 | ((w0 & 0x40) >> 6);
+                Fm = (w1 & 0xf) << 1;
+#ifdef fpudebug
+                dumpfpreg(er, Fm);
+                wrstr("VCVT S"); wrdec(Fd); wrstr(" D"); wrdec(Fm>>1); newline();
+#endif
                 fpid2i(&in1, &er->s[Fm]);
                 fpii2w((Word *)&er->s[Fd], &in1);
 #ifdef fpudebug
-                wrstr("VCVT S"); wrdec(Fm); wrstr(" D"); wrdec(Fd>>1); newline();
+                dumpfpreg(er, Fd);
 #endif
             } else
                 return 0;
@@ -274,18 +286,21 @@ fpithumb2(Ereg *er)
         fpid2i(&in2, &er->s[Fm]);
         if (w1 & 0x40) {
 #ifdef fpudebug
+            dumpfpreg(er, Fn); dumpfpreg(er, Fm);
             wrstr("VSUB D"); wrdec(Fd>>1); wrstr(", D"); wrdec(Fn>>1); wrstr(", D"); wrdec(Fm>>1); newline();
 #endif
             fsub(in2, in1, &inr);
         } else {
 #ifdef fpudebug
+            dumpfpreg(er, Fn); dumpfpreg(er, Fm);
             wrstr("VADD D"); wrdec(Fd>>1); wrstr(", D"); wrdec(Fn>>1); wrstr(", D"); wrdec(Fm>>1); newline();
 #endif
             fadd(in2, in1, &inr);
         }
         fpii2d(&er->s[Fd], &inr);
 #ifdef fpudebug
-        dumpfpreg(er, Fd); dumpfpreg(er, Fn); dumpfpreg(er, Fm);
+        dumpfpreg(er, Fd);
+        dumperegs(er);
 #endif
         //dumpfpregs(er);
         er->pc += 4;
@@ -305,6 +320,9 @@ fpithumb2(Ereg *er)
         dumpfpreg(er, Fd); dumpfpreg(er, Fm);
 #endif
         fpii2d(&er->s[Fd], &inr);
+#ifdef fpudebug
+        dumpfpreg(er, Fd);
+#endif
         er->pc += 4;
         return 1;
     }

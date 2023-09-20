@@ -85,8 +85,8 @@ int	fpithumb2(Ereg*);
 void    dumpfpregs(Ereg*);
 void	mdelay(uint);
 void	initfrozen(void);
-void    savefpregs(double*);
-void    restorefpregs(double*);
+void    savefpregs(void*);
+void    restorefpregs(void*);
 
 char*	getconf(char*);
 char *	getethermac(void);
@@ -107,6 +107,7 @@ int 	dmawait(int);
 void    hwinit(void);
 
 void    switcher(Ureg *);
+void    bus_fault(int);
 void    usage_fault(int);
 void    hard_fault(int);
 void    svcall(int);

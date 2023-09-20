@@ -1,4 +1,7 @@
 typedef struct Ureg {
+    ulong s[16];
+    ulong fpscr;
+
     ulong r0;
     ulong r1;
     ulong r2;
@@ -25,6 +28,8 @@ typedef struct Ereg {
         ulong sp;   /* interrupted sp */
         ulong r13;
     };
+    ulong xxx;
+
     ulong r4;
     ulong r5;
     ulong r6;
