@@ -109,6 +109,15 @@
 /* ARMv7-M Architecture Reference Manual, A7.7.233 */
 #define VLDR(fp, Rn, offset) WORD $(0x0b00ed90 | (fp & 0xf) << 28 | ((offset >> 2) & 0xff) << 16 | (Rn))
 
+/* ARMv7-M Architecture Reference Manual, A7.7.248, T1 */
+#define VPUSH(first_reg, number_of_double_regs) \
+    WORD $(0x0b00ed2d | (((first_reg & 0x10) << 2) | ((first_reg & 0xf) << 28) | \
+           ((number_of_double_regs & 0x7f) << 17)))
+/* ARMv7-M Architecture Reference Manual, A7.7.249, T1 */
+#define VPOP(first_reg, number_of_double_regs) \
+    WORD $(0x0b00ecbd | (((first_reg & 0x10) << 2) | ((first_reg & 0xf) << 28) | \
+           ((number_of_double_regs & 0x7f) << 17)))
+
 /* System control and ID registers
    ARMv7-M Architecture Reference Manual, B3.2.2 */
 #define CPUID_ADDR 0xe000ed00

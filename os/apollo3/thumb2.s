@@ -475,3 +475,23 @@ TEXT restorefpregs(SB), THUMB, $-4
     VLDR(6, 0, 48)
     VLDR(7, 0, 56)
     RET
+
+/*
+UART0_FR = $0x4001c018
+UART_FR_TXFE = 0x80
+UART0_DR = $0x4001c000
+
+TEXT wrch(SB), THUMB, $-4
+    PUSH(0x6, 1)
+    MOVW $0x4001c018, R1
+    wrch_loop:
+        MOVW 0(R1), R2
+        AND $0x80, R2
+        CMP $0, R2
+        BEQ wrch_loop
+
+    MOVW $0x4001c000, R1
+    AND $0xff, R0
+    MOVW R0, 0(R1)
+    POP(0x6, 1)
+*/
