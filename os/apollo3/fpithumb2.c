@@ -130,7 +130,7 @@ fcmp(Internal *n, Internal *m)
 }
 
 ulong xpsr_flags = 0;
-static Internal zero_internal = {0, 0, 0, 0};
+static Internal zero_internal = {0, 1, 0, 0};   // according to os/rpi/fpiarm.c
 
 int
 fpithumb2(Ereg *er)
@@ -187,13 +187,6 @@ fpithumb2(Ereg *er)
             wrstr("VMOV D"); wrdec(Fd>>1); wrstr(", #0x"); wrhex(imm); newline();
             dumpfpreg(er, Fd);
             dumperegs(er);
-            if (imm == 0x60) {
-                wrhex((int)er); wrch(' '); wrhex(er->r13); wrch(' ');
-                wrhex(*(int *)(er->r13 + 0xb8)); wrch(' ');
-                wrhex(*(int *)(er->r13 + 0xbc)); wrch(' ');
-                wrhex(*(int *)(er->pc + 0x294)); wrch(' ');
-                wrhex(*(int *)(er->pc + 0x298)); newline();
-            }
 #endif
 
         } else if (w0 & 0x08) {
@@ -235,6 +228,7 @@ fpithumb2(Ereg *er)
 #ifdef fpudebug
                 wrstr("VCMP D"); wrdec(Fd>>1); wrstr(", #0.0\r\n");
                 dumpfpreg(er, Fd);
+                wrstr("flags="); wrhex(xpsr_flags); newline();
 #endif
             } else {
                 Fm = (w1 & 0x0f) << 1;
@@ -271,9 +265,13 @@ fpithumb2(Ereg *er)
         fpid2i(&in2, &er->s[Fm]);
         fpidiv(&in2, &in1, &inr);
 #ifdef fpudebug
+        dumpfpreg(er, Fn); dumpfpreg(er, Fm);
         wrstr("VDIV D"); wrdec(Fd>>1); wrstr(", D"); wrdec(Fn>>1); wrstr(", D"); wrdec(Fm>>1); newline();
 #endif
         fpii2d(&er->s[Fd], &inr);
+#ifdef fpudebug
+        dumpfpreg(er, Fd);
+#endif
         er->pc += 4;
         return 1;
 
