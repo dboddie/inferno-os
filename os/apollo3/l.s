@@ -99,7 +99,7 @@ _systick_exit:
 TEXT _preswitch(SB), THUMB, $-4
 
     MOVW R0, R0
-    PUSH(0x1000, 0)             /* Save R12 (will be PC). */
+    PUSH(0x1400, 0)             /* Save R10 and R12 (will be PC). */
     PUSH(0x0bff, 1)             /* Save registers R0-R9, R11 as well as R14, in
                                    case the interrupted code uses them. */
     VMRS(0)                     /* Copy FPSCR into R0 */
@@ -114,14 +114,14 @@ TEXT _preswitch(SB), THUMB, $-4
 
     MOVW    $apsr_flags(SB), R1
     MOVW    (R1), R1
-    MSR(1, 0)                /* Restore the status bits. */
+    MSR(1, 0)                   /* Restore the status bits. */
 
     VPOP(0, 8)                  /* Recover D0-D7. */
     POP(0x0001, 0)              /* Recover FPSCR into R0 */
     VMSR(0)                     /* then restore it. */
 
     POP_LR_PC(0x0bff, 1, 0)     /* Recover R0-R9, R11 and R14 */
-    POP_LR_PC(0, 0, 1)          /* then PC. */
+    POP_LR_PC(0x0400, 0, 1)     /* then R10 and PC. */
 
 TEXT _hard_fault(SB), THUMB, $-4
 /*    MRS(0, MRS_MSP)     Pass the main stack pointer (MSP) to a C function. */
@@ -129,7 +129,7 @@ TEXT _hard_fault(SB), THUMB, $-4
     MOVW    SP, R1      /* Record the interrupted stack pointer. */
     ADD     $0x68, R1   /* Includes FP registers. */
 
-    PUSH(0x0ff2, 1)
+    PUSH(0x0ffa, 1)
     MOVW    SP, R0
     B ,hard_fault(SB)
 

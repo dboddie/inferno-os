@@ -12,13 +12,13 @@ typedef struct Ureg {
     ulong r7;
     ulong r8;
     ulong r9;
-    ulong r10;
     ulong r11;
     union {
         ulong r14;
         ulong link;
         ulong lr;
     };
+    ulong r10;
     ulong pc;   /* interrupted addr */
 } Ureg;
 
@@ -28,8 +28,8 @@ typedef struct Ereg {
         ulong sp;   /* interrupted sp */
         ulong r13;
     };
-    ulong xxx;
-
+    ulong xxx;      /* This slot contains a redundant copy of R3 - see the
+                       _usage_fault routine in l.s for an explanation. */
     ulong r4;
     ulong r5;
     ulong r6;

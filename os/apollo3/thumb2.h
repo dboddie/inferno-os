@@ -150,6 +150,7 @@
 #define MRS_MSP 8
 #define MRS_PSP 9
 #define MRS_PRIMASK 16
+#define MRS_BASEPRI 17
 #define MRS_FAULTMASK 19
 #define MRS_CONTROL 20
 
