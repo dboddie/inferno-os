@@ -27,7 +27,7 @@
 #define CACHELINESZ     32
 #define BLOCKALIGN	32
 
-#define KSTKSIZE	2048
+#define KSTKSIZE	4096
 #define KSTACK		KSTKSIZE
 
 /* Memory map: SRAM at 0x10000000-0x10060000 (384KB)
