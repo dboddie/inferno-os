@@ -119,3 +119,12 @@ with a definition of the symbol.
 When a usage fault is promoted to a hard fault, it seems that the FPCA bit in
 the CONTROL register is cleared, causing confusion about the cause of the
 exception.
+
+Clear the UNDEFINSTR bit in the UFSR register after the instruction has been
+handled.
+
+One source of hard faults may be that an undefined instruction is encountered
+while interrupts are disabled, which causes a fault.
+
+Use of the wrong definition for the Internal representation of zero caused
+a loop in dtoa to fail to exit.

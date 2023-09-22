@@ -15,10 +15,12 @@ init(nil: ref Draw->Context, args: list of string)
     sys = load Sys Sys->PATH;
 
 #    for (;;) {
-#        assign_test();
-#        add_test();
-#        compare_test();
-#        convert_test();
+        assign_test();
+        add_test();
+        compare_test();
+        convert_test();
+        multiply_test();
+        divide_test();
         print_test();
 #    }
 
@@ -127,12 +129,43 @@ convert_test()
         sys->print("FAIL: y != -2.0\n");
 }
 
+multiply_test()
+{
+    a := 2.0;
+    b := -3.0;
+    c := a * b;
+
+    if (c == -6.0)
+        sys->print("c == -6.0\n");
+    else
+        sys->print("FAIL: c != -6.0\n");
+}
+
+divide_test()
+{
+    a := 3.0;
+    b := -2.0;
+    c := a / b;
+
+    if (c == -1.5)
+        sys->print("c == -1.5\n");
+    else
+        sys->print("FAIL: c != -1.5\n");
+}
+
 print_test()
 {
     sys->print("\nPrinting values\n\n");
-    sys->print("x := 2.0;\n");
     x := 2.0;
+    sys->print("x := 2.0;\n");
     sys->print("%f\n", x);
-    x = 1.0;
+    sys->print("%g\n", x);
+    x = 1.5;
+    sys->print("x = 1.5;\n");
     sys->print("%f\n", x);
+    sys->print("%g\n", x);
+    x = -2.0;
+    sys->print("x = -2.0;\n");
+    sys->print("%f\n", x);
+    sys->print("%g\n", x);
 }
