@@ -18,7 +18,7 @@ void trapinit(void)
     // Interrupts need to be off at this point. This is done in the loader.
 
 //    *(int *)SHPR1 = (*(int *)SHPR1 & 0xff00ffff) | 0x00440000;
-    *(int *)SHPR3 = (*(int *)SHPR3 & 0x00ffffff) | 0xff000000;
+    *(int *)SHPR3 = (*(int *)SHPR3 & 0x00ffffff) | 0xe0000000;
 
     /* Enable the usage fault exception. */
     *(int *)SHCSR_ADDR |= SHCSR_USGFAULTENA;
@@ -37,26 +37,6 @@ void trapinit(void)
     /* Enable the FPU again. */
     enablefpu();
     setcontrol(CONTROL_FPCA);
-}
-
-void showregs(int sp, int below)
-{
-    int i;
-    for (i = 0; i < 4; i++)
-        print("r%d=%.8lux ", i, *(ulong *)(sp + (i*4)));
-
-    print("\n");
-
-    if (below) {
-        for (i = 4; i < 13; i++) {
-            print("r%d=%.8lux ", i, *(ulong *)(sp - 40 + (i - 4)*4));
-            if (i % 4 == 3) print("\n");
-        }
-    }
-
-    print("sp=%.8lux ", (ulong)sp);
-    print("lr=%.8lux ", *(ulong *)(sp + 20));
-    print("pc=%.8lux\n", *(ulong *)(sp + 24));
 }
 
 void dumpregs(Ureg *uregs)
@@ -113,7 +93,7 @@ void switcher(Ureg *ureg)
 //    print("up=%.8lux\n", up);
 //    print("psr=%.8lux\n", ureg->psr);
 //    wrstr("in\r\n");
-//    _dumpregs();
+//    dumpregs(ureg);
 
     if (up) up->pc = ureg->pc;
 
@@ -138,7 +118,7 @@ void switcher(Ureg *ureg)
 //    wrstr("<< sp="); wrhex(getsp()); wrstr(" pc="); wrhex(*(ulong *)((ulong)ureg + 52)); newline();
 //    wrstr("pc="); wrhex((uint)ureg->pc); wrstr(" r14="); wrhex((uint)ureg->lr); newline();
 //    wrstr("out\r\n");
-//    _dumpregs();
+//    dumpregs(ureg);
 //    wrstr("< up="); wrhex((int)up); newline();
 }
 
@@ -240,6 +220,7 @@ void hard_fault(int sp)
     wrstr("SHCSR="); wrhex(shcsr); newline();
     wrstr("FPCCR="); wrhex(*(int *)FPCCR_ADDR); newline();
     wrstr("CONTROL="); wrhex(getcontrol()); newline();
+    wrstr("intr enabled="); wrhex(islo()); newline();
     wrstr("up="); wrhex((int)up); newline();
     wrstr("up->kstack="); wrhex((int)up->kstack); wrstr("..");
     wrhex((int)up->kstack + KSTKSIZE); newline();
