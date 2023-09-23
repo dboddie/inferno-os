@@ -186,7 +186,7 @@ fpithumb2(Ereg *er)
 #ifdef fpudebug
             wrstr("VMOV D"); wrdec(Fd>>1); wrstr(", #0x"); wrhex(imm); newline();
             dumpfpreg(er, Fd);
-            dumperegs(er);
+//            dumperegs(er);
 #endif
 
         } else if (w0 & 0x08) {
@@ -298,7 +298,6 @@ fpithumb2(Ereg *er)
         fpii2d(&er->s[Fd], &inr);
 #ifdef fpudebug
         dumpfpreg(er, Fd);
-        dumperegs(er);
 #endif
         //dumpfpregs(er);
         er->pc += 4;
@@ -335,7 +334,7 @@ fpithumb2(Ereg *er)
         REG(Rt) = er->s[Fn];
 #ifdef fpudebug
         wrstr("VMOV (to ARM) R"); wrdec(Rt); wrstr(", S"); wrdec(Fn); newline();
-        dumperegs(er);
+        dumpreg(Rt, REG(Rt));
         dumpfpreg(er, Fm);
 #endif
         er->pc += 4;
@@ -349,7 +348,7 @@ fpithumb2(Ereg *er)
         er->s[Fm] = REG(Rt);
 #ifdef fpudebug
         wrstr("VMOV (to FPU) S"); wrdec(Fn); wrstr(", R"); wrdec(Rt); newline();
-        dumperegs(er);
+        dumpreg(Rt, REG(Rt));
         dumpfpreg(er, Fm);
 #endif
         er->pc += 4;

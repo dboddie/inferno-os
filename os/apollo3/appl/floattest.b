@@ -1,7 +1,9 @@
 implement FloatTest;
 
 include "draw.m";
+include "math.m";
 include "sys.m";
+math: Math;
 sys: Sys;
 print: import sys;
 
@@ -13,6 +15,7 @@ FloatTest: module
 init(nil: ref Draw->Context, args: list of string)
 {
     sys = load Sys Sys->PATH;
+    math = load Math Math->PATH;
 
 #    for (;;) {
         assign_test();
@@ -22,6 +25,7 @@ init(nil: ref Draw->Context, args: list of string)
         multiply_test();
         divide_test();
         print_test();
+        math_test();
 #    }
 
     sys->print("Finished\n");
@@ -168,4 +172,12 @@ print_test()
     sys->print("x = -2.0;\n");
     sys->print("%f\n", x);
     sys->print("%g\n", x);
+}
+
+math_test()
+{
+    x := 2.0;
+    y := math->sqrt(x);
+    sys->print("x := %f\n", x);
+    sys->print("y := %f\n", y);
 }
