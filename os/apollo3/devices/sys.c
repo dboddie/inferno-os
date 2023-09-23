@@ -21,3 +21,20 @@ void disablefpu(void)
     *(int *)CPACR_ADDR &= ~(0xf << 20);
     coherence();
 }
+
+int getmvfr(int i)
+{
+    /* Return the contents of the MVFR<i> register containing FP feature
+       information. */
+    switch (i) {
+    case 0:
+        return *(int *)MVFR0;
+    case 1:
+        return *(int *)MVFR1;
+    case 2:
+        return *(int *)MVFR2;
+    default:
+        ;
+    }
+    return 0;
+}

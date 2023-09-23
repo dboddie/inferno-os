@@ -179,4 +179,9 @@
 /* ARMv7-M Architecture Reference Manual, B1.4.2 */
 #define EPSR_T 0x01000000
 
+/* Floating point features (ARMv7-M Architecture Reference Manual, B4.7) */
+#define MVFR0 0xe000ef40
+#define MVFR1 0xe000ef44
+#define MVFR2 0xe000ef48
+
 #endif
