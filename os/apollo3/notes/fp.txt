@@ -128,3 +128,50 @@ while interrupts are disabled, which causes a fault.
 
 Use of the wrong definition for the Internal representation of zero caused
 a loop in dtoa to fail to exit.
+
+
+
+0005f1d4: 0000eeb0 00003b40	(969)	MOVD	F0,F3           saves y
+ 0005f1d8: 00004f6d 000042bc	(970)	CMP	$-1021,R4,      cmp(k, -1021)
+ 0005f1dc: 000046e4	(970)	MOVW	R12,R12
+ 0005f1de: 0000db09	(970)	BLT	,5f1f4(BRANCH)
+ 0005f1e0: 00000021	(971)	MOVW	R4,R1                   k
+ 0005f1e2: 00000509	(971)	SLL	$20,R1                  k << 20
+ 0005f1e4: 00009a12	(971)	MOVW	y-4(SP),R2              __HI(y)
+ 0005f1e6: 00001852	(971)	ADD	R1,R2                   += (k << 20)
+ 0005f1e8: 00009212	(971)	MOVW	R2,y-4(SP)              and update
+ 0005f1ea: 0000eeb0 00000b43	(972)	MOVD	F3,F0           load unmodified value
+ 0005f1ee: 00009e00	(972)	MOVW	0(R13),R6               and prepare to return
+
+
+0005f1d4: 0000ed8d 00000b11	(969)	MOVD	F0,y-8(SP)      store y
+ 0005f1d8: 00004f6c 000042bc	(970)	CMP	$-1021,R4,      cmp(k, -1021)
+ 0005f1dc: 000046e4	(970)	MOVW	R12,R12
+ 0005f1de: 0000db10	(970)	BLT	,5f202(BRANCH)
+ 0005f1e0: 0000486b	(971)	MOVW	$.string<>+74(SB),R0    load string address
+ 0005f1e2: 00009912	(971)	MOVW	y-4(SP),R1              __HI(y)
+ 0005f1e4: 00009102	(971)	MOVW	R1,8(R13)
+ 0005f1e6: 00009911	(971)	MOVW	y-8(SP),R1              __LO(y)
+ 0005f1e8: 00009103	(971)	MOVW	R1,12(R13)
+ 0005f1ea: 0000f7b4 0000f9a5	(971)	BL	,print+13538(BRANCH)
+ 0005f1ee: 00009908	(971)	MOVW	k-44(SP),R1             k
+ 0005f1f0: 00000509	(972)	SLL	$20,R1                  k << 20
+ 0005f1f2: 00009a12	(972)	MOVW	y-4(SP),R2              __HI(y)
+ 0005f1f4: 00001852	(972)	ADD	R1,R2                   += (k << 20)
+ 0005f1f6: 00009212	(972)	MOVW	R2,y-4(SP)              and update
+ 0005f1f8: 0000ed9d 00000b11	(973)	MOVD	y-8(SP),F0      load modified y
+ 0005f1fc: 00009e00	(973)	MOVW	0(R13),R6               and return
+
+
+
+ 0005f16a: 0000eeb0 00003b40    (966)   MOVD    F0,F3
+ 0005f16e: 00004f83 000042bc    (967)   CMP     $-1021,R4,
+ 0005f172: 0000db08     (967)   BLT     ,5f186(BRANCH)
+ 0005f174: 00000021     (968)   MOVW    R4,R1
+ 0005f176: 00000509     (968)   SLL     $20,R1
+ 0005f178: 00009a0d     (968)   MOVW    y-4(SP),R2
+ 0005f17a: 00001852     (968)   ADD     R1,R2
+ 0005f17c: 0000920d     (968)   MOVW    R2,y-4(SP)
+ 0005f17e: 0000eeb0 00000b43    (969)   MOVD    F3,F0
+ 0005f182: 0000b00e     (969)   ADD     $56,R13
+ 0005f184: 000046f7     (969)   MOVW    R14,R15
