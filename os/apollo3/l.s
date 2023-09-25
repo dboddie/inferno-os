@@ -142,6 +142,10 @@ TEXT _usage_fault(SB), THUMB, $-4
     MOVW    SP, R1      /* Record the interrupted stack pointer. */
     ADD     $0x68, R1   /* Includes FP registers. */
 
+    /* Push R1, R4-R11 and LR to complete the set of stacked registers.
+       It was found that PUSH(0x0ff2, 1) resulted in an incomplete or
+       corrupt set of stacked registers, with the value expected in r4 found
+       in r3. */
     PUSH(0x0ffa, 1)
     MOVW    SP, R0
     BL ,usage_fault(SB)
@@ -157,7 +161,7 @@ TEXT _bus_fault(SB), THUMB, $-4
     MOVW    SP, R1      /* Record the interrupted stack pointer. */
     ADD     $0x68, R1   /* Includes FP registers. */
 
-    PUSH(0x0ff2, 1)
+    PUSH(0x0ffa, 1)
     MOVW    SP, R0
     B ,bus_fault(SB)
 
