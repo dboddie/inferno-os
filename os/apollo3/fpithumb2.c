@@ -329,6 +329,7 @@ fpithumb2(Ereg *er)
         er->pc += 4;
         return 1;
     }
+/*
     // MOVDW (A7.7.240)
     case 0xee10:
     {
@@ -406,6 +407,9 @@ fpithumb2(Ereg *er)
         er->pc += 4;
         return 1;
     }
+*/
+    default:
+        ;
     }
 
     return 0;
