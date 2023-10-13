@@ -49,10 +49,6 @@ static void poolsizeinit(void)
     poolsize(imagmem, (nb*image_pool_pcnt)/100, 1);
 }
 
-extern char bdata[];
-extern void setup_led(void);
-extern void set_led(int);
-
 void main(void)
 {
     /* Mach is defined in dat.h, edata and end are in port/lib.h */
@@ -71,10 +67,6 @@ void main(void)
 
     start_timer();
     setup_usart();
-
-wrstr("etext="); wrhex((int)etext); newline();
-wrstr("edata="); wrhex((int)edata); newline();
-wrstr("end="); wrhex((int)end); newline();
 
 //    uartconsinit();
     serwrite = uart_serwrite;
