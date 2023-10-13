@@ -101,3 +101,4 @@ appl:V:
 	limbo -o $ROOT/dis/makecol.dis appl/makecol.b
 	limbo -o $ROOT/dis/ledsegment.dis appl/ledsegment.b
 	limbo -o $ROOT/dis/floattest.dis appl/floattest.b
+	limbo -o $ROOT/dis/textmandel.dis appl/textmandel.b
