@@ -274,33 +274,59 @@ CKBL(int o)
 	IMM(o, -4194304, 4194302, "BL");
 }
 
-#define DPIRRS(op, i, rm, rd)	(CKIRRS(op, i, rm, rd), *code++ = ((op-Lsl)<<11) | (i<<6) | (rm<<3) | rd)
-#define DPRRR(op, rs, rm, rd)	(CKRRR(op, rs, rm, rd), *code++ = (6<<10) | ((op-Add)<<9) | (rs<<6) | (rm<<3) | rd)
-#define DPIRR(op, i, rm, rd)	(CKIRR(op, i, rm, rd), *code++ = (7<<10) | ((op-Add)<<9) | (i<<6) | (rm<<3) | rd)
-#define DPIR(op, i, rd)		(CKIR(op, i, rd), *code++ = (1<<13) | ((op-Mov)<<11) | (rd<<8) | i)
-#define DPRR(op, rs, rd)		(CKRR(op, rs, rd), *code++ = (1<<14) | (op<<6) | (rs<<3) | rd)
+static char op_str[][21] = {
+	"And",
+	"Eor",
+	"Lsl",
+	"Lsr",
+	"Asr",
+	"Adc",
+	"Sbc",
+	"Ror",
+	"Tst",
+	"Neg",
+	"Cmp",
+	"Cmn",
+	"Orr",
+	"Mul",
+	"Bic",
+	"Mvn",
+	"Mov",
+	"Cmpi",
+	"Add",
+	"Sub",
+	"Movh",
+};
 
-#define DPRH(op, rs, hd)		(CKRH(op, rs, hd), *code++ = (17<<10) | ((op-Add)<<8) | (1<<7) | (rs<<3) | (hd-8))
-#define DPHR(op, hs, rd)		(CKHR(op, hs, rd), *code++ = (17<<10) | ((op-Add)<<8) | (1<<6) | ((hs-8)<<3) | rd)
-#define DPHH(op, hs, hd)		(CKHH(op, hs, hd), *code++ = (17<<10) | ((op-Add)<<8) | (3<<6) | ((hs-8)<<3) | (hd-8))
+void dprint(char*, ...) {}
 
-#define LDW(rs, o, rd)	(CKLS(rs, o, rd, 4, 1), *code++ = (13<<11)|((o/4)<<6)|(rs<<3)|rd)
-#define STW(rs, o, rd)	(CKLS(rs, o, rd, 4, 0), *code++ = (12<<11)|((o/4)<<6)|(rs<<3)|rd)
-#define LDH(rs, o, rd)	(CKLS(rs, o, rd, 2, 0), *code++ = (17<<11)|((o/2)<<6)|(rs<<3)|rd)
-#define STH(rs, o, rd)	(CKLS(rs, o, rd, 2, 1), *code++ = (16<<11)|((o/2)<<6)|(rs<<3)|rd)
-#define LDB(rs, o, rd)	(CKLS(rs, o, rd, 1, 1), *code++ = (15<<11)|(o<<6)|(rs<<3)|rd)
-#define STB(rs, o, rd)	(CKLS(rs, o, rd, 1, 0), *code++ = (14<<11)|(o<<6)|(rs<<3)|rd)
-#define LDRW(rs, rm, rd)	(CKLSR(rs, rm, rd, 4, 1), *code++ = (44<<9)|(rs<<6)|(rm<<3)|rd)
-#define STRW(rs, rm, rd)	(CKLSR(rs, rm, rd, 4, 1), *code++ = (40<<9)|(rs<<6)|(rm<<3)|rd)
-#define LDRH(rs, rm, rd)	(CKLSR(rs, rm, rd, 4, 1), *code++ = (45<<9)|(rs<<6)|(rm<<3)|rd)
-#define STRH(rs, rm, rd)	(CKLSR(rs, rm, rd, 4, 1), *code++ = (41<<9)|(rs<<6)|(rm<<3)|rd)
-#define LDRB(rs, rm, rd)	(CKLSR(rs, rm, rd, 4, 1), *code++ = (46<<9)|(rs<<6)|(rm<<3)|rd)
-#define STRB(rs, rm, rd)	(CKLSR(rs, rm, rd, 4, 1), *code++ = (42<<9)|(rs<<6)|(rm<<3)|rd)
+#define DPIRRS(op, i, rm, rd)	(dprint("%ux: %s r%d,r%d ", code, op_str[op], rd, rm), CKIRRS(op, i, rm, rd), *code++ = ((op-Lsl)<<11) | (i<<6) | (rm<<3) | rd, dprint("%04ux\n", *(code-1)))
+#define DPRRR(op, rs, rm, rd)	(dprint("%ux: %s r%d,r%d,r%d ", code, op_str[op], rd, rm, rs), CKRRR(op, rs, rm, rd), *code++ = (6<<10) | ((op-Add)<<9) | (rs<<6) | (rm<<3) | rd, dprint("%04ux\n", *(code-1)))
+#define DPIRR(op, i, rm, rd)	(dprint("%ux: %s r%d,r%d,#%d ", code, op_str[op], rd, rm, i), CKIRR(op, i, rm, rd), *code++ = (7<<10) | ((op-Add)<<9) | (i<<6) | (rm<<3) | rd, dprint("%04ux\n", *(code-1)))
+#define DPIR(op, i, rd)		(dprint("%ux: %s r%d,#%d ", code, op_str[op], rd, i), CKIR(op, i, rd), *code++ = (1<<13) | ((op-Mov)<<11) | (rd<<8) | i, dprint("%04ux\n", *(code-1)))
+#define DPRR(op, rs, rd)		(dprint("%ux: %s r%d,r%d ", code, op_str[op], rd, rs), CKRR(op, rs, rd), *code++ = (1<<14) | (op<<6) | (rs<<3) | rd, dprint("%04ux\n", *(code-1)))
 
-#define LDWPCREL(o, rd)	(CKLPCR(o, rd), *code++ = (9<<11)|(rd<<8)|(o/4))
+#define DPRH(op, rs, hd)		(dprint("%ux: %s r%d,r%d ", code, op_str[op], hd, rs), CKRH(op, rs, hd), *code++ = (17<<10) | ((op-Add)<<8) | (1<<7) | (rs<<3) | (hd-8), dprint("%04ux\n", *(code-1)))
+#define DPHR(op, hs, rd)		(dprint("%ux: %s r%d,r%d ", code, op_str[op], rd, hs), CKHR(op, hs, rd), *code++ = (17<<10) | ((op-Add)<<8) | (1<<6) | ((hs-8)<<3) | rd, dprint("%04ux\n", *(code-1)))
+#define DPHH(op, hs, hd)		(dprint("%ux: %s r%d,r%d ", code, op_str[op], hd, hs), CKHH(op, hs, hd), *code++ = (17<<10) | ((op-Add)<<8) | (3<<6) | ((hs-8)<<3) | (hd-8), dprint("%04ux\n", *(code-1)))
 
-#define CMPI(i, rn)		DPIR(Cmpi, i, rn)
-#define CMP(rs, rn)		DPRR(Cmp, rs, rn)
+#define LDW(rs, o, rd)	(dprint("%ux: LDW r%d,[r%d,#%d] ", code, rd, rs, o), CKLS(rs, o, rd, 4, 1), *code++ = (13<<11)|((o/4)<<6)|(rs<<3)|rd, dprint("%04ux\n", *(code-1)))
+#define STW(rs, o, rd)	(dprint("%ux: STW r%d,[r%d,#%d] ", code, rd, rs, o), CKLS(rs, o, rd, 4, 0), *code++ = (12<<11)|((o/4)<<6)|(rs<<3)|rd, dprint("%04ux\n", *(code-1)))
+#define LDH(rs, o, rd)	(dprint("%ux: LDH r%d,[r%d,#%d] ", code, rd, rs, o), CKLS(rs, o, rd, 2, 0), *code++ = (17<<11)|((o/2)<<6)|(rs<<3)|rd, dprint("%04ux\n", *(code-1)))
+#define STH(rs, o, rd)	(dprint("%ux: STH r%d,[r%d,#%d] ", code, rd, rs, o), CKLS(rs, o, rd, 2, 1), *code++ = (16<<11)|((o/2)<<6)|(rs<<3)|rd, dprint("%04ux\n", *(code-1)))
+#define LDB(rs, o, rd)	(dprint("%ux: LDB r%d,[r%d,#%d] ", code, rd, rs, o), CKLS(rs, o, rd, 1, 1), *code++ = (15<<11)|(o<<6)|(rs<<3)|rd, dprint("%04ux\n", *(code-1)))
+#define STB(rs, o, rd)	(dprint("%ux: STB r%d,[r%d,#%d] ", code, rd, rs, o), CKLS(rs, o, rd, 1, 0), *code++ = (14<<11)|(o<<6)|(rs<<3)|rd, dprint("%04ux\n", *(code-1)))
+#define LDRW(rs, rm, rd)	(dprint("%ux: LDRW r%d,[r%d,r%d] ", code, rd, rm, rs), CKLSR(rs, rm, rd, 4, 1), *code++ = (44<<9)|(rs<<6)|(rm<<3)|rd, dprint("%04ux\n", *(code-1)))
+#define STRW(rs, rm, rd)	(dprint("%ux: STRW r%d,[r%d,r%d] ", code, rd, rm, rs), CKLSR(rs, rm, rd, 4, 1), *code++ = (40<<9)|(rs<<6)|(rm<<3)|rd, dprint("%04ux\n", *(code-1)))
+#define LDRH(rs, rm, rd)	(dprint("%ux: LDRH r%d,[r%d,r%d] ", code, rd, rm, rs), CKLSR(rs, rm, rd, 4, 1), *code++ = (45<<9)|(rs<<6)|(rm<<3)|rd, dprint("%04ux\n", *(code-1)))
+#define STRH(rs, rm, rd)	(dprint("%ux: STRH r%d,[r%d,r%d] ", code, rd, rm, rs), CKLSR(rs, rm, rd, 4, 1), *code++ = (41<<9)|(rs<<6)|(rm<<3)|rd, dprint("%04ux\n", *(code-1)))
+#define LDRB(rs, rm, rd)	(dprint("%ux: LDRB r%d,[r%d,r%d] ", code, rd, rm, rs), CKLSR(rs, rm, rd, 4, 1), *code++ = (46<<9)|(rs<<6)|(rm<<3)|rd, dprint("%04ux\n", *(code-1)))
+#define STRB(rs, rm, rd)	(dprint("%ux: STRB r%d,[r%d,r%d] ", code, rd, rm, rs), CKLSR(rs, rm, rd, 4, 1), *code++ = (42<<9)|(rs<<6)|(rm<<3)|rd, dprint("%04ux\n", *(code-1)))
+
+#define LDWPCREL(o, rd)	(dprint("%ux: LDWPCREL r%d,[pc,#%d] ", code, rd, o), CKLPCR(o, rd), *code++ = (9<<11)|(rd<<8)|(o/4), dprint("%04ux\n", *(code-1)))
+
+#define CMPI(i, rn)		(dprint("%ux: CMPI %d %d ", code, rn, i), DPIR(Cmpi, i, rn), dprint("%04ux\n", *(code-1)))
+#define CMP(rs, rn)		(dprint("%ux: CMP %d %d ", code, rn, rs), DPRR(Cmp, rs, rn), dprint("%04ux\n", *(code-1)))
 #define CMPRH(rs, rn)	DPRH(Cmph, rs, rn)
 #define CMPHR(rs, rn)	DPHR(Cmph, rs, rn)
 #define CMPHH(rs, rn)	DPHH(Cmph, rs, rn)
@@ -329,18 +355,18 @@ CKBL(int o)
 #define BRADIS(o)		branch(IA(patch, o)-(ulong)CODE)
 #define CBRADIS(c, o)	cbranch(c, IA(patch, o)-(ulong)CODE)
 #define BRAMAC(o)		branch(IA(macro, o)-(ulong)CODE)
-#define RETURN		MOVHH(RLINK, RPC)
-#define CALL(o)		call((ulong)(FPX(o))-(ulong)CODE)
-#define CALLMAC(o)	call(IA(macro, o)-(ulong)CODE)
+#define RETURN		(dprint("%ux: RETURN ", code), MOVHH(RLINK, RPC), dprint("%04ux\n", *(code-1)))
+#define CALL(o)		call((ulong)(FPX(o)))
+#define CALLMAC(o)	call(IA(macro, o))
 		
 #define PATCH(ptr)		(CKB((ulong)code-(ulong)ptr-4), *ptr |= (((ulong)code-(ulong)(ptr)-4)>>1) & 0x7ff)
 #define CPATCH(ptr)	(CKBCC((ulong)code-(ulong)ptr-4), *ptr |= (((ulong)code-(ulong)(ptr)-4)>>1) & 0xff)
 #define BPATCH(ptr)		((ulong)ptr-(ulong)code)
 
 /* long branches */
-#define DWORD(o)		(*code++ = (o)&0xffff, *code++ = ((o)>>16)&0xffff)
+#define DWORD(o)		(dprint("%ux: DWORD ", code), *code++ = (o)&0xffff, *code++ = ((o)>>16)&0xffff, dprint("%04ux %04ux\n", *(code-2), *(code-1)))
 #define BRALONG(o)		(LDWPCREL(0, RCON), MOVRH(RCON, RPC), DWORD(o+(ulong)code-4))
-#define CALLLONG(o)	(MOVHR(RPC, RCON), DPIR(Add, 10, RCON), MOVRH(RCON, RLINK), BRALONG(o))
+//#define CALLLONG(addr)	(MOVHR(RPC, RCON), DPIR(Add, 11, RCON), MOVRH(RCON, RLINK), BRALONG(addr))
 
 #define PAD()		MOVHH(RSB, RSB)
 
@@ -354,10 +380,10 @@ CKBL(int o)
 #define CMPH(r, scr)		DPIRR(Add, 1, r, scr)
 #define NOTNIL(r, scr)	(CMPH(r, scr), label = code, CJUMP(EQ, NOBR), CALL(bounds), CPATCH(label))
 
-#define ADDSP(o)	*code++ = (11<<12) | (0<<7) | (o>>2)
-#define SUBSP(o)	*code++ = (11<<12) | (1<<7) | (o>>2)
-#define LDSP(o, r)	*code++ = (19<<11) | (r<<8) | (o>>2)
-#define STSP(o, r)	*code++ = (18<<11) | (r<<8) | (o>>2)
+#define ADDSP(o)	(dprint("%ux: ADDSP ", code), *code++ = (11<<12) | (0<<7) | (o>>2), dprint("%04ux\n", *(code-1)))
+#define SUBSP(o)	(dprint("%ux: SUBSP ", code), *code++ = (11<<12) | (1<<7) | (o>>2), dprint("%04ux\n", *(code-1)))
+#define LDSP(o, r)	(dprint("%ux: LDSP ", code), *code++ = (19<<11) | (r<<8) | (o>>2), dprint("%04ux\n", *(code-1)))
+#define STSP(o, r)	(dprint("%ux: STSP ", code), *code++ = (18<<11) | (r<<8) | (o>>2), dprint("%04ux\n", *(code-1)))
 
 static	ushort*	code;
 static	ushort*	base;
@@ -380,6 +406,18 @@ static	void	macrelq(void);
 static	void movmem(Inst*);
 static	void mid(Inst*, int, int);
 extern	void	das(ushort*, int);
+
+void
+CALLLONG(ulong addr)
+{
+    MOVHR(RPC, RCON);    // reads PC + 4
+    DPIR(Add, 11, RCON); // address+1 after the constant encoded by DWORD
+    MOVRH(RCON, RLINK);  // PC + 4
+    LDWPCREL(0, RCON);
+    MOVRH(RCON, RPC);
+    DWORD(addr);
+    // address to return to
+}
 
 #define T(r)	*((void**)(R.r))
 
@@ -443,7 +481,7 @@ static void
 branch(long o)
 {
 	long off = o-4;
-
+//print("branch code=%lux o=%lx\n", (ulong)CODE, o);
 	if(pass == FIRSTPASS || (off >= -2048 && off <= 2046))
 		BRA(o);
 	else{
@@ -454,16 +492,18 @@ branch(long o)
 }
 
 static void
-call(long o)
+call(ulong addr)
 {
-	long off = o-4;
-
+        long o, off;
+        o = addr - (ulong)CODE;
+	off = o - 4;
+//print("call code=%lux addr=%lux\n", (ulong)code, addr);
 	if(pass == FIRSTPASS || (off >= -4194304 && off <= 4194302))
 		genc(o);
 	else{
 		if(!((int)CODE&2))
 			PAD();
-		CALLLONG(o);
+		CALLLONG(addr);
 	}
 }
 
@@ -872,6 +912,7 @@ punt(Inst *i, int m, void (*fn)(void))
 	}
 	mem(Stw, O(REG, FP), RREG, RFP);
 
+//print("call fn=%lux\n", fn);
 	CALL(fn);
 
 	con((ulong)&R, RREG, 1);
@@ -1084,7 +1125,7 @@ static void
 commframe(Inst *i)
 {
 	ushort *punt, *mlnil;
-
+//print("*** commframe ***\n");
 	opwld(i, Ldw, RA0);
 	CMPH(RA0, RA3);
 	mlnil = code;
@@ -1109,6 +1150,7 @@ commframe(Inst *i)
 
 	/* Type in RA3, destination in RA0 */
 	CPATCH(mlnil);
+//print("*** %lux\n", patch[i-mod->prog+1]);
 	con(RELPC(patch[i-mod->prog+1]), RA2, 0);
 	MOVRH(RA2, RLINK);
 	BRAMAC(MacMFRA);
@@ -1259,6 +1301,184 @@ comgoto(Inst *i)
 		t++;
 	}
 }
+
+static char opcode_str[][175] = {
+	"badop",
+	"alt",
+	"nbalt",
+	"igoto",
+	"call",
+	"frame",
+	"spawn",
+	"runt",
+	"iload",
+	"mcall",
+	"mspawn",
+	"mframe",
+	"ret",
+	"jmp",
+	"icase",
+	"iexit",
+	"new",
+	"newa",
+	"newcb",
+	"newcw",
+	"newcf",
+	"newcp",
+	"newcm",
+	"newcmp",
+	"isend",
+	"irecv",
+	"consb",
+	"consw",
+	"consp",
+	"consf",
+	"consm",
+	"consmp",
+	"headb",
+	"headw",
+	"headp",
+	"headf",
+	"headm",
+	"headmp",
+	"tail",
+	"lea",
+	"indx",
+	"movp",
+	"movm",
+	"movmp",
+	"movb",
+	"movw",
+	"movf",
+	"cvtbw",
+	"cvtwb",
+	"cvtfw",
+	"cvtwf",
+	"cvtca",
+	"cvtac",
+	"cvtwc",
+	"cvtcw",
+	"cvtfc",
+	"cvtcf",
+	"addb",
+	"addw",
+	"addf",
+	"subb",
+	"subw",
+	"subf",
+	"mulb",
+	"mulw",
+	"mulf",
+	"divb",
+	"divw",
+	"divf",
+	"modw",
+	"modb",
+	"andb",
+	"andw",
+	"orb",
+	"orw",
+	"xorb",
+	"xorw",
+	"shlb",
+	"shlw",
+	"shrb",
+	"shrw",
+	"insc",
+	"indc",
+	"addc",
+	"lenc",
+	"lena",
+	"lenl",
+	"beqb",
+	"bneb",
+	"bltb",
+	"bleb",
+	"bgtb",
+	"bgeb",
+	"beqw",
+	"bnew",
+	"bltw",
+	"blew",
+	"bgtw",
+	"bgew",
+	"beqf",
+	"bnef",
+	"bltf",
+	"blef",
+	"bgtf",
+	"bgef",
+	"beqc",
+	"bnec",
+	"bltc",
+	"blec",
+	"bgtc",
+	"bgec",
+	"slicea",
+	"slicela",
+	"slicec",
+	"indw",
+	"indf",
+	"indb",
+	"negf",
+	"movl",
+	"addl",
+	"subl",
+	"divl",
+	"modl",
+	"mull",
+	"andl",
+	"orl",
+	"xorl",
+	"shll",
+	"shrl",
+	"bnel",
+	"bltl",
+	"blel",
+	"bgtl",
+	"bgel",
+	"beql",
+	"cvtlf",
+	"cvtfl",
+	"cvtlw",
+	"cvtwl",
+	"cvtlc",
+	"cvtcl",
+	"headl",
+	"consl",
+	"newcl",
+	"casec",
+	"indl",
+	"movpc",
+	"tcmp",
+	"mnewz",
+	"cvtrf",
+	"cvtfr",
+	"cvtws",
+	"cvtsw",
+	"lsrw",
+	"lsrl",
+	"eclr",		/* unused */
+	"newz",
+	"newaz",
+	"iraise",
+	"casel",
+	"mulx",
+	"divx",
+	"cvtxx",
+	"mulx0",
+	"divx0",
+	"cvtxx0",
+	"mulx1",
+	"divx1",
+	"cvtxx1",
+	"cvtfx",
+	"cvtxf",
+	"iexpw",
+	"iexpl",
+	"iexpf",
+	"self",
+};
 
 static void
 comp(Inst *i)
@@ -1899,6 +2119,26 @@ comp(Inst *i)
 	}
 }
 
+extern void tmpdump(void);
+extern void procdump(void);
+
+void
+preamble_dbg(REG *reg)
+{
+    print("reg=%lux\n", (ulong)reg);
+    print("reg.PC=%lux\n", (ulong)reg->PC);
+    print("reg.SP=%lux\n", (ulong)reg->SP);
+    print("reg.xpc=%lux\n", (ulong)reg->xpc);
+
+for (ulong i = (ulong)reg->PC; i < (ulong)reg->PC + 0x30; i+=2)
+    print("%04lux,", *(ushort *)i);
+
+print("\n");
+
+procdump();
+    for (;;) {}
+}
+
 static void
 preamble(void)
 {
@@ -1909,18 +2149,32 @@ preamble(void)
 	if(comvec == nil)
 		error(exNomem);
 	code = (ushort*)comvec;
+print("mod=%s code = %lux\n", R.M->m->name, (ulong)code);
+ushort *cc = code;
+        /* Generate code to populate R, a REG struct (interp.h), which is
+           a member of the Prog struct. */
+	con((ulong)&R, RREG, 0);                // address of R
+	memh(Stw, O(REG, xpc), RREG, RLINK);    // R->xpc = lr
+	mem(Ldw, O(REG, FP), RREG, RFP);        // fp = R->FP
+	mem(Ldw, O(REG, MP), RREG, RMP);        // mp = R->MP
+	memh(Ldw, O(REG, PC), RREG, RPC);       // pc = R->PC
 
-	con((ulong)&R, RREG, 0);
-	memh(Stw, O(REG, xpc), RREG, RLINK);
-	mem(Ldw, O(REG, FP), RREG, RFP);
-	mem(Ldw, O(REG, MP), RREG, RMP);
-	memh(Ldw, O(REG, PC), RREG, RPC);
+//        con((ulong)tmpdump, R0, 0);
+//	MOVRH(R0, R15);
+
+//	LDW(RREG, 0, R0);
+//	DPIR(Add, 1, R0);
+//	MOVRH(R0, R15);
+
 	pass = LASTPASS;
 	flushcon(0);
 	pass = FIRSTPASS;
 	// print("preamble\n");
 	// das((ushort*)comvec, code-(ushort*)comvec);
 	segflush(comvec, 10 * sizeof(*code));
+while (cc != code)
+    print("%04ux,", *cc++);
+print("\n");
 	comvec =(void *)((ulong)comvec | 1);	/* T bit */
 }
 
@@ -2337,6 +2591,7 @@ compile(Module *m, int size, Modlink *ml)
 	tinit = malloc(m->ntype*sizeof(*tinit));
 	tmp = malloc(4096*sizeof(ulong));
 	base = tmp;
+
 	if(tinit == nil || patch == nil || tmp == nil)
 		goto bad;
 
@@ -2398,7 +2653,13 @@ compile(Module *m, int size, Modlink *ml)
 	codeoff = 0;
 	for(i = 0; i < size; i++) {
 		s = code;
+Inst *inst = &m->prog[i];
+print("op %d %s %ux\n", (int)inst->op, opcode_str[inst->op], code);
+ushort *cc = code;
 		comp(&m->prog[i]);
+while (cc != code)
+    print("%04ux,", *cc++);
+print("\n");
 		if(patch[i] != n) {
 			print("%3d %D\n", i, &m->prog[i]);
 			print("error: %lud != %d\n", patch[i], n);
@@ -2453,9 +2714,9 @@ compile(Module *m, int size, Modlink *ml)
 	m->prog = (Inst*)base;
 	m->compiled = 1;
 	segflush(base, n*sizeof(*base));
-// print("comvec at %lux\n", (ulong)comvec);
-// print("base at %lux-%lux\n", (ulong)base, (ulong)base+2*n);
-// print("entry %lux prog %lux\n", (ulong)m->entry, (ulong)m->prog);
+print("comvec at %lux\n", (ulong)comvec);
+print("base at %lux-%lux\n", (ulong)base, (ulong)base+2*n);
+print("entry %lux prog %lux\n", (ulong)m->entry, (ulong)m->prog);
 	return 1;
 bad:
 	free(patch);

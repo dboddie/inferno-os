@@ -723,8 +723,8 @@ OP(iload)
 	Module *m;
 	Modlink *ml, **mp, *t;
 	Heap *h;
-
 	n = string2c(S(s));
+//print("iload %s\n", n);
 	m = R.M->m;
 	if(m->rt & HASLDT)
 		ldt = m->ldt[W(m)];
@@ -1667,6 +1667,8 @@ opinit(void)
 			optab[i] = badop;
 }
 
+extern ulong getsp(void);
+
 void
 xec(Prog *p)
 {
@@ -1684,10 +1686,19 @@ xec(Prog *p)
 	}
 
 // print("%lux %lux %lux %lux %lux\n", (ulong)&R, R.xpc, R.FP, R.MP, R.PC);
+//print("xec mod=%s\n", R.M->m->name);
 
-	if(R.M->compiled)
+	if(R.M->compiled) {
+print("calling comvec %lux %lux\n", (ulong)comvec, getsp());
+print("R.PC=%lux R.FP=%lux R.SP=%lux R.xpc=%lux\n", R.PC, R.FP, R.SP, R.xpc);
+ushort *cc = (ushort *)((ulong)comvec & ~1);
+int i = 0;
+for (; i != 10; i++)
+    print("%04ux,", *cc++);
+print("\n");
 		comvec();
-	else do {
+print("after comvec %lux\n", (ulong)comvec);
+	} else do {
 		dec[R.PC->add]();
 		op = R.PC->op;
 		R.PC++;
