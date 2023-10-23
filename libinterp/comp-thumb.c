@@ -407,7 +407,7 @@ static	void movmem(Inst*);
 static	void mid(Inst*, int, int);
 extern	void	das(ushort*, int);
 
-void
+static void
 CALLLONG(ulong addr)
 {
     MOVHR(RPC, RCON);    // reads PC + 4
@@ -417,6 +417,25 @@ CALLLONG(ulong addr)
     MOVRH(RCON, RPC);
     DWORD(addr);
     // address to return to
+}
+
+static void
+literal16(ushort imm16, ushort high, int r)
+{
+        ushort imm4 = imm16 & 0xf000;
+        ushort i    = imm16 & 0x0800;
+        ushort imm3 = imm16 & 0x0700;
+        ushort imm8 = imm16 & 0x00ff;
+        *code++ = 0xf240 | (high << 7) | (imm4 >> 12) | (i >> 1);
+        *code++ = (imm3 << 4) | (r << 8) | imm8;
+}
+
+static void
+literal32(ulong imm32, int r)
+{
+	literal16(imm32 & 0xffff, 0, r);
+        if (imm32 >> 16)
+	    literal16(imm32 >> 16, 1, r);
 }
 
 #define T(r)	*((void**)(R.r))
@@ -669,6 +688,7 @@ con(ulong o, int r, int opt)
 	c->code = code;
 	c->pc = code+codeoff;
 	LDWPCREL(0, r);
+//	literal32(o, r);
 }
 
 static void
@@ -814,6 +834,9 @@ literal(ulong imm, int roff)
 	nlit++;
 
 	con((ulong)litpool, RCON, 0);
+//	literal16(imm & 0xffff, 0, RCON);
+//        if (imm >> 16)
+//	    literal16(imm >> 16, 1, RCON);
 	mem(Stw, roff, RREG, RCON);
 
 	if(pass != LASTPASS)
@@ -2149,8 +2172,8 @@ preamble(void)
 	if(comvec == nil)
 		error(exNomem);
 	code = (ushort*)comvec;
-print("mod=%s code = %lux\n", R.M->m->name, (ulong)code);
-ushort *cc = code;
+//print("mod=%s code = %lux\n", R.M->m->name, (ulong)code);
+//ushort *cc = code;
         /* Generate code to populate R, a REG struct (interp.h), which is
            a member of the Prog struct. */
 	con((ulong)&R, RREG, 0);                // address of R
@@ -2172,9 +2195,9 @@ ushort *cc = code;
 	// print("preamble\n");
 	// das((ushort*)comvec, code-(ushort*)comvec);
 	segflush(comvec, 10 * sizeof(*code));
-while (cc != code)
-    print("%04ux,", *cc++);
-print("\n");
+//while (cc != code)
+//    print("%04ux,", *cc++);
+//print("\n");
 	comvec =(void *)((ulong)comvec | 1);	/* T bit */
 }
 
@@ -2653,13 +2676,13 @@ compile(Module *m, int size, Modlink *ml)
 	codeoff = 0;
 	for(i = 0; i < size; i++) {
 		s = code;
-Inst *inst = &m->prog[i];
+/*Inst *inst = &m->prog[i];
 print("op %d %s %ux\n", (int)inst->op, opcode_str[inst->op], code);
-ushort *cc = code;
+ushort *cc = code;*/
 		comp(&m->prog[i]);
-while (cc != code)
+/*while (cc != code)
     print("%04ux,", *cc++);
-print("\n");
+print("\n");*/
 		if(patch[i] != n) {
 			print("%3d %D\n", i, &m->prog[i]);
 			print("error: %lud != %d\n", patch[i], n);

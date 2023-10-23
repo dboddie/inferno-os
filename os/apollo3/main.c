@@ -188,6 +188,7 @@ void fpinit(void)
 
 void    segflush(void *p, ulong n)
 {
+    coherence();
 }
 
 void uartputs(char *data, int len)

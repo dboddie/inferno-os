@@ -1,0 +1,4 @@
+MOV instructions don't update flags, apparently, unless S is set, so assigning
+an even address (bit 0 clear) to R15 should be fine. Care still needs to be
+taken to ensure that R14 always has bit 0 set so that returns always maintain
+Thumb mode, otherwise an invalid state usage fault will occur.

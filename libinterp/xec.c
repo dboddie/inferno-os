@@ -1691,11 +1691,16 @@ xec(Prog *p)
 	if(R.M->compiled) {
 print("calling comvec %lux %lux\n", (ulong)comvec, getsp());
 print("R.PC=%lux R.FP=%lux R.SP=%lux R.xpc=%lux\n", R.PC, R.FP, R.SP, R.xpc);
-ushort *cc = (ushort *)((ulong)comvec & ~1);
+/*ushort *cc = (ushort *)((ulong)comvec & ~1);
 int i = 0;
 for (; i != 10; i++)
     print("%04ux,", *cc++);
 print("\n");
+i = 0;
+cc = (ushort *)R.PC;
+for (; i != 20; i++)
+    print("%04ux,", *cc++);
+print("\n");*/
 		comvec();
 print("after comvec %lux\n", (ulong)comvec);
 	} else do {
