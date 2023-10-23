@@ -1667,8 +1667,6 @@ opinit(void)
 			optab[i] = badop;
 }
 
-extern ulong getsp(void);
-
 void
 xec(Prog *p)
 {
@@ -1689,8 +1687,8 @@ xec(Prog *p)
 //print("xec mod=%s\n", R.M->m->name);
 
 	if(R.M->compiled) {
-print("calling comvec %lux %lux\n", (ulong)comvec, getsp());
-print("R.PC=%lux R.FP=%lux R.SP=%lux R.xpc=%lux\n", R.PC, R.FP, R.SP, R.xpc);
+//print("calling comvec %lux %lux\n", (ulong)comvec, getsp());
+//print("R.PC=%lux R.FP=%lux R.SP=%lux R.xpc=%lux\n", R.PC, R.FP, R.SP, R.xpc);
 /*ushort *cc = (ushort *)((ulong)comvec & ~1);
 int i = 0;
 for (; i != 10; i++)
@@ -1702,7 +1700,7 @@ for (; i != 20; i++)
     print("%04ux,", *cc++);
 print("\n");*/
 		comvec();
-print("after comvec %lux\n", (ulong)comvec);
+//print("after comvec %lux\n", (ulong)comvec);
 	} else do {
 		dec[R.PC->add]();
 		op = R.PC->op;
