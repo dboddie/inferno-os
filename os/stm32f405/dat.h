@@ -4,6 +4,7 @@
 typedef struct ISAConf ISAConf;
 typedef struct Lock Lock;
 typedef struct Ureg Ureg;
+typedef struct Ereg Ereg;
 typedef struct Label Label;
 typedef struct FPenv FPenv;
 typedef struct I2Cdev I2Cdev;
@@ -31,7 +32,7 @@ struct Label
 };
 
 enum {
-        Maxfpregs       = 16,   /* 16 for Thumb-2, see Mach.fpnregs */
+        Maxfpregs       = 8,   /* use 8 of 16 doubles for Thumb-2, see Mach.fpnregs */
 	Nfpctlregs      = 16,
 };
 
@@ -51,7 +52,8 @@ struct FPenv
 {
 	ulong	status;
 	ulong   control;
-	ulong   regs[Maxfpregs][3];
+	double  regs[Maxfpregs];
+        int     fpscr;
 	int     fpistate;
         uintptr pc;
 };

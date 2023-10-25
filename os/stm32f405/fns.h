@@ -81,9 +81,12 @@ void	setpower(int, int);
 void	clockcheck(void);
 void	armtimerset(int);
 void	links(void);
-int	fpiarm(Ureg*);
+int	fpithumb2(Ereg*);
+void    dumpfpregs(Ereg*);
 void	mdelay(uint);
 void	initfrozen(void);
+void    savefpregs(void*);
+void    restorefpregs(void*);
 
 char*	getconf(char*);
 char *	getethermac(void);
@@ -104,12 +107,14 @@ int 	dmawait(int);
 void    hwinit(void);
 
 void    switcher(Ureg *);
+void    bus_fault(int);
 void    usage_fault(int);
 void    hard_fault(int);
 void    svcall(int);
 void    uart3_intr(void);
 uint    get_r10(void);
 uint    get_r12(void);
+void    intron(void);
 
 int getprimask(void);
 int getcontrol(void);
@@ -118,6 +123,13 @@ int getmsp(void);
 void setmsp(int);
 int getpsp(void);
 void setpsp(int);
+
+/* Debugging functions, typically implemented using a UART */
+extern void wrhex(int);
+extern void wrdec(int);
+extern void newline(void);
+extern void wrch(int);
+extern void wrstr(char *);
 
 #define PTR2UINT(p)     ((uintptr)(p))
 #define UINT2PTR(i)     ((void*)(i))

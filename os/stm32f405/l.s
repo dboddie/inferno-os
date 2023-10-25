@@ -50,7 +50,7 @@ _end_start_loop:
 TEXT _dummy(SB), THUMB, $-4
 
     MOVW    SP, R0
-    B   ,dummy(SB)
+    B   ,trap_dummy(SB)
 
 /* These exception handlers will be entered in handler mode, using the main
    stack pointer (MSP). */
@@ -60,6 +60,19 @@ TEXT _systick(SB), THUMB, $-4
     /* In handler mode; R0-R3, R12, R14, PC and xPSR from the preempted code
        are saved on the stack. R0 is stored lowest at the address pointed to
        by the stack pointer. */
+
+    /* Don't interrupt a currently active exception.
+    MOVW    $SHCSR_ADDR, R0
+    MOVW    (R0), R0
+    AND.S   $0xff, R0
+    BNE     _systick_exit
+
+    MOVW    $CFSR_ADDR, R0
+    MOVW    (R0), R0
+    SRL     $16, R0
+    AND.S   $0x1, R0
+    BNE     _systick_exit
+    */
 
     MOVW    28(SP), R0          /* Read xPSR */
     MOVW    R0, R2
@@ -96,9 +109,13 @@ _systick_exit:
 TEXT _preswitch(SB), THUMB, $-4
 
     MOVW R0, R0
-    PUSH(0x1000, 0)             /* Save R12 (will be PC). */
+    PUSH(0x1400, 0)             /* Save R10 and R12 (will be PC). */
     PUSH(0x0bff, 1)             /* Save registers R0-R9, R11 as well as R14, in
                                    case the interrupted code uses them. */
+    VMRS(0)                     /* Copy FPSCR into R0 */
+    PUSH(0x0001, 0)             /* then push it onto the stack. */
+    VPUSH(0, 8)                 /* Push D0-D7. */
+
     MOVW    $setR12(SB), R1
     MOVW    R1, R12             /* Reset static base (SB) */
 
@@ -107,22 +124,42 @@ TEXT _preswitch(SB), THUMB, $-4
 
     MOVW    $apsr_flags(SB), R1
     MOVW    (R1), R1
-    MSR(1, 0)                /* Restore the status bits. */
+    MSR(1, 0)                   /* Restore the status bits. */
+
+    VPOP(0, 8)                  /* Recover D0-D7. */
+    POP(0x0001, 0)              /* Recover FPSCR into R0 */
+    VMSR(0)                     /* then restore it. */
 
     POP_LR_PC(0x0bff, 1, 0)     /* Recover R0-R9, R11 and R14 */
-    POP_LR_PC(0, 0, 1)          /* then PC. */
+    POP_LR_PC(0x0400, 0, 1)     /* then R10 and PC. */
 
 TEXT _hard_fault(SB), THUMB, $-4
 /*    MRS(0, MRS_MSP)     Pass the main stack pointer (MSP) to a C function. */
-    PUSH(0x1ff0, 0)
+
+    MOVW    SP, R1      /* Record the interrupted stack pointer. */
+    ADD     $0x68, R1   /* Includes FP registers. */
+
+    PUSH(0x0ffa, 1)
     MOVW    SP, R0
     B ,hard_fault(SB)
 
 TEXT _usage_fault(SB), THUMB, $-4
 /*     MRS(0, MRS_MSP)     Pass the main stack pointer (MSP) to a C function. */
-    PUSH(0x1ff0, 0)
+
+    /* R0-R3, R12, R14, PC and xPSR are saved on the stack. R0 is stored lowest
+       at the address pointed to by the stack pointer. */
+
+    MOVW    SP, R1      /* Record the interrupted stack pointer. */
+    ADD     $0x68, R1   /* Includes FP registers. */
+
+    /* Push R1, R4-R11 and LR to complete the set of stacked registers.
+       It was found that PUSH(0x0ff2, 1) resulted in an incomplete or
+       corrupt set of stacked registers, with the value expected in r4 found
+       in r3. */
+    PUSH(0x0ffa, 1)
     MOVW    SP, R0
-    B ,usage_fault(SB)
+    BL ,usage_fault(SB)
+    POP(0x0ffa, 1)
 
 TEXT _nmi(SB), THUMB, $-4
     B ,_nmi(SB)
@@ -131,7 +168,12 @@ TEXT _mem_manage(SB), THUMB, $-4
     B ,_mem_manage(SB)
 
 TEXT _bus_fault(SB), THUMB, $-4
-    B ,_bus_fault(SB)
+    MOVW    SP, R1      /* Record the interrupted stack pointer. */
+    ADD     $0x68, R1   /* Includes FP registers. */
+
+    PUSH(0x0ffa, 1)
+    MOVW    SP, R0
+    B ,bus_fault(SB)
 
 TEXT _svcall(SB), THUMB, $-4
     B ,_svcall(SB)

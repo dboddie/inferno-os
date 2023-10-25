@@ -1,5 +1,6 @@
 #include "devices/stm32f405.h"
 
+extern void coherence(void);
 extern void enablefpu(void);
 
 extern void setup_system_clock(void);
