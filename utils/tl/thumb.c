@@ -515,10 +515,10 @@ Optab thumboptab[] =
 	{ ACMPD,	C_FREG,	C_REG,	C_NONE,		57, 8, 0 },
 	{ ACMPD,	C_FCON,	C_REG,	C_NONE,		57, 8, 0 },
 
-	{ AMOVFW,	C_FREG,	C_NONE,	C_REG,		58, 4, 0 },
-	{ AMOVWF,	C_REG,	C_NONE,	C_FREG,		58, 4, 0 },
-	{ AMOVWD,	C_REG,	C_NONE,	C_FREG,		58, 4, 0 },
-	{ AMOVDW,	C_FREG,	C_NONE,	C_REG,		58, 4, 0 },
+	{ AMOVFW,	C_FREG,	C_NONE,	C_REG,		58, 8, 0 },
+	{ AMOVWF,	C_REG,	C_NONE,	C_FREG,		58, 8, 0 },
+	{ AMOVWD,	C_REG,	C_NONE,	C_FREG,		58, 8, 0 },
+	{ AMOVDW,	C_FREG,	C_NONE,	C_REG,		58, 8, 0 },
 	{ AMOVFD,	C_FREG,	C_NONE,	C_FREG,		58, 4, 0 },
 	{ AMOVDF,	C_FREG,	C_NONE,	C_FREG,		58, 4, 0 },
 
@@ -1299,16 +1299,20 @@ if(debug['G']) print("%ulx: %s: thumb\n", (ulong)(p->pc), p->from.sym->name);
 
                 switch (p->as) {
                 case AADDF:
-                case AADDD:
                 case ADIVF:
-                case ADIVD:
                 case AMULF:
-                case AMULD:
                 case ASUBF:
-                case ASUBD:
-		    o1 |= (r >> 1) | ((r & 1) << 23) |          /* Vn */
-                          ((rf & 0x1e)<<15) | ((rf & 1)<<21) |  /* Vm */
-                          ((rt & 0x1e)<<27) | ((rt & 1)<<6);    /* Vd */
+//		    o1 |= ((r >> 1) & 0xf) | ((r & 1) << 23) |          /* Vn */
+//                          (((rf >> 1) & 0xf)<<16) | ((rf & 1) << 21) |  /* Vm */
+//                          (((rt >> 1) & 0xf)<<28) | ((rt & 1) << 6);    /* Vd */
+//                    break;
+                case AADDD:
+                case ADIVD:
+                case AMULD:
+                case ASUBD: // assume that NFREG < 16
+		    o1 |= (r & 0xf) |           /* Vn */
+                          ((rf & 0xf)<<16) |    /* Vm */
+                          ((rt & 0xf)<<28);     /* Vd */
                     break;
                 case AMOVF:
                 case AMOVD: /* TODO: actually use double precision */
@@ -1317,8 +1321,8 @@ if(debug['G']) print("%ulx: %s: thumb\n", (ulong)(p->pc), p->from.sym->name);
                             /* Float constant was zero */
                             /* VSUB rt, rt, rt (ARMv7-M ARM, A7.7.257) */
                             o1 ^= 1 << 7;
-                            o1 |= (rt >> 1) | ((rt & 1) << 23);     /* Vn */
-                            o1 |= ((rt & 0x1e)<<15) | ((rt & 1)<<21); /* Vm */
+                            o1 |= (rt & 0xf);       /* Vn */
+                            o1 |= ((rt & 0xf)<<16); /* Vm */
                         } else {
                             /* VMOV immediate (ARMv7-M ARM, A7.7.236) */
                             o1 ^= 1 << 22;
@@ -1326,9 +1330,9 @@ if(debug['G']) print("%ulx: %s: thumb\n", (ulong)(p->pc), p->from.sym->name);
                         }
                     } else {
                         /* VMOV register (ARMv7-M ARM, A7.7.237) */
-		        o1 |= ((rf & 0x1e)<<15) | ((rf & 1)<<21); /* Vm */
+		        o1 |= ((rf & 0xf)<<16); /* Vm */
                     }
-		    o1 |= ((rt & 0x1e)<<27) | ((rt & 1)<<6);    /* Vd */
+		    o1 |= ((rt & 0xf)<<28);     /* Vd */
                     if (p->as == AMOVD)
                         o1 |= 1 << 24;
                     break;
@@ -1345,9 +1349,16 @@ if(debug['G']) print("%ulx: %s: thumb\n", (ulong)(p->pc), p->from.sym->name);
 		rf = p->from.reg;
 		rt = p->reg;
 
-                /* VCMP (ARMv7-M ARM, A7.7.223) */
-                o1 |= ((rf & 0x1e)<<15) | ((rf & 1)<<21) |  /* Vm */
-                      ((r & 0x1e)<<27) | ((r & 1)<<6);      /* Vd */
+                if(p->from.type == D_FCONST) {
+		    if(p->from.ieee->h != 0 || p->from.ieee->l != 0)
+                        diag("invalid floating-point immediate\n%P", p);
+                    // VCMP (ARMv7-M ARM, A7.7.223, T2) compare to 0.0
+                    o1 |= 1;
+                    rf = 0;
+		}
+
+                // VCMP (ARMv7-M ARM, A7.7.223, T1)
+                o1 |= ((rf & 0x0f)<<16) | ((rt & 0x0f)<<28); /* Vm, Vd */
 
                 /* VMRS (ARMv7-M ARM, A7.7.243) with Rt=15 (for flags) */
                 o3 = 0x0a10eef1 | (15 << 28);
@@ -1356,19 +1367,44 @@ if(debug['G']) print("%ulx: %s: thumb\n", (ulong)(p->pc), p->from.sym->name);
                 SPLIT_INS(o3, o4);
 		break;
 
-	case 58:	/* floating point fix and float */
+	case 58:	/* floating point fix and float (MOVDW/MOVWD) */
 		o1 = thumbopfp(p->as, p->scond);
 		rf = p->from.reg;
 		rt = p->to.reg;
-		if(p->to.type == D_NONE){
-			rt = 0;
-			diag("to.type==D_NONE (asm/fp)");
-		}
-		if(p->from.type == D_REG)
-			o1 |= (rf<<28) | ((rt & 1)<<23) | ((rt & 0x1e)>>1);
-		else
-			o1 |= (rt<<28) | ((rf & 1)<<23) | ((rf & 0x1e)>>1);
-                SPLIT_INS(o1, o2);
+
+                if (p->as == AMOVDF) {
+                    // Vd:D M:Vm - only support 16 registers
+                    o1 |= ((rt & 1) << 6) | ((rt & 0xe) << 27) | ((rf & 0x0f) << 16);
+                    SPLIT_INS(o1, o2);
+                } else if (p->as == AMOVFD) {
+                    // MOVFD: D:Vd Vm:M - only support 16 registers
+                    o1 |= ((rt & 0x0f)<<28) | ((rf & 1) << 21) | ((rf & 0x0e) << 16);
+                    SPLIT_INS(o1, o2);
+                } else {
+                    if (p->from.type == D_REG) {    // int -> float
+                        // VCVT (A7.7.225)
+                        o3 = o1 | (rt << 16);   // Vm:M (*2 to align with doubles)
+                        if (p->as == AMOVWD)
+                            o3 |= rt << 28; // D:Vd
+                        else
+                            o3 |= ((rt >> 1) << 28) | ((rt & 1) << 6); // Vd:D
+                        // VMOV F,R (A7.7.240)
+                        o1 = 0x0a10ee00;
+                        o1 |= rt | rf<<28;  // rt = Vn:N (*2 to align with doubles)
+                    } else {                        // float -> int
+                        // VCVT (A7.7.225) rf -> FREGTMP
+                        o1 |= FREGTMP<<28;  // Vd:D
+                        if (p->as == AMOVDW)
+                            o1 |= rf << 16; // M:Vm
+                        else
+                            o1 |= ((rf & 1) << 21) | ((rf >> 1) << 16); // Vm:M
+                        // VMOV R,F (A7.7.240) FREFTMP -> rt
+                        o3 = 0x0a10ee10;
+                        o3 |= FREGTMP | rt<<28;
+                    }
+                    SPLIT_INS(o1, o2);
+                    SPLIT_INS(o3, o4);
+                }
 		break;
 
 	case 59:	/* move to FP[CS]R */
@@ -1663,18 +1699,27 @@ thumboprrr(int a, int ld)
 long
 thumbopfp(int a, int sc)
 {
+	/* See opvfprrr in 5l/asm.c for hints. */
 	long o = 0;
 
-        o |= 0xee << 8;
+        o |= 0xee00;    // Prepare the first half-word in the sequence.
+
+        // VCVT opc2 bits are to_int,0,signed
 
 	switch(a) {
-        /* VMOV (ARMv7-M ARM, A7.7.240), encoding T1, op=0 */
-	case AMOVWD:	return o | (0x0a<<24) | (1<<20) | (1<<6) | (0<<4);
-	case AMOVWF:	return o | (0x0a<<24) | (1<<20) | (0<<4);
-        /* VMOV (ARMv7-M ARM, A7.7.240), encoding T1, op=1 */
-	case AMOVDW:	return o | (0x0a<<24) | (1<<20) | (1<<6) | (1<<4);
-	case AMOVFW:	return o | (0x0a<<24) | (1<<20) | (1<<4);
-        /* VCVT (ARMv7-M ARM, A7.7.225), encoding T1 */
+	case AMOVWF:
+        /* VCVT (ARMv7-M ARM, A7.7.225), encoding T1, op=1, sz=0, opc2=b_000 */
+        return o | (0x0a << 24) | (0xc0 << 16) | 0xb8;
+	case AMOVFW:
+        /* VCVT (ARMv7-M ARM, A7.7.225), encoding T1, op=1, sz=0, opc2=b_101 */
+        return o | (0x0a << 24) | (0xc0 << 16) | 0xbd;
+	case AMOVWD:
+        /* VCVT (ARMv7-M ARM, A7.7.225), encoding T1, op=1, sz=1, opc2=b_000 */
+        return o | (0x0b << 24) | (0xc0 << 16) | 0xb8;
+	case AMOVDW:
+        /* VCVT (ARMv7-M ARM, A7.7.225), encoding T1, op=1, sz=1, opc2=b_101 */
+        return o | (0x0b << 24) | (0xc0 << 16) | 0xbd;
+        /* VCVT (ARMv7-M ARM, A7.7.227), encoding T1 */
 	case AMOVFD:	return o | (0x0a<<24) | (0xc0<<16) | 0xb7;
 	case AMOVDF:	return o | (0x0b<<24) | (0xc0<<16) | 0xb7;
         /* VMOV (register) (ARMv7-M ARM, A7.7.237) */
@@ -1717,9 +1762,9 @@ thumbofsr(int a, int r, long v, int b, Prog *p)
 		diag("odd offset for floating point op: %d\n%P", v, p);
 	else if(v >= (1<<10))
 		diag("literal span too large: %d\n%P", v, p);
-	o |= ((v>>2) & 0xFF) << 16;                 /* offset */
-	o |= b;                                     /* Rn */
-	o |= ((r & 0x1e) << 27) | ((r & 1) << 6);   /* Vd */
+	o |= ((v>>2) & 0xFF) << 16;     /* offset */
+	o |= b;                         /* Rn */
+	o |= ((r & 0x0f) << 28);        /* Vd */
 
 	switch(a) {
 	default:

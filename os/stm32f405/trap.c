@@ -16,11 +16,29 @@ extern void hzclock(Ureg *);
 
 void trapinit(void)
 {
+    // Interrupts need to be off at this point. This is done in the loader.
+
+//    *(int *)SHPR1 = (*(int *)SHPR1 & 0xff00ffff) | 0x00440000;
+    // Make SysTick low priority by assigning a high number to it.
+    *(int *)SHPR3 = (*(int *)SHPR3 & 0x00ffffff) | 0xe0000000;
+
     /* Enable the usage fault exception. */
     *(int *)SHCSR_ADDR |= SHCSR_USGFAULTENA;
 
     /* Enable division by zero trapping. */
     *(int *)CCR_ADDR |= CCR_DIV_0_TRP | CCR_UNALIGN_TRP;
+    /* Disable 8-byte stack alignment. */
+    *(int *)CCR_ADDR &= ~CCR_STKALIGN;
+
+    /* Disable privileged access, use SP_main as the stack, disable FP
+       extension. */
+    setcontrol(0);
+    disablefpu();
+    *(int *)FPCCR_ADDR &= ~FPCCR_LSPEN;
+    *(int *)FPCCR_ADDR |= FPCCR_ASPEN;
+    /* Enable the FPU again. */
+    enablefpu();
+    setcontrol(CONTROL_FPCA);
 }
 
 void showregs(int sp, int below)
@@ -60,6 +78,29 @@ void dumpregs(Ureg *uregs)
     wrstr("r12="); wrhex(get_r12()); wrch(' ');
     wrstr("sp="); wrhex((int)uregs); wrch(' ');
     wrstr("r14="); wrhex(uregs->r14); newline();
+}
+
+void dumperegs(Ereg *eregs)
+{
+    wrstr(" r0="); wrhex(eregs->r0); wrch(' ');
+    wrstr("r1="); wrhex(eregs->r1); wrch(' ');
+    wrstr(" r2="); wrhex(eregs->r2); wrch(' ');
+    wrstr("r3="); wrhex(eregs->r3); newline();
+    wrstr(" r4="); wrhex(eregs->r4); wrch(' ');
+    wrstr("r5="); wrhex(eregs->r5); wrch(' ');
+    wrstr(" r6="); wrhex(eregs->r6); wrch(' ');
+    wrstr("r7="); wrhex(eregs->r7); newline();
+    wrstr(" r8="); wrhex(eregs->r8); wrch(' ');
+    wrstr("r9="); wrhex(eregs->r9); wrch(' ');
+    wrstr("r10="); wrhex(eregs->r10); wrch(' ');
+    wrstr("r11="); wrhex(eregs->r11); newline();
+    wrstr("r12="); wrhex(eregs->r12); wrch(' ');
+    wrstr("r13="); wrhex(eregs->sp); wrch(' ');
+    wrstr("sp="); wrhex((int)eregs); wrch(' ');
+    wrstr("r14="); wrhex(eregs->r14); newline();
+    wrstr("exc_ret="); wrhex(eregs->exc_ret); wrch(' ');
+    wrstr("pc="); wrhex(eregs->pc); wrch(' ');
+    wrstr("xpsr="); wrhex(eregs->xpsr); newline();
 }
 
 extern int apsr_flags;
@@ -128,89 +169,107 @@ void kprocchild(Proc *p, void (*func)(void*), void *arg)
 
 void usage_fault(int sp)
 {
-    /* Entered with sp pointing to R4-R12, R0-R3, R12, R14, PC and xPSR. */
-    wrstr("Usage fault at "); wrhex(*(int *)(sp + 60)); newline();
-    wrstr("UFSR="); wrhex(*(short *)UFSR_ADDR); newline();
-//    wrstr("Instruction: "); wrhex(**(int **)(sp + 24)); newline();
-
-/* Step past an FP instruction, setting Thumb mode execution.
-    *(int *)(sp + 24) += 4;
-    *(int *)(sp + 28) = 0x01000000;
+    /* Entered with sp pointing to an Ereg struct. */
+    Ereg *er = (Ereg *)sp;
+//    wrstr("Usage fault at "); wrhex(er->pc); newline();
+/*
+    wrstr("CFSR="); wrhex(*(int *)CFSR_ADDR); newline();
+    wrstr("SHCSR="); wrhex(*(int *)SHCSR_ADDR); newline();
+    wrstr("FPCCR="); wrhex(*(int *)FPCCR_ADDR); newline();
+    wrstr("up="); wrhex((int)up); newline();
+    dumperegs(er);
+    dumpfpregs(er);
 */
-    wrstr("last APSR="); wrhex(apsr_flags); newline();
-    wrstr("sp="); wrhex(sp); newline();
-    wrstr("r10="); wrhex(get_r10()); newline();
-    wrstr("r12="); wrhex(get_r12()); newline();
+    if ((*(short *)UFSR_ADDR) & UFSR_UNDEFINSTR) {
+        if (fpithumb2(er)) {
+/*
+            wrstr("CFSR="); wrhex(*(int *)CFSR_ADDR); newline();
+            wrstr("SHCSR="); wrhex(*(int *)SHCSR_ADDR); newline();
+            wrstr("FPCCR="); wrhex(*(int *)FPCCR_ADDR); newline();
+            wrstr("up="); wrhex((int)up); newline();
+*/
+/*
+            dumpfpregs(er);
+            newline();
+*/
+            *(short *)UFSR_ADDR |= UFSR_UNDEFINSTR;
+//            setcontrol(CONTROL_FPCA);
+//            wrstr("control="); wrhex(getcontrol()); newline();
+//            wrstr("<-- "); wrhex(er->pc); newline();
+            return;
+        }
+    }
 
-    wrstr("sp="); wrhex(sp); newline();
-    wrstr("r10="); wrhex(get_r10()); wrch(' ');
-    wrstr("r12="); wrhex(get_r12()); newline();
+    wrstr("Usage fault at "); wrhex((int)er->pc); newline();
+    wrstr("UFSR="); wrhex(*(short *)UFSR_ADDR); newline();
 
-    wrstr("r0="); wrhex(*(int *)(sp + 36)); wrch(' ');
-    wrstr("r1="); wrhex(*(int *)(sp + 40)); wrch(' ');
-    wrstr("r2="); wrhex(*(int *)(sp + 44)); wrch(' ');
-    wrstr("r3="); wrhex(*(int *)(sp + 48)); newline();
-    wrstr("r4="); wrhex(*(int *)(sp)); wrch(' ');
-    wrstr("r5="); wrhex(*(int *)(sp + 4)); wrch(' ');
-    wrstr("r6="); wrhex(*(int *)(sp + 8)); wrch(' ');
-    wrstr("r7="); wrhex(*(int *)(sp + 12)); newline();
-    wrstr("r8="); wrhex(*(int *)(sp + 16)); wrch(' ');
-    wrstr("r9="); wrhex(*(int *)(sp + 20)); wrch(' ');
-    wrstr("r10="); wrhex(*(int *)(sp + 24)); wrch(' ');
-    wrstr("r11="); wrhex(*(int *)(sp + 28)); newline();
-    wrstr("r12="); wrhex(*(int *)(sp + 32)); wrch(' ');
-    wrstr("lr="); wrhex(*(int *)(sp + 56)); wrch(' ');
-    wrstr("pc="); wrhex(*(int *)(sp + 60)); wrch(' ');
-    wrstr("xPSR="); wrhex(*(int *)(sp + 64)); newline();
-
+    dumperegs((Ereg *)sp);
     poolsummary();
     poolshow();
 
     for (;;) {}
 }
 
+void bus_fault(int sp)
+{
+    Ereg *er = (Ereg *)sp;
+
+    wrstr("Bus fault at "); wrhex(er->pc); newline();
+
+    dumperegs(er);
+    dumpfpregs(er);
+
+    for (;;) {}
+}
+
+void wrstack(void)
+{
+    wrstr("up->kstack="); wrhex((int)up->kstack); wrstr("..");
+    wrhex((int)up->kstack + KSTKSIZE); newline();
+}
+
 void hard_fault(int sp)
 {
-    /* Entered with sp pointing to R4-R12, R0-R3, R12, R14, PC and xPSR. */
-    wrstr("Hard fault at "); wrhex(*(int *)(sp + 60)); newline();
-/*    wrstr("UFSR="); wrhex(*(int *)UFSR_ADDR); newline();
-    wrstr("Instruction: "); wrhex(**(int **)(sp + 24)); newline();*/
+    Ereg *er = (Ereg *)sp;
+
+    wrstr("Hard fault at "); wrhex(er->pc); newline();
+    wrstr("HFSR="); wrhex(*(int *)HFSR_ADDR); newline();
     int cfsr = *(int *)CFSR_ADDR;
     wrstr("CFSR="); wrhex(cfsr); newline();
+    int shcsr = *(int *)SHCSR_ADDR;
+    wrstr("SHCSR="); wrhex(shcsr); newline();
+    wrstr("FPCCR="); wrhex(*(int *)FPCCR_ADDR); newline();
+    wrstr("CONTROL="); wrhex(getcontrol()); newline();
+    wrstr("intr enabled="); wrhex(islo()); newline();
+    wrstr("up="); wrhex((int)up); newline();
+    wrstr("up->kstack="); wrhex((int)up->kstack); wrstr("..");
+    wrhex((int)up->kstack + KSTKSIZE); newline();
+
+    dumperegs(er);
+    dumpfpregs(er);
 
     if (cfsr & 0x200) {
         wrstr("BFAR="); wrhex(*(int *)BFAR_ADDR); newline();
     }
 
     wrstr("last APSR="); wrhex(apsr_flags); newline();
-    wrstr("sp="); wrhex(sp); newline();
-    wrstr("r10="); wrhex(get_r10()); wrch(' ');
-    wrstr("r12="); wrhex(get_r12()); newline();
 
-    wrstr("r0="); wrhex(*(int *)(sp + 36)); wrch(' ');
-    wrstr("r1="); wrhex(*(int *)(sp + 40)); wrch(' ');
-    wrstr("r2="); wrhex(*(int *)(sp + 44)); wrch(' ');
-    wrstr("r3="); wrhex(*(int *)(sp + 48)); newline();
-    wrstr("r4="); wrhex(*(int *)(sp)); wrch(' ');
-    wrstr("r5="); wrhex(*(int *)(sp + 4)); wrch(' ');
-    wrstr("r6="); wrhex(*(int *)(sp + 8)); wrch(' ');
-    wrstr("r7="); wrhex(*(int *)(sp + 12)); newline();
-    wrstr("r8="); wrhex(*(int *)(sp + 16)); wrch(' ');
-    wrstr("r9="); wrhex(*(int *)(sp + 20)); wrch(' ');
-    wrstr("r10="); wrhex(*(int *)(sp + 24)); wrch(' ');
-    wrstr("r11="); wrhex(*(int *)(sp + 28)); newline();
-    wrstr("r12="); wrhex(*(int *)(sp + 32)); wrch(' ');
-    wrstr("lr="); wrhex(*(int *)(sp + 56)); wrch(' ');
-    wrstr("pc="); wrhex(*(int *)(sp + 60)); wrch(' ');
-    wrstr("xPSR="); wrhex(*(int *)(sp + 64)); newline();
+    int a = sp + sizeof(Ereg);
+    for (int i = 0; i < 128; i+=4) {
+        wrhex(*(int *)(a + i));
+        if ((i & 0xf) == 0xc)
+            newline();
+        else
+            wrch(' ');
+    }
 
-    poolsummary();
-    poolshow();
+//    poolsummary();
+//    poolshow();
 
     for (;;) {}
 }
 
-void dummy(int sp)
+void trap_dummy(int sp)
 {
     wrstr("sp="); wrhex(sp); newline();
     wrstr("r0="); wrhex(*(int *)(sp)); newline();

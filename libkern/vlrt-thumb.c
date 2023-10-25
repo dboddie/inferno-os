@@ -13,6 +13,12 @@ struct	Vlong
 	ulong	lo;
 };
 
+struct	RVlong
+{
+	ulong	lo;
+	ulong	hi;
+};
+
 void	abort(void);
 
 void
@@ -41,14 +47,12 @@ _subv(Vlong *r, Vlong a, Vlong b)
 	r->hi = hi;
 }
 
-
 void
 _d2v(Vlong *y, double d)
 {
-	union { double d; struct Vlong; } x;
+	union { double d; struct RVlong; } x;
 	ulong xhi, xlo, ylo, yhi;
 	int sh;
-
 	x.d = d;
 
 	xhi = (x.hi & 0xfffff) | 0x100000;
