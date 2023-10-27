@@ -18,6 +18,7 @@ void trapinit(void)
     // Interrupts need to be off at this point. This is done in the loader.
 
 //    *(int *)SHPR1 = (*(int *)SHPR1 & 0xff00ffff) | 0x00440000;
+    // Make SysTick low priority by assigning a high number to it.
     *(int *)SHPR3 = (*(int *)SHPR3 & 0x00ffffff) | 0xe0000000;
 
     /* Enable the usage fault exception. */
