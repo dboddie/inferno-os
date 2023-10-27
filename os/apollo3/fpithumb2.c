@@ -280,9 +280,10 @@ fpithumb2(Ereg *er)
 #endif
         er->pc += 4;
         return 1;
-
+    }
     // ADDD (A7.7.222), SUBD (A7.7.257)
     case 0xee30:
+    {
         Fd = (w1 >> 12) << 1;
         Fm = (w1 & 0x0f) << 1;
         Fn = (w0 & 0x0f) << 1;
