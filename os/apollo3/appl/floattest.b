@@ -18,13 +18,13 @@ init(nil: ref Draw->Context, args: list of string)
     math = load Math Math->PATH;
 
 #    for (;;) {
-#        assign_test();
-#        add_test();
-#        compare_test();
-#        convert_test();
-#        multiply_test();
-#        divide_test();
-#        print_test();
+        assign_test();
+        add_test();
+        compare_test();
+        convert_test();
+        multiply_test();
+        divide_test();
+        print_test();
         math_test();
 #    }
 
