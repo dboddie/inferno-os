@@ -12,21 +12,12 @@ Conf conf;
 Mach *m = (Mach*)MACHADDR;
 Proc *up = 0;
 
-/* Use a function to avoid caching(?) speed-ups. */
-void _delay(void)
-{
-    for (int i = 0; i < 0x1000000; i++) {}
-}
-
 void main(void)
 {
-    setup_led();
-    for (;;) {
-        set_led(1);
-        _delay();
-        set_led(0);
-        _delay();
-    }
+    setup_uart();
+
+    for (int i = 0; i < 256; i++)
+        wrch(i);
 }
 
 void reboot(void)

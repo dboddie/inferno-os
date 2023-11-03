@@ -16,6 +16,7 @@ enum {
 
 void clockinit(void)
 {
+    setup_system_clock();
     start_timer();
     intron();
 }
