@@ -1,0 +1,97 @@
+<../../mkconfig
+
+CONF=teensy41mm.conf
+CONFLIST=teensy41mm.conf
+DATA2S=data2texts
+loadaddr=0x60001080
+
+# There are two banks of RAM. See mem.h for details.
+# Put data at the start of DTCM.
+dataaddr=0x20000000
+
+SYSTARG=$OSTARG
+OBJTYPE=thumb
+INSTALLDIR=$ROOT/Inferno/$OBJTYPE/bin
+
+<$ROOT/mkfiles/mkfile-$SYSTARG-$OBJTYPE
+
+<| $SHELLNAME ../port/mkdevlist $CONF
+
+# Create a directory to hold frozen modules and run the mkfrozen script to
+# create them, defining MODFILES as a side effect.
+<| $SHELLNAME listfrozen $CONF
+
+OBJ=\
+	l.$O\
+	main.$O\
+	clock.$O\
+	dump.$O\
+	thumb2.$O\
+#	trap.$O\
+#	fpi.$O\
+#	fpimem.$O\
+#	fpithumb2.$O\
+	devices/clocks.$O\
+#	devices/sys.$O\
+#	$IP\
+	$DEVS\
+#	$ETHERS\
+	$LINKS\
+	$PORT\
+	$MISC\
+	$OTHERS\
+	$CONF.root.$O\
+	frozen.$O\
+
+LIBNAMES=${LIBS:%=lib%.a}
+LIBDIRS=$LIBS
+
+# Strip off the devices prefix of any object paths.
+NOPREFIXOBJ=${OBJ:devices/%=%} ${MODOBJ:frozen/%=%}
+
+HFILES=\
+	mem.h\
+	dat.h\
+	fns.h\
+	fpi.h\
+
+CFLAGS=-wFV -I./include -I$ROOT/include -I$ROOT/libinterp
+LDFLAGS=-H0 -l -s -t -f -a
+KERNDATE=`{$NDATE}
+
+default:V: appl mkfreeze mkfrozendir frozen.h frozen.c kernel
+
+kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
+	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
+	$LD $LDFLAGS -o $target -R0 -T$loadaddr -D$dataaddr $NOPREFIXOBJ $CONF.$O $LIBFILES
+
+<../port/portmkfile
+
+main.$O:	include/ureg.h
+
+mkfreeze:V:
+	echo Making freeze
+	(cd freeze; mk $MKFLAGS install)
+
+mkfrozendir:V:
+	echo Making frozen
+	mkdir -p frozen
+
+MODSRC=${MODOBJ:%.$O=%.s}
+
+frozen.h:V:
+	$SHELLNAME mkfrozen $CONF
+
+frozen.c:V: $MODSRC
+	# Only build frozen modules if they exist.
+	$MODSRC || $AS $ASFLAGS $MODSRC
+
+frozen/%.s:
+	echo $target
+
+%.fdis:Q:
+	# $target is built by the frozen.c rule that builds frozen.h
+
+appl:V:
+	limbo -o $ROOT/dis/tiny/ls.dis $ROOT/appl/tiny/ls.b
+	limbo -o $ROOT/dis/blink.dis appl/blink.b
