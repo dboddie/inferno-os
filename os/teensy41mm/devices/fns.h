@@ -10,6 +10,8 @@ extern void setup_led(void);
 extern int get_led(void);
 extern void set_led(int);
 
+extern void setup_system_clock(void);
+
 extern void setup_uart(void);
 extern void newline(void);
 extern int rdch_ready(void);

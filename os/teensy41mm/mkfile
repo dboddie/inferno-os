@@ -64,6 +64,11 @@ default:V: appl mkfreeze mkfrozendir frozen.h frozen.c kernel
 kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
 	$LD $LDFLAGS -o $target -R0 -T$loadaddr -D$dataaddr $NOPREFIXOBJ $CONF.$O $LIBFILES
+        tools/teensy41_flashcfg.py kernel kernel.bin
+	/usr/share/python3-intelhex/bin2hex.py --offset=0x60000000 kernel.bin kernel.hex
+
+upload: kernel.hex
+	teensy_loader_cli --mcu=TEENSY_MICROMOD -v -w kernel.hex
 
 <../port/portmkfile
 
