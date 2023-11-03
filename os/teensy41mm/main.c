@@ -16,8 +16,13 @@ void main(void)
 {
     setup_uart();
 
-    for (int i = 0; i < 256; i++)
+    wrstr("Testing...\r\n");
+    for (int i = 32; i < 128; i++)
         wrch(i);
+
+    wrstr("\r\nDone\r\n");
+
+    for (;;) {}
 }
 
 void reboot(void)
