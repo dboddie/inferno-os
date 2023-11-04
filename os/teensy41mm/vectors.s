@@ -12,20 +12,20 @@
 TEXT vectors(SB), $0
     WORD    $STACK_TOP
     WORD    $RESET
-    WORD    $DUMMY          /* $NMI */
-    WORD    $DUMMY          /* $HARD_FAULT */
-    WORD    $DUMMY          /* $MEM_MANAGE */
-    WORD    $DUMMY          /* $BUS_FAULT */
-    WORD    $DUMMY          /* $USAGE_FAULT */
+    WORD    $NMI
+    WORD    $HARD_FAULT
+    WORD    $MEM_MANAGE
+    WORD    $BUS_FAULT
+    WORD    $USAGE_FAULT
     WORD    $0
     WORD    $0
     WORD    $0
     WORD    $0
-    WORD    $DUMMY          /* $SVCALL */
+    WORD    $SVCALL
     WORD    $0
     WORD    $0
-    WORD    $DUMMY          /* $PENDSV */
-    WORD    $DUMMY          /* $SYSTICK */
+    WORD    $PENDSV
+    WORD    $SYSTICK
 
 /* Handlers for peripherals start at 0x40 from the start of the vector table.
    See section 3.2 of the Apollo3 Blue MCU Data Sheet. */
