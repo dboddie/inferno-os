@@ -462,3 +462,12 @@ TEXT wrch(SB), THUMB, $-4
     MOVW R0, 0(R1)
     POP(0x6, 1)
 */
+
+/* Disable instruction cache
+    MOVW    $CCR_ADDR, R0
+    MOVW    0(R0), R1
+    MOVW    $~CCR_IC, R2
+    AND     R2, R1
+    MOVW    R1, 0(R0)
+    ISB
+*/
