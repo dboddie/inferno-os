@@ -28,8 +28,6 @@ typedef struct Ereg {
         ulong sp;   /* interrupted sp */
         ulong r13;
     };
-    ulong xxx;      /* This slot contains a redundant copy of R3 - see the
-                       _usage_fault routine in l.s for an explanation. */
     ulong r4;
     ulong r5;
     ulong r6;

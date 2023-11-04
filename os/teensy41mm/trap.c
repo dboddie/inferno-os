@@ -158,8 +158,8 @@ void usage_fault(int sp)
     dumperegs(er);
     dumpfpregs(er);
 */
-    if ((*(short *)UFSR_ADDR) & UFSR_UNDEFINSTR) {
-        if (fpithumb2(er)) {
+//    if ((*(short *)UFSR_ADDR) & UFSR_UNDEFINSTR) {
+//        if (fpithumb2(er)) {
 /*
             wrstr("CFSR="); wrhex(*(int *)CFSR_ADDR); newline();
             wrstr("SHCSR="); wrhex(*(int *)SHCSR_ADDR); newline();
@@ -170,13 +170,13 @@ void usage_fault(int sp)
             dumpfpregs(er);
             newline();
 */
-            *(short *)UFSR_ADDR |= UFSR_UNDEFINSTR;
+//            *(short *)UFSR_ADDR |= UFSR_UNDEFINSTR;
 //            setcontrol(CONTROL_FPCA);
 //            wrstr("control="); wrhex(getcontrol()); newline();
 //            wrstr("<-- "); wrhex(er->pc); newline();
             return;
-        }
-    }
+//        }
+//    }
 
     wrstr("Usage fault at "); wrhex((int)er->pc); newline();
     wrstr("UFSR="); wrhex(*(short *)UFSR_ADDR); newline();
@@ -269,4 +269,15 @@ void trap_dummy(int sp)
     poolshow();
 
     for (;;) {}
+}
+
+void
+dumpfpregs(Ereg *er)
+{
+    for (int i = 0; i < 16; i++) {
+        wrch(' '); wrstr("s"); wrdec(i); wrstr(" = "); wrhex(er->s[i]);
+        if ((i & 3) == 3)
+            newline();
+    }
+    wrstr("fpscr = "); wrhex(er->fpscr); newline();
 }

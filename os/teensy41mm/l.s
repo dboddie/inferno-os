@@ -18,14 +18,7 @@ TEXT _start(SB), THUMB, $-4
     MOVW    $IOMUXC_GPR_GPR17, R0
     MOVW    $0xaaaaaaaa, R1
     MOVW    R1, 0(R0)
-/* Disable instruction cache
-    MOVW    $CCR_ADDR, R0
-    MOVW    0(R0), R1
-    MOVW    $~CCR_IC, R2
-    AND     R2, R1
-    MOVW    R1, 0(R0)
-    ISB
-*/
+
     /* After reset, we are in thread mode with main stack pointer (MSP) used. */
     MOVW    $STACK_TOP, R1
     MOVW    R1, SP
@@ -152,7 +145,7 @@ TEXT _hard_fault(SB), THUMB, $-4
     MOVW    SP, R1      /* Record the interrupted stack pointer. */
     ADD     $0x68, R1   /* Includes FP registers. */
 
-    PUSH(0x0ffa, 1)
+    PUSH(0x0ff2, 1)
     MOVW    SP, R0
     B ,hard_fault(SB)
 
@@ -169,10 +162,10 @@ TEXT _usage_fault(SB), THUMB, $-4
        It was found that PUSH(0x0ff2, 1) resulted in an incomplete or
        corrupt set of stacked registers, with the value expected in r4 found
        in r3. */
-    PUSH(0x0ffa, 1)
+    PUSH(0x0ff2, 1)
     MOVW    SP, R0
     BL ,usage_fault(SB)
-    POP(0x0ffa, 1)
+    POP(0x0ff2, 1)
 
 TEXT _nmi(SB), THUMB, $-4
     B ,_nmi(SB)
@@ -184,7 +177,7 @@ TEXT _bus_fault(SB), THUMB, $-4
     MOVW    SP, R1      /* Record the interrupted stack pointer. */
     ADD     $0x68, R1   /* Includes FP registers. */
 
-    PUSH(0x0ffa, 1)
+    PUSH(0x0ff2, 1)
     MOVW    SP, R0
     B ,bus_fault(SB)
 

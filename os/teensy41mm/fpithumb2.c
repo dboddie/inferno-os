@@ -35,17 +35,6 @@ static	int	roff[] = {
 };
 
 void
-dumpfpregs(Ereg *er)
-{
-    for (int i = 0; i < 16; i++) {
-        wrch(' '); wrstr("s"); wrdec(i); wrstr(" = "); wrhex(er->s[i]);
-        if ((i & 3) == 3)
-            newline();
-    }
-    wrstr("fpscr = "); wrhex(er->fpscr); newline();
-}
-
-void
 dumpfpreg(Ereg *er, int i)
 {
     wrstr("D"); wrdec(i>>1); wrstr(" (F"); wrdec(i+1); wrstr(":F");
