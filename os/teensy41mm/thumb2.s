@@ -24,8 +24,8 @@ TEXT getcallerpc(SB), THUMB, $-4
 	MOVW    0(SP), R0
 	RET
 
-#include "basepri.s"
-/* #include "primask.s" */
+/* #include "basepri.s" */
+#include "primask.s"
 
 TEXT getR12(SB), THUMB, $-4
         MOVW R12, R0

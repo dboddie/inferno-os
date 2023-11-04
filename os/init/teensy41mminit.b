@@ -33,7 +33,7 @@ init(context: ref Draw->Context, nil: list of string)
     sys->bind("#d", "/fd", sys->MREPL);
 
     fd := sys->open("/dev/sysname", sys->OWRITE);
-    b := array of byte "apollo3";
+    b := array of byte "teensy41mm";
     sys->write(fd, b, len b);
 
     args: list of string;
