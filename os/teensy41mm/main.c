@@ -20,10 +20,10 @@ void confinit(void)
 {
     conf.topofmem = MEMORY_TOP;
     conf.base0 = PGROUND((ulong)end);
-    conf.base1 = 0;
+    conf.base1 = OCRAM2;
 
-    conf.npage0 = (conf.topofmem - conf.base0)/BY2PG;
-    conf.npage1 = 0;
+    conf.npage0 = (MACHADDR - conf.base0)/BY2PG;
+    conf.npage1 = (OCRAM2_TOP - OCRAM2)/BY2PG;
     conf.npage = conf.npage0 + conf.npage1;
     conf.ialloc = BY2PG;
 

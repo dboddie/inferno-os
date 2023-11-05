@@ -35,7 +35,9 @@
 #define STACK_TOP       (SRAM_TOP - 4)
 /*! Address of Mach structure, assuming a maximum size of 128 bytes. */
 #define MACHADDR        (SRAM_TOP - KSTKSIZE - 128)
-#define MEMORY_TOP      MACHADDR      /* End of memory Inferno can use */
+#define OCRAM2          0x20200000
+#define OCRAM2_TOP      0x20280000
+#define MEMORY_TOP      OCRAM2_TOP    /* End of memory Inferno can use */
 
 /* Memory map: banks at 0x20000000-0x2007ffff (512KB, DTCM) and
                         0x20200000-0x2027ffff (512KB, OCRAM2)

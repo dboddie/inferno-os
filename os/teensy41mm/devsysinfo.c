@@ -26,8 +26,10 @@ static void dbgsysinfo(void)
 {
     print("etext=%ulx bdata=%ulx edata=%ulx end=%ulx mach=%ulx\n", etext, bdata, edata, end, m);
     print("Total memory available: %ldK\n",conf.npage*BY2PG/1024);
-    print("%ld bytes from %ulx to %ulx\n", conf.topofmem - conf.base0,
-          conf.base0, conf.topofmem);
+    print("Bank 0: %ld bytes from %ulx to %ulx\n", MACHADDR - conf.base0,
+          conf.base0, MACHADDR);
+    print("Bank 1: %ld bytes from %ulx to %ulx\n", conf.topofmem - conf.base1,
+          conf.base1, conf.topofmem);
 }
 
 static void
