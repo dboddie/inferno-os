@@ -2,9 +2,6 @@
 
 void start_timer(void)
 {
-    *(unsigned int *)PWR_DEVPWREN |= PWR_UART0;
-    while ((*(unsigned int *)PWR_DEVPWRSTATUS & PWR_HCPA) == 0);
-
     *(unsigned int *)CLKGEN_CLKKEY = 0x47;
     /* Set the HFRC (high frequency reference clock) divisor to 1. */
     *(unsigned int *)CLKGEN_CCTRL = 0;

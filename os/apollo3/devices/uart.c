@@ -37,6 +37,9 @@
 
 void setup_usart(void)
 {
+    *(unsigned int *)PWR_DEVPWREN |= PWR_UART0;
+    while ((*(unsigned int *)PWR_DEVPWRSTATUS & PWR_HCPA) == 0);
+
     *(unsigned int *)GPIO_padkey = 0x73;
     /* Configure pads 48 for TX and 49 for RX (with input enabled) using function 0. */
     *(unsigned int *)GPIO_padregM = 0x200;
