@@ -72,6 +72,9 @@ TEXT _systick(SB), THUMB, $-4
     AND.S   R1, R0              /* Check the exception number and other bits. */
     BNE     _systick_exit       /* Don't interrupt if these are set. */
 
+    /* Mask all exceptions to prevent re-entry. */
+    CPS(1, CPS_I)
+
     /* Store the xPSR flags for the interrupted routine. These will be
        temporarily overwritten and restored later. */
     MOVW    $apsr_flags(SB), R1
@@ -104,6 +107,10 @@ TEXT _preswitch(SB), THUMB, $-4
     PUSH(0x1400, 0)             /* Save R10 and R12 (will be PC). */
     PUSH(0x0bff, 1)             /* Save registers R0-R9, R11 as well as R14, in
                                    case the interrupted code uses them. */
+
+    /* Now that R12 (return PC) is safely stacked, enable interrupts again. */
+    CPS(0, CPS_I)
+
     VMRS(0)                     /* Copy FPSCR into R0 */
     PUSH(0x0001, 0)             /* then push it onto the stack. */
     VPUSH(0, 8)                 /* Push D0-D7. */
