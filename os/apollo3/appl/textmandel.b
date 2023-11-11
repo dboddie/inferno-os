@@ -72,7 +72,7 @@ render(ox, oy, length: real, iterations: int)
             }
 
             low := iterations - 16;
-            if (count < low)
+            if (count <= low)
                 draw(-1);
 
             else if (count < iterations) {
