@@ -30,6 +30,7 @@ OBJ=\
 	trap.$O\
 	fpi.$O\
 	fpimem.$O\
+	fpithumb2.$O\
 	devices/clocks.$O\
 #	devices/sys.$O\
 #	$IP\

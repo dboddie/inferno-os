@@ -12,6 +12,7 @@ extern void wrch(int);
 extern void poolsummary(void);
 
 extern void hzclock(Ureg *);
+//void dumpreentries(void);
 
 void trapinit(void)
 {
@@ -30,11 +31,15 @@ void trapinit(void)
     *(int *)CCR_ADDR &= ~CCR_STKALIGN;
 
     /* Disable FP extension. */
+    setcontrol(0);
     disablefpu();
     *(int *)FPCCR_ADDR &= ~FPCCR_LSPEN;
     *(int *)FPCCR_ADDR |= FPCCR_ASPEN;
     /* Enable the FPU again. */
     enablefpu();
+    setcontrol(CONTROL_FPCA);
+
+//    debugkey('z', "reentries", dumpreentries, 0);
 }
 
 void dumpregs(Ureg *uregs)
@@ -80,6 +85,7 @@ void dumperegs(Ereg *eregs)
 }
 
 int apsr_flags = 0;
+int reentries = 0;
 
 void switcher(Ureg *ureg)
 {
@@ -149,17 +155,12 @@ void usage_fault(int sp)
 {
     /* Entered with sp pointing to an Ereg struct. */
     Ereg *er = (Ereg *)sp;
-    wrstr("Usage fault at "); wrhex(er->pc); newline();
 /*
-    wrstr("CFSR="); wrhex(*(int *)CFSR_ADDR); newline();
-    wrstr("SHCSR="); wrhex(*(int *)SHCSR_ADDR); newline();
-    wrstr("FPCCR="); wrhex(*(int *)FPCCR_ADDR); newline();
-    wrstr("up="); wrhex((int)up); newline();
     dumperegs(er);
     dumpfpregs(er);
 */
-//    if ((*(short *)UFSR_ADDR) & UFSR_UNDEFINSTR) {
-//        if (fpithumb2(er)) {
+    if ((*(short *)UFSR_ADDR) & UFSR_UNDEFINSTR) {
+        if (fpithumb2(er)) {
 /*
             wrstr("CFSR="); wrhex(*(int *)CFSR_ADDR); newline();
             wrstr("SHCSR="); wrhex(*(int *)SHCSR_ADDR); newline();
@@ -175,15 +176,24 @@ void usage_fault(int sp)
 //            wrstr("control="); wrhex(getcontrol()); newline();
 //            wrstr("<-- "); wrhex(er->pc); newline();
             return;
-//        }
-//    }
+        }
+    }
 
     wrstr("Usage fault at "); wrhex((int)er->pc); newline();
     wrstr("UFSR="); wrhex(*(short *)UFSR_ADDR); newline();
+    wrstr("CFSR="); wrhex(*(int *)CFSR_ADDR); newline();
+    wrstr("SHCSR="); wrhex(*(int *)SHCSR_ADDR); newline();
+    wrstr("FPCCR="); wrhex(*(int *)FPCCR_ADDR); newline();
+    wrstr("up="); wrhex((int)up); newline();
+//    print("\nislo=%d reentries=%d\n", islo(), reentries);
 
     dumperegs((Ereg *)sp);
-    poolsummary();
-    poolshow();
+//    poolsummary();
+//    poolshow();
+
+    for (int i = 0; i < 64; i+=4) {
+        wrhex(*(int *)(sp + i)); newline();
+    }
 
     for (;;) {}
 }
@@ -281,3 +291,11 @@ dumpfpregs(Ereg *er)
     }
     wrstr("fpscr = "); wrhex(er->fpscr); newline();
 }
+/*
+void
+dumpreentries(void)
+{
+    print("reentries=%d", reentries);
+    reentries = 0;
+}
+*/

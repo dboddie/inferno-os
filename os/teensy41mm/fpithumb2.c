@@ -9,6 +9,7 @@
 #include "fpi.h"
 
 //#define fpudebug
+extern void dumpfpregs(Ereg *er);
 
 enum {
 	N = 1<<31,
