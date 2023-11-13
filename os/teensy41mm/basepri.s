@@ -1,3 +1,6 @@
+/* Note that the use of CPS around writes to the BASEPRI register, as described
+   in this notice: https://developer.arm.com/documentation/EPM064408/r0p1/?lang=en */
+
 /* Disable interrupts and return the previous state. */
 TEXT splhi(SB), THUMB, $-4
 	MOVW	$(MACHADDR), R6
@@ -13,6 +16,7 @@ splhi_disable:
         CPS(1, CPS_I)
 	MSR(0, MRS_BASEPRI)
         CPS(0, CPS_I)
+        ISB
 	MOVW $1, R0         /* return a flag for the previous state */
 	RET
 
@@ -28,6 +32,7 @@ spllo_enable:
         CPS(1, CPS_I)
 	MSR(0, MRS_BASEPRI)
         CPS(0, CPS_I)
+        ISB
 	RET
 
 /* Set the interrupt enabled state passed in R0. */
@@ -43,12 +48,14 @@ TEXT splxpc(SB), THUMB, $-4
         CPS(1, CPS_I)
         MSR(0, MRS_BASEPRI)
         CPS(0, CPS_I)
+        ISB
         RET
 splx_disable:               /* disable/mask the systick interrupt by using */
         MOVW $0x60, R0      /* a base number lower than the systick priority */
         CPS(1, CPS_I)
 	MSR(0, MRS_BASEPRI)
         CPS(0, CPS_I)
+        ISB
 	RET
 
 TEXT islo(SB), THUMB, $-4
@@ -60,4 +67,3 @@ TEXT islo(SB), THUMB, $-4
 islo_enabled:
         MOVW $1, R0
 	RET
-
