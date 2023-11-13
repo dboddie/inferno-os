@@ -24,8 +24,8 @@ TEXT getcallerpc(SB), THUMB, $-4
 	MOVW    0(SP), R0
 	RET
 
-/* #include "basepri.s" */
-#include "primask.s"
+#include "basepri.s"
+/* #include "primask.s" */
 
 TEXT getR12(SB), THUMB, $-4
         MOVW R12, R0
@@ -46,6 +46,10 @@ TEXT getsc(SB), THUMB, $-4
 TEXT getapsr(SB), THUMB, $-4
         /* Read APSR into R0 */
         WORD    $(0x8000f3ef | (0 << 4) | (0 << 24))
+        RET
+
+TEXT getxpsr(SB), THUMB, $-4
+        MRS(0, MRS_XPSR)
         RET
 
 TEXT getfpscr(SB), THUMB, $-4
@@ -92,6 +96,22 @@ TEXT setpsp(SB), THUMB, $-4
 
 TEXT getprimask(SB), THUMB, $-4
     MRS(0, MRS_PRIMASK)
+    RET
+
+TEXT getbasepri(SB), THUMB, $-4
+    MRS(0, MRS_BASEPRI)
+    RET
+
+TEXT setbasepri(SB), THUMB, $-4
+    MSR(0, MRS_BASEPRI)
+    RET
+
+TEXT getbaseprimax(SB), THUMB, $-4
+    MRS(0, MRS_BASEPRI_MAX)
+    RET
+
+TEXT getfaultmask(SB), THUMB, $-4
+    MRS(0, MRS_FAULTMASK)
     RET
 
 TEXT getcontrol(SB), THUMB, $-4

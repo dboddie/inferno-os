@@ -33,7 +33,7 @@
 
 /* ARMv7-M Architecture Reference Manual, A7.7.82, mask=2 */
 #define MSR(Rn, spec) \
-    WORD $(0x8000f380 | (Rn & 0xf) | ((3 & 3) << 26) | ((spec & 0xff) << 16))
+    WORD $(0x8800f380 | (Rn & 0xf) | ((spec & 0xff) << 16))
 
 /* ARM Architecture Reference Manual Thumb-2 Supplement, 4.6.34 */
 #define DMB WORD $0x8f5ff3bf
@@ -148,10 +148,15 @@
 #define FPCCR_LSPEN 0x40000000
 
 /* MRS and MSR encodings, ARMv7-M Architecture Reference Manual, B5.1.1 */
+#define MRS_APSR 0
+#define MRS_IPSR 1
+#define MRS_EPSR 2
+#define MRS_XPSR 3
 #define MRS_MSP 8
 #define MRS_PSP 9
 #define MRS_PRIMASK 16
 #define MRS_BASEPRI 17
+#define MRS_BASEPRI_MAX 18
 #define MRS_FAULTMASK 19
 #define MRS_CONTROL 20
 

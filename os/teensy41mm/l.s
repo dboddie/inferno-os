@@ -48,7 +48,10 @@ _start_loop:
     B       _start_loop
 
 _end_start_loop:
-
+/* Initialise R10 when using the register as a mutex in _systick.
+    MOVW    $0, R0
+    MOVW    R0, R10
+*/
     BL  ,introff(SB)
 
     B   ,main(SB)
@@ -71,20 +74,32 @@ TEXT _systick(SB), THUMB, $-4
     MOVW    $SHCSR_ADDR, R0
     MOVW    (R0), R0
     AND.S   $0xff, R0
-    BNE     _systick_exit
+    CMP     $0, R0
+    BNE     _systick_exit2
 
     MOVW    $CFSR_ADDR, R0
     MOVW    (R0), R0
     SRL     $16, R0
     AND.S   $0x1, R0
-    BNE     _systick_exit
-    */
+    CMP     $0, R0
+    BNE     _systick_exit3 */
 
     MOVW    28(SP), R0          /* Read xPSR */
     MOVW    R0, R2
     MOVW    $0x060fffff, R1
     AND.S   R1, R0              /* Check the exception number and other bits. */
     BNE     _systick_exit       /* Don't interrupt if these are set. */
+
+    /* Use R10 to guard against re-entry, only allowing entry if R10 == 0.
+    MOVW    R10, R0
+    CMP     $0, R0
+    BNE     _systick_reentry_exit
+
+    MOVW    $1, R0
+    MOVW    R0, R10 */
+
+    /* Mask all exceptions to prevent re-entry. */
+    CPS(1, CPS_I)
 
     /* Store the xPSR flags for the interrupted routine. These will be
        temporarily overwritten and restored later. */
@@ -107,7 +122,14 @@ TEXT _systick(SB), THUMB, $-4
 
 _systick_exit:
     RET
-
+/*
+_systick_reentry_exit:
+    MOVW    $reentries(SB), R0
+    MOVW    0(R0), R1
+    ADD     $1, R1
+    MOVW    R1, 0(R0)
+    RET
+*/
 /* When _systick returns, the exception returns and thread mode is entered
    again. The registers from the interrupted code have the values they would
    have if uninterrupted except for R12 which contains the interrupted PC and
@@ -118,6 +140,15 @@ TEXT _preswitch(SB), THUMB, $-4
     PUSH(0x1400, 0)             /* Save R10 and R12 (will be PC). */
     PUSH(0x0bff, 1)             /* Save registers R0-R9, R11 as well as R14, in
                                    case the interrupted code uses them. */
+
+    /* Clear the stacked value of R10 to allow _systick to be called again
+       only after this routine returns.
+    MOVW    $0, R0
+    MOVW    R0, 48(SP) */
+
+    /* Now that R12 (return PC) is safely stacked, enable interrupts again. */
+    CPS(0, CPS_I)
+
     VMRS(0)                     /* Copy FPSCR into R0 */
     PUSH(0x0001, 0)             /* then push it onto the stack. */
     VPUSH(0, 8)                 /* Push D0-D7. */
