@@ -15,7 +15,11 @@ void kbdinit(void)
 
 void kbd_readc(void)
 {
-    int c = rdch();
+    int c;
+    if (!rdch_ready())
+        return;
+
+    c = rdch();
     /* Filter backspace */
     if (c == 127) {
         kbdputc(kbdq, 8);
