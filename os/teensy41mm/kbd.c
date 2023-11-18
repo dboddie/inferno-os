@@ -28,12 +28,16 @@ void kbd_readc(void)
         wrch(8);
         return;
     }
-    /* Process characters normally */
-    kbdputc(kbdq, c);
-    wrch(c);
-    /* Add additional newlines for carriage returns */
-    if (c == 13) {
-        kbdputc(kbdq, 10);
+    if (c != 13) {
+        /* Process characters normally */
+        kbdputc(kbdq, c);
+        wrch(c);
+    } else {
+        /* Add additional newlines for carriage returns */
+        char buf[2];
+        buf[0] = 13; buf[1] = 10;
+        qproduce(kbdq, buf, 2);
+        wrch(13);
         wrch(10);
     }
 }
