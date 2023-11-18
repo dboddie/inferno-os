@@ -13,7 +13,7 @@ void setup_led(void)
 
 int get_led(void)
 {
-    return *(unsigned int *)GPIO_wtA & (1 << 19);
+    return (*(int *)GPIO_rdA >> 19) & 1;
 }
 
 void set_led(int on)
