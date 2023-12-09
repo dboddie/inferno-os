@@ -2,6 +2,7 @@
 
 TARG=\
 	broke.dis\
+	gunzip.dis\
 	kill.dis\
 	ls.dis\
 	rm.dis\
