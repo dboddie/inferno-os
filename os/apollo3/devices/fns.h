@@ -31,5 +31,8 @@ extern void UC8159_finish(void);
 extern int UC8159_get_status(void);
 extern int UC8159_send_parameter(int);
 
+extern void ILI9341_init(void);
+extern void ILI9341_start(void);
+
 extern int get_led(void);
 extern void set_led(int);
