@@ -87,6 +87,7 @@ ili9341write(Chan* c, void* a, long n, vlong offset)
 
     switch((ulong)c->qid.path){
     case Qdata:
+        qlock(&ili9341lock);
         if (sent == 0) {
             ILI9341_start();
             spi_change_cs(0);
@@ -103,6 +104,7 @@ ili9341write(Chan* c, void* a, long n, vlong offset)
             }
         }
 
+        qunlock(&ili9341lock);
         break;
     default:
         error(Ebadusefd);
