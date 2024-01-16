@@ -27,7 +27,9 @@ There are some known issues:
   (512K - 64K) in size. If too many files are added to the root namespace,
   this limit is exceeded and the resulting system will fail to boot.
 
-Hopefully, these can be resolved in time.
+Hopefully, these can be resolved in time. In particular the bootloader issue
+is resolved by flashing the v6 bootloader to the board, as discussed in
+[Apollo_Uploader_SVL issue 9](https://github.com/sparkfun/Apollo3_Uploader_SVL/issues/9).
 
 ## Building
 
