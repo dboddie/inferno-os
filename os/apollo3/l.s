@@ -77,8 +77,7 @@ TEXT _systick(SB), THUMB, $-4
 
     /* Store the xPSR flags for the interrupted routine. These will be
        temporarily overwritten and restored later. */
-    MOVW    $apsr_flags(SB), R1
-    MOVW    R2, (R1)
+    MOVW    R2, R10
 
     /* Record the interrupted PC in the slot for R12. */
     MOVW    24(SP), R0
@@ -103,8 +102,8 @@ _systick_exit:
    PC which points to here. */
 TEXT _preswitch(SB), THUMB, $-4
 
-    PUSH(0x1400, 0)             /* Save R10 and R12 (will be PC). */
-    PUSH(0x0bff, 1)             /* Save registers R0-R9, R11 as well as R14, in
+    PUSH(0x1001, 0)             /* Save R0 and R12 (will be PC). */
+    PUSH(0x0ffe, 1)             /* Save registers R1-R11 as well as R14, in
                                    case the interrupted code uses them. */
 
     /* Now that R12 (return PC) is safely stacked, enable interrupts again. */
@@ -120,16 +119,14 @@ TEXT _preswitch(SB), THUMB, $-4
     MOVW    SP, R0              /* Pass the stack pointer to the switcher. */
     BL      ,switcher(SB)
 
-    MOVW    $apsr_flags(SB), R1
-    MOVW    (R1), R1
-    MSR(1, 0)                   /* Restore the status bits. */
-
     VPOP(0, 8)                  /* Recover D0-D7. */
     POP(0x0001, 0)              /* Recover FPSCR into R0 */
     VMSR(0)                     /* then restore it. */
 
-    POP_LR_PC(0x0bff, 1, 0)     /* Recover R0-R9, R11 and R14 */
-    POP_LR_PC(0x0400, 0, 1)     /* then R10 and PC. */
+    POP_LR_PC(0x0ffe, 1, 0)     /* Recover R1-R11 and R14 */
+    MSR(10, 0)                  /* Restore the status bits in R10. */
+
+    POP_LR_PC(0x0001, 0, 1)     /* then R0 and PC. */
 
 TEXT _hard_fault(SB), THUMB, $-4
 /*    MRS(0, MRS_MSP)     Pass the main stack pointer (MSP) to a C function. */

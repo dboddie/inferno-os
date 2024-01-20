@@ -82,8 +82,6 @@ void dumperegs(Ereg *eregs)
     wrstr("xpsr="); wrhex(eregs->xpsr); newline();
 }
 
-extern int apsr_flags;
-
 void switcher(Ureg *ureg)
 {
     int t;
@@ -232,8 +230,6 @@ void hard_fault(int sp)
     if (cfsr & 0x200) {
         wrstr("BFAR="); wrhex(*(int *)BFAR_ADDR); newline();
     }
-
-    wrstr("last APSR="); wrhex(apsr_flags); newline();
 
     int a = sp + sizeof(Ereg);
     for (int i = 0; i < 128; i+=4) {
