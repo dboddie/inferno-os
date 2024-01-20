@@ -103,7 +103,6 @@ _systick_exit:
    PC which points to here. */
 TEXT _preswitch(SB), THUMB, $-4
 
-    MOVW R0, R0
     PUSH(0x1400, 0)             /* Save R10 and R12 (will be PC). */
     PUSH(0x0bff, 1)             /* Save registers R0-R9, R11 as well as R14, in
                                    case the interrupted code uses them. */
