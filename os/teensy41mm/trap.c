@@ -81,8 +81,6 @@ void dumperegs(Ereg *eregs)
     wrstr("xpsr="); wrhex(eregs->xpsr); newline();
 }
 
-int apsr_flags = 0;
-
 void switcher(Ureg *ureg)
 {
     int t;
@@ -237,7 +235,6 @@ if (up) {
         wrstr("BFAR="); wrhex(*(int *)BFAR_ADDR); newline();
     }
 
-    wrstr("last APSR="); wrhex(apsr_flags); newline();
 /*
     int a = sp + sizeof(Ereg);
     for (int i = 0; i < 128; i+=4) {
