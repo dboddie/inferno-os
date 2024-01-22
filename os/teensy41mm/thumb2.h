@@ -1,6 +1,8 @@
 #ifndef THUMB2_H
 #define THUMB2_H
 
+#include "sysdep.h"
+
 /* ARM Architecture Reference Manual Thumb-2 Supplement, page 4-76, T1 */
 #define CPS(disable, bit) \
     WORD $(0xb660 | ((disable & 1) << 4) | (bit & 7))
@@ -31,9 +33,7 @@
 #define MRS(Rd, spec) \
     WORD $(0x8000f3ef | ((Rd & 0xf) << 24) | ((spec & 0xff) << 16))
 
-/* ARMv7-M Architecture Reference Manual, A7.7.82, mask=2 */
-#define MSR(Rn, spec) \
-    WORD $(0x8800f380 | (Rn & 0xf) | ((spec & 0xff) << 16))
+/* See the sysdep.h file for a definition of MSR. */
 
 /* ARM Architecture Reference Manual Thumb-2 Supplement, 4.6.34 */
 #define DMB WORD $0x8f5ff3bf
