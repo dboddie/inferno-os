@@ -20,8 +20,6 @@ extern int main_pool_pcnt;
 extern int heap_pool_pcnt;
 extern int image_pool_pcnt;
 
-int apsr_flags = 0;
-
 void confinit(void)
 {
     conf.topofmem = MEMORY_TOP;

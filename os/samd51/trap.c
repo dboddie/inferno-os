@@ -61,8 +61,6 @@ void dumpregs(Ureg *uregs)
     wrstr("r14="); wrhex(uregs->r14); newline();
 }
 
-extern int apsr_flags;
-
 void switcher(Ureg *ureg)
 {
     int t;
@@ -136,7 +134,6 @@ void usage_fault(int sp)
     *(int *)(sp + 24) += 4;
     *(int *)(sp + 28) = 0x01000000;
 */
-    wrstr("last APSR="); wrhex(apsr_flags); newline();
     wrstr("sp="); wrhex(sp); newline();
     wrstr("r10="); wrhex(get_r10()); newline();
     wrstr("r12="); wrhex(get_r12()); newline();
@@ -181,7 +178,6 @@ void hard_fault(int sp)
         wrstr("BFAR="); wrhex(*(int *)BFAR_ADDR); newline();
     }
 
-    wrstr("last APSR="); wrhex(apsr_flags); newline();
     wrstr("sp="); wrhex(sp); newline();
     wrstr("r10="); wrhex(get_r10()); wrch(' ');
     wrstr("r12="); wrhex(get_r12()); newline();
