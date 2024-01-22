@@ -48,6 +48,10 @@ TEXT getapsr(SB), THUMB, $-4
         WORD    $(0x8000f3ef | (0 << 4) | (0 << 24))
         RET
 
+TEXT getxpsr(SB), THUMB, $-4
+        MRS(0, MRS_XPSR)
+        RET
+
 TEXT getfpscr(SB), THUMB, $-4
         VMRS(0)
         RET
@@ -94,6 +98,22 @@ TEXT getprimask(SB), THUMB, $-4
     MRS(0, MRS_PRIMASK)
     RET
 
+TEXT getbasepri(SB), THUMB, $-4
+    MRS(0, MRS_BASEPRI)
+    RET
+
+TEXT setbasepri(SB), THUMB, $-4
+    MSR(0, MRS_BASEPRI)
+    RET
+
+TEXT getbaseprimax(SB), THUMB, $-4
+    MRS(0, MRS_BASEPRI_MAX)
+    RET
+
+TEXT getfaultmask(SB), THUMB, $-4
+    MRS(0, MRS_FAULTMASK)
+    RET
+
 TEXT getcontrol(SB), THUMB, $-4
     MRS(0, MRS_CONTROL)
     RET
@@ -129,3 +149,27 @@ _tas_loop:
 _tas_lockbusy:
         CLREX
         RET
+
+/* Currently unused */
+
+TEXT savefpregs(SB), THUMB, $-4
+    VSTR(0, 0, 0)
+    VSTR(1, 0, 8)
+    VSTR(2, 0, 16)
+    VSTR(3, 0, 24)
+    VSTR(4, 0, 32)
+    VSTR(5, 0, 40)
+    VSTR(6, 0, 48)
+    VSTR(7, 0, 56)
+    RET
+
+TEXT restorefpregs(SB), THUMB, $-4
+    VLDR(0, 0, 0)
+    VLDR(1, 0, 8)
+    VLDR(2, 0, 16)
+    VLDR(3, 0, 24)
+    VLDR(4, 0, 32)
+    VLDR(5, 0, 40)
+    VLDR(6, 0, 48)
+    VLDR(7, 0, 56)
+    RET
