@@ -61,19 +61,6 @@ TEXT _systick(SB), THUMB, $-4
        are saved on the stack. R0 is stored lowest at the address pointed to
        by the stack pointer. */
 
-    /* Don't interrupt a currently active exception.
-    MOVW    $SHCSR_ADDR, R0
-    MOVW    (R0), R0
-    AND.S   $0xff, R0
-    BNE     _systick_exit
-
-    MOVW    $CFSR_ADDR, R0
-    MOVW    (R0), R0
-    SRL     $16, R0
-    AND.S   $0x1, R0
-    BNE     _systick_exit
-    */
-
     MOVW    28(SP), R0          /* Read xPSR */
     MOVW    R0, R2
     MOVW    $0x060fffff, R1

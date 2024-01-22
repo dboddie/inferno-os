@@ -1,6 +1,8 @@
 #ifndef THUMB2_H
 #define THUMB2_H
 
+#include "sysdep.h"
+
 /* ARM Architecture Reference Manual Thumb-2 Supplement, page 4-76, T1 */
 #define CPS(disable, bit) \
     WORD $(0xb660 | ((disable & 1) << 4) | (bit & 7))
@@ -31,9 +33,7 @@
 #define MRS(Rd, spec) \
     WORD $(0x8000f3ef | ((Rd & 0xf) << 24) | ((spec & 0xff) << 16))
 
-/* ARMv7-M Architecture Reference Manual, A7.7.82, mask=2 */
-#define MSR(Rn, spec) \
-    WORD $(0x8000f380 | (Rn & 0xf) | ((3 & 3) << 26) | ((spec & 0xff) << 16))
+/* See the sysdep.h file for a definition of MSR. */
 
 /* ARM Architecture Reference Manual Thumb-2 Supplement, 4.6.34 */
 #define DMB WORD $0x8f5ff3bf
@@ -122,6 +122,7 @@
    ARMv7-M Architecture Reference Manual, B3.2.2 */
 #define CPUID_ADDR 0xe000ed00
 #define CCR_ADDR   0xe000ed14
+#define CCR_IC       0x20000
 #define CCR_STKALIGN (1 << 9)
 #define CCR_DIV_0_TRP (1 << 4)
 #define CCR_UNALIGN_TRP (1 << 3)
@@ -147,10 +148,15 @@
 #define FPCCR_LSPEN 0x40000000
 
 /* MRS and MSR encodings, ARMv7-M Architecture Reference Manual, B5.1.1 */
+#define MRS_APSR 0
+#define MRS_IPSR 1
+#define MRS_EPSR 2
+#define MRS_XPSR 3
 #define MRS_MSP 8
 #define MRS_PSP 9
 #define MRS_PRIMASK 16
 #define MRS_BASEPRI 17
+#define MRS_BASEPRI_MAX 18
 #define MRS_FAULTMASK 19
 #define MRS_CONTROL 20
 
