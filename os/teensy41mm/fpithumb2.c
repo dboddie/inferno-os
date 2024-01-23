@@ -9,7 +9,6 @@
 #include "fpi.h"
 
 //#define fpudebug
-extern void dumpfpregs(Ereg *er);
 
 enum {
 	N = 1<<31,
@@ -34,6 +33,17 @@ static	int	roff[] = {
 	OFR(r8), OFR(r9), OFR(r10), OFR(r11),
 	OFR(r12), OFR(r13), OFR(r14), OFR(pc),
 };
+
+void
+dumpfpregs(Ereg *er)
+{
+    for (int i = 0; i < 16; i++) {
+        wrch(' '); wrstr("s"); wrdec(i); wrstr(" = "); wrhex(er->s[i]);
+        if ((i & 3) == 3)
+            newline();
+    }
+    wrstr("fpscr = "); wrhex(er->fpscr); newline();
+}
 
 void
 dumpfpreg(Ereg *er, int i)
