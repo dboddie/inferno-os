@@ -3,7 +3,6 @@
 #include "../port/error.h"
 #include "dat.h"
 #include "fns.h"
-#include "io.h"
 #include "../port/uart.h"
 
 #include "devices/fns.h"
@@ -12,7 +11,6 @@ void kbdinit(void)
 {
     kbdq = qopen(128, 0, nil, nil);
     qnoblock(kbdq, 1);
-    enable_usart_intr(0);
 }
 
 void kbd_readc(void)
