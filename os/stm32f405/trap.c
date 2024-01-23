@@ -131,7 +131,7 @@ void switcher(Ureg *ureg)
     splhi();
 
     if (rdch_ready())
-        uart3_intr();
+        kbd_readc();
 
 //    print("up=%.8lux\n", up);
 //    wrstr("<< sp="); wrhex(getsp()); wrstr(" pc="); wrhex(*(ulong *)((ulong)ureg + 52)); newline();

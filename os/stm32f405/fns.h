@@ -111,7 +111,7 @@ void    bus_fault(int);
 void    usage_fault(int);
 void    hard_fault(int);
 void    svcall(int);
-void    uart3_intr(void);
+void    kbd_readc(void);
 uint    get_r10(void);
 uint    get_r12(void);
 void    intron(void);

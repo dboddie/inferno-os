@@ -177,7 +177,7 @@ TEXT _uart3(SB), THUMB, $-4
 
     MOVW    $setR12(SB), R1
     MOVW    R1, R12             /* Reset static base (SB) */
-    BL ,uart3_intr(SB)
+    BL ,kbd_readc(SB)
 
     POP_LR_PC(0x1bff, 0, 1)     /* Pop registers R0-R9, R11-R12 and return */
 
