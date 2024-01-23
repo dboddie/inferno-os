@@ -362,7 +362,6 @@ fpithumb2(Ereg *er)
         er->pc += 4;
         return 1;
     }
-*/
     // MOVD (A7.7.256)
     case 0xed00:
     case 0xed80:
@@ -409,6 +408,7 @@ fpithumb2(Ereg *er)
         er->pc += 4;
         return 1;
     }
+*/
     default:
         ;
     }
