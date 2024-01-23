@@ -107,7 +107,8 @@ PhysUart stm32physuart = {
 	.putc		= putc,
 };
 
-/* Not part of the above API. Called from the l.s file. */
+/* Not part of the above API. Should be called from the interrupt handler in
+   the l.s file, but not currently implemented that way. */
 void uart3_intr(void)
 {
     Uart *uart = &uart3;

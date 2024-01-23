@@ -15,7 +15,7 @@ void kbdinit(void)
     enable_usart_intr(0);
 }
 
-void uart3_intr(void)
+void kbd_readc(void)
 {
     int c;
     if (!rdch_ready())
