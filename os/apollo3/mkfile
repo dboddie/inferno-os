@@ -17,7 +17,7 @@ INSTALLDIR=$ROOT/Inferno/$OBJTYPE/bin
 
 # Create a directory to hold frozen modules and run the mkfrozen script to
 # create them, defining MODFILES as a side effect.
-<| $SHELLNAME listfrozen $CONF
+<| $SHELLNAME ../cortexm/listfrozen $CONF
 
 OBJ=\
 	l.$O\
@@ -59,7 +59,7 @@ CFLAGS=-wFV -I./include -I../cortexm -I$ROOT/include -I$ROOT/libinterp
 LDFLAGS=-H0 -l -s -t -f -a
 KERNDATE=`{$NDATE}
 
-default:V: appl mkfreeze mkfrozendir frozen.h frozen.c kernel
+default:V: appl mkfreeze mkfrozendir frozen.h kernel
 
 kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
@@ -85,10 +85,8 @@ mkfrozendir:V:
 
 MODSRC=${MODOBJ:%.$O=%.s}
 
-frozen.h:V:
-	$SHELLNAME mkfrozen $CONF
-
-frozen.c:V: $MODSRC
+frozen.h:V: $MODSRC
+	$SHELLNAME ../cortexm/mkfrozen $CONF
 	# Only build frozen modules if they exist.
 	$MODSRC || $AS $ASFLAGS $MODSRC
 
