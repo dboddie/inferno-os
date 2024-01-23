@@ -76,19 +76,23 @@ main.$O:	include/ureg.h
 	$CC $CFLAGS -I. -I../cortexm ../cortexm/$stem.c
 
 mkfreeze:V:
-	echo Making freeze
 	(cd freeze; mk $MKFLAGS install)
 
+rmfreeze:V:
+	(cd freeze; mk $MKFLAGS clean)
+
 mkfrozendir:V:
-	echo Making frozen
 	mkdir -p frozen
+
+rmfrozendir:V:
+	rm -r frozen
 
 MODSRC=${MODOBJ:%.$O=%.s}
 
 frozen.h:V: $MODSRC
 	$SHELLNAME ../cortexm/mkfrozen $CONF
 	# Only build frozen modules if they exist.
-	$MODSRC || $AS $ASFLAGS $MODSRC
+	(test -f $MODSRC) || $AS $ASFLAGS $MODSRC
 
 frozen/%.s:
 	echo $target
