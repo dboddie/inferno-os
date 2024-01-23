@@ -16,7 +16,7 @@ INSTALLDIR=$ROOT/Inferno/$OBJTYPE/bin
 <| $SHELLNAME ../port/mkdevlist $CONF
 
 # Create a directory to hold frozen modules and run the mkfrozen script to
-# create them, defining MODFILES as a side effect.
+# create them, defining MODOBJ as a side effect.
 <| $SHELLNAME ../cortexm/listfrozen $CONF
 
 OBJ=\
@@ -76,10 +76,10 @@ main.$O:	include/ureg.h
 	$CC $CFLAGS -I. -I../cortexm ../cortexm/$stem.c
 
 mkfreeze:V:
-	(cd freeze; mk $MKFLAGS install)
+	(cd ../cortexm/freeze; mk $MKFLAGS install)
 
 rmfreeze:V:
-	(cd freeze; mk $MKFLAGS clean)
+	(cd ../cortexm/freeze; mk $MKFLAGS clean)
 
 mkfrozendir:V:
 	mkdir -p frozen
@@ -92,7 +92,7 @@ MODSRC=${MODOBJ:%.$O=%.s}
 frozen.h:V: $MODSRC
 	$SHELLNAME ../cortexm/mkfrozen $CONF
 	# Only build frozen modules if they exist.
-	(test -f $MODSRC) || $AS $ASFLAGS $MODSRC
+	$MODSRC || $AS $ASFLAGS $MODSRC
 
 frozen/%.s:
 	echo $target
