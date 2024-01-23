@@ -51,7 +51,7 @@ HFILES=\
 	mem.h\
 	dat.h\
 	fns.h\
-	fpi.h\
+	../cortexm/fpi.h\
 	../cortexm/thumb2.h\
 
 ASFLAGS=$ASFLAGS -I../cortexm
@@ -71,6 +71,9 @@ main.$O:	include/ureg.h
 
 %.$O: ../cortexm/%.s
 	$AS $ASFLAGS -I. -I../cortexm ../cortexm/$stem.s
+
+%.$O: ../cortexm/%.c
+	$CC $CFLAGS -I. -I../cortexm ../cortexm/$stem.c
 
 mkfreeze:V:
 	echo Making freeze
