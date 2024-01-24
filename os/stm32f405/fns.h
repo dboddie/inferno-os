@@ -117,6 +117,10 @@ uint    get_r12(void);
 void    intron(void);
 
 int getprimask(void);
+int getbasepri(void);
+void setbasepri(int);
+int getbaseprimax(void);
+int getfaultmask(void);
 int getcontrol(void);
 void setcontrol(int);
 int getmsp(void);
