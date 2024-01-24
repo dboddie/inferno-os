@@ -18,8 +18,8 @@ INSTALLDIR=$ROOT/Inferno/$OBJTYPE/bin
 <| $SHELLNAME ../port/mkdevlist $CONF
 
 # Create a directory to hold frozen modules and run the mkfrozen script to
-# create them, defining MODFILES as a side effect.
-<| $SHELLNAME listfrozen $CONF
+# create them, defining MODOBJ as a side effect.
+<| $SHELLNAME ../cortexm/listfrozen $CONF
 
 OBJ=\
 	l.$O\
@@ -54,14 +54,15 @@ HFILES=\
 	mem.h\
 	dat.h\
 	fns.h\
-	io.h\
-	fpi.h\
+	../cortexm/fpi.h\
+	../cortexm/thumb2.h\
 
-CFLAGS=-wFV -I./include -I./peripherals -I$ROOT/include -I$ROOT/libinterp
+ASFLAGS=$ASFLAGS -I../cortexm
+CFLAGS=-wFV -I./include -I../cortexm -I./peripherals -I$ROOT/include -I$ROOT/libinterp
 LDFLAGS=-H0 -l -s -t
 KERNDATE=`{$NDATE}
 
-default:V: appl mkfreeze mkfrozendir frozen.h frozen.c kernel
+default:V: appl mkfreeze mkfrozendir frozen.h kernel
 
 kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
@@ -71,21 +72,30 @@ kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 
 main.$O:	include/ureg.h
 
+%.$O: ../cortexm/%.s
+	$AS $ASFLAGS -I. -I../cortexm ../cortexm/$stem.s
+
+%.$O: ../cortexm/%.c
+	$CC $CFLAGS -I. -I../cortexm ../cortexm/$stem.c
+
 mkfreeze:V:
-	echo Making freeze
-	(cd freeze; mk $MKFLAGS install)
+	(cd ../cortexm/freeze; mk $MKFLAGS install)
+
+rmfreeze:V:
+	(cd ../cortexm/freeze; mk $MKFLAGS clean)
 
 mkfrozendir:V:
-	echo Making frozen
 	mkdir -p frozen
+
+rmfrozendir:V:
+	rm -r frozen
 
 MODSRC=${MODOBJ:%.$O=%.s}
 
-frozen.h:V:
-	$SHELLNAME mkfrozen $CONF
-
-frozen.c:V: $MODSRC
-	$AS $ASFLAGS $MODSRC
+frozen.h:V: $MODSRC
+	$SHELLNAME ../cortexm/mkfrozen $CONF
+	# Only build frozen modules if they exist.
+	$MODSRC || $AS $ASFLAGS $MODSRC
 
 frozen/%.s:
 	echo $target
