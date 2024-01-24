@@ -7,7 +7,6 @@
 #include    "dat.h"
 #include    "fns.h"
 #include    "../port/error.h"
-#include    "devices/teensy41mm.h"
 
 extern char bdata[];
 
