@@ -28,6 +28,9 @@ OBJ=\
 	dump.$O\
 	thumb2.$O\
 	trap.$O\
+	fpi.$O\
+	fpimem.$O\
+	fpithumb2.$O\
 	devices/clocks.$O\
 	devices/gpio.$O\
 	devices/sys.$O\
@@ -96,3 +99,5 @@ appl:V:
 	limbo -o $ROOT/dis/banner16.dis appl/banner16.b
 	limbo -o $ROOT/dis/blink.dis appl/blink.b
 	limbo -o $ROOT/dis/ink.dis appl/ink.b
+	limbo -o $ROOT/dis/floattest.dis appl/floattest.b
+	limbo -o $ROOT/dis/textmandel.dis appl/textmandel.b

@@ -1,4 +1,6 @@
 #include "thumb2.h"
+#include "fns.h"
+
 /*
 int getcpacr(void)
 {
@@ -15,11 +17,32 @@ void enablefpu(void)
     /* Enable CP10 and CP11 coprocessors - see page 7-71 of the Arm Cortex-M4
        Processor Technical Reference Manual. */
     *(int *)CPACR_ADDR |= (0xf << 20);
+    coherence();
 }
-/*
-int getshcsr(void)
+
+void disablefpu(void)
 {
-    return *(int *)SHCSR_ADDR;
+    /* Disable CP10 and CP11 coprocessors - see page 7-71 of the Arm Cortex-M4
+       Processor Technical Reference Manual. */
+    *(int *)CPACR_ADDR &= ~(0xf << 20);
+    coherence();
+}
+
+int getmvfr(int i)
+{
+    /* Return the contents of the MVFR<i> register containing FP feature
+       information. */
+    switch (i) {
+    case 0:
+        return *(int *)MVFR0;
+    case 1:
+        return *(int *)MVFR1;
+    case 2:
+        return *(int *)MVFR2;
+    default:
+        ;
+    }
+    return 0;
 }
 
 short getufsr(void)
@@ -51,4 +74,3 @@ int setcfsr(int bits)
 {
     return *(int *)CFSR_ADDR |= bits;
 }
-*/

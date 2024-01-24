@@ -27,7 +27,7 @@
 #define CACHELINESZ     32
 #define BLOCKALIGN	32
 
-#define KSTKSIZE	2048
+#define KSTKSIZE	4096
 #define KSTACK		KSTKSIZE
 
 /* Memory map: banks at 0x10000000-0x10010000 (64KB) and

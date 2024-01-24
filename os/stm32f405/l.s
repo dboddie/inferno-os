@@ -50,7 +50,7 @@ _end_start_loop:
 TEXT _dummy(SB), THUMB, $-4
 
     MOVW    SP, R0
-    B   ,dummy(SB)
+    B   ,trap_dummy(SB)
 
 /* These exception handlers will be entered in handler mode, using the main
    stack pointer (MSP). */
@@ -67,10 +67,12 @@ TEXT _systick(SB), THUMB, $-4
     AND.S   R1, R0              /* Check the exception number and other bits. */
     BNE     _systick_exit       /* Don't interrupt if these are set. */
 
+    /* Mask all exceptions to prevent re-entry. */
+    CPS(1, CPS_I)
+
     /* Store the xPSR flags for the interrupted routine. These will be
        temporarily overwritten and restored later. */
-    MOVW    $apsr_flags(SB), R1
-    MOVW    R2, (R1)
+    MOVW    R2, R10
 
     /* Record the interrupted PC in the slot for R12. */
     MOVW    24(SP), R0
@@ -95,34 +97,59 @@ _systick_exit:
    PC which points to here. */
 TEXT _preswitch(SB), THUMB, $-4
 
-    MOVW R0, R0
-    PUSH(0x1000, 0)             /* Save R12 (will be PC). */
-    PUSH(0x0bff, 1)             /* Save registers R0-R9, R11 as well as R14, in
+    PUSH(0x1001, 0)             /* Save R0 and R12 (will be PC). */
+    PUSH(0x0ffe, 1)             /* Save registers R1-R11 as well as R14, in
                                    case the interrupted code uses them. */
+
+    /* Now that R12 (return PC) is safely stacked, enable interrupts again. */
+    CPS(0, CPS_I)
+
+    VMRS(0)                     /* Copy FPSCR into R0 */
+    PUSH(0x0001, 0)             /* then push it onto the stack. */
+    VPUSH(0, 8)                 /* Push D0-D7. */
+
     MOVW    $setR12(SB), R1
     MOVW    R1, R12             /* Reset static base (SB) */
 
     MOVW    SP, R0              /* Pass the stack pointer to the switcher. */
     BL      ,switcher(SB)
 
-    MOVW    $apsr_flags(SB), R1
-    MOVW    (R1), R1
-    MSR(1, 0)                /* Restore the status bits. */
+    VPOP(0, 8)                  /* Recover D0-D7. */
+    POP(0x0001, 0)              /* Recover FPSCR into R0 */
+    VMSR(0)                     /* then restore it. */
 
-    POP_LR_PC(0x0bff, 1, 0)     /* Recover R0-R9, R11 and R14 */
-    POP_LR_PC(0, 0, 1)          /* then PC. */
+    POP_LR_PC(0x0ffe, 1, 0)     /* Recover R1-R11 and R14 */
+    MSR(10, 0)                  /* Restore the status bits in R10. */
+
+    POP_LR_PC(0x0001, 0, 1)     /* then R0 and PC. */
 
 TEXT _hard_fault(SB), THUMB, $-4
 /*    MRS(0, MRS_MSP)     Pass the main stack pointer (MSP) to a C function. */
-    PUSH(0x1ff0, 0)
+
+    MOVW    SP, R1      /* Record the interrupted stack pointer. */
+    ADD     $0x68, R1   /* Includes FP registers. */
+
+    PUSH(0x0ffa, 1)
     MOVW    SP, R0
     B ,hard_fault(SB)
 
 TEXT _usage_fault(SB), THUMB, $-4
 /*     MRS(0, MRS_MSP)     Pass the main stack pointer (MSP) to a C function. */
-    PUSH(0x1ff0, 0)
+
+    /* R0-R3, R12, R14, PC and xPSR are saved on the stack. R0 is stored lowest
+       at the address pointed to by the stack pointer. */
+
+    MOVW    SP, R1      /* Record the interrupted stack pointer. */
+    ADD     $0x68, R1   /* Includes FP registers. */
+
+    /* Push R1, R4-R11 and LR to complete the set of stacked registers.
+       It was found that PUSH(0x0ff2, 1) resulted in an incomplete or
+       corrupt set of stacked registers, with the value expected in r4 found
+       in r3. */
+    PUSH(0x0ffa, 1)
     MOVW    SP, R0
-    B ,usage_fault(SB)
+    BL ,usage_fault(SB)
+    POP(0x0ffa, 1)
 
 TEXT _nmi(SB), THUMB, $-4
     B ,_nmi(SB)
@@ -131,7 +158,12 @@ TEXT _mem_manage(SB), THUMB, $-4
     B ,_mem_manage(SB)
 
 TEXT _bus_fault(SB), THUMB, $-4
-    B ,_bus_fault(SB)
+    MOVW    SP, R1      /* Record the interrupted stack pointer. */
+    ADD     $0x68, R1   /* Includes FP registers. */
+
+    PUSH(0x0ffa, 1)
+    MOVW    SP, R0
+    B ,bus_fault(SB)
 
 TEXT _svcall(SB), THUMB, $-4
     B ,_svcall(SB)
@@ -145,7 +177,7 @@ TEXT _uart3(SB), THUMB, $-4
 
     MOVW    $setR12(SB), R1
     MOVW    R1, R12             /* Reset static base (SB) */
-    BL ,uart3_intr(SB)
+    BL ,kbd_readc(SB)
 
     POP_LR_PC(0x1bff, 0, 1)     /* Pop registers R0-R9, R11-R12 and return */
 

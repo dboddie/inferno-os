@@ -1,6 +1,8 @@
 #ifndef THUMB2_H
 #define THUMB2_H
 
+#include "sysdep.h"
+
 /* ARM Architecture Reference Manual Thumb-2 Supplement, page 4-76, T1 */
 #define CPS(disable, bit) \
     WORD $(0xb660 | ((disable & 1) << 4) | (bit & 7))
@@ -31,9 +33,7 @@
 #define MRS(Rd, spec) \
     WORD $(0x8000f3ef | ((Rd & 0xf) << 24) | ((spec & 0xff) << 16))
 
-/* ARMv7-M Architecture Reference Manual, A7.7.82, mask=2 */
-#define MSR(Rn, spec) \
-    WORD $(0x8000f380 | (Rn & 0xf) | ((3 & 3) << 26) | ((spec & 0xff) << 16))
+/* See the sysdep.h file for a definition of MSR. */
 
 /* ARM Architecture Reference Manual Thumb-2 Supplement, 4.6.34 */
 #define DMB WORD $0x8f5ff3bf
@@ -104,15 +104,26 @@
 /* ARM Architecture Reference Manual Thumb-2 Supplement, page A7-535 */
 #define VMSR(r) WORD $(0x0a10eee1 | (r)<<28) /* ARM to FP */
 
-/* ARM Architecture Reference Manual Thumb-2 Supplement, page A7-557 */
-#define VSTR(fp, Rn, offset) WORD $(0x0b00ed00 | (fp & 0xf) << 28 | ((offset >> 2) & 0xff) << 16 | (Rn))
-/* ARM Architecture Reference Manual Thumb-2 Supplement, page A7-521 */
-#define VLDR(fp, Rn, offset) WORD $(0x0b00ed10 | (fp & 0xf) << 28 | ((offset >> 2) & 0xff) << 16 | (Rn))
+/* ARMv7-M Architecture Reference Manual, A7.7.256 */
+#define VSTR(fp, Rn, offset) WORD $(0x0b00ed80 | (fp & 0xf) << 28 | ((offset >> 2) & 0xff) << 16 | (Rn))
+/* ARMv7-M Architecture Reference Manual, A7.7.233 */
+#define VLDR(fp, Rn, offset) WORD $(0x0b00ed90 | (fp & 0xf) << 28 | ((offset >> 2) & 0xff) << 16 | (Rn))
+
+/* ARMv7-M Architecture Reference Manual, A7.7.248, T1 */
+#define VPUSH(first_reg, number_of_double_regs) \
+    WORD $(0x0b00ed2d | (((first_reg & 0x10) << 2) | ((first_reg & 0xf) << 28) | \
+           ((number_of_double_regs & 0x7f) << 17)))
+/* ARMv7-M Architecture Reference Manual, A7.7.249, T1 */
+#define VPOP(first_reg, number_of_double_regs) \
+    WORD $(0x0b00ecbd | (((first_reg & 0x10) << 2) | ((first_reg & 0xf) << 28) | \
+           ((number_of_double_regs & 0x7f) << 17)))
 
 /* System control and ID registers
    ARMv7-M Architecture Reference Manual, B3.2.2 */
 #define CPUID_ADDR 0xe000ed00
 #define CCR_ADDR   0xe000ed14
+#define CCR_IC       0x20000
+#define CCR_STKALIGN (1 << 9)
 #define CCR_DIV_0_TRP (1 << 4)
 #define CCR_UNALIGN_TRP (1 << 3)
 #define SHCSR_ADDR 0xe000ed24
@@ -133,20 +144,35 @@
 #define MVFR0_ADDR 0xe000ef40
 #define MVFR1_ADDR 0xe000ef44
 
+#define FPCCR_ASPEN 0x80000000
+#define FPCCR_LSPEN 0x40000000
+
 /* MRS and MSR encodings, ARMv7-M Architecture Reference Manual, B5.1.1 */
+#define MRS_APSR 0
+#define MRS_IPSR 1
+#define MRS_EPSR 2
+#define MRS_XPSR 3
 #define MRS_MSP 8
 #define MRS_PSP 9
 #define MRS_PRIMASK 16
+#define MRS_BASEPRI 17
+#define MRS_BASEPRI_MAX 18
+#define MRS_FAULTMASK 19
 #define MRS_CONTROL 20
 
+#define CONTROL_NPRIV 1
 #define CONTROL_SPSEL 2
+#define CONTROL_FPCA 4
 
 /* System handler priority register 3 (SysTick is in top 4/8 bits) and
    equivalent for IRQs 36-39 (UART3 is 39, so in the top 4/8 bits). */
+#define SHPR1 0xe000ed18
+#define SHPR2 0xe000ed1c
 #define SHPR3 0xe000ed20
 #define NVIC_IPR9 0xe000e424
 
 /* System control block (STM32 Cortex-M4 programming manual, section 4.4.5) */
+#define SCB_VTOR 0xe000ed08
 #define SCB_AIRCR 0xe000ed0c
 #define SCB_AIRCR_VECTKEYRESET 0x05fa0000
 #define SCB_AIRCR_SYSRESETREQ 0x04
@@ -158,5 +184,10 @@
 
 /* ARMv7-M Architecture Reference Manual, B1.4.2 */
 #define EPSR_T 0x01000000
+
+/* Floating point features (ARMv7-M Architecture Reference Manual, B4.7) */
+#define MVFR0 0xe000ef40
+#define MVFR1 0xe000ef44
+#define MVFR2 0xe000ef48
 
 #endif
