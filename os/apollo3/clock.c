@@ -17,7 +17,6 @@ enum {
 void clockinit(void)
 {
     start_timer();
-    intron();
 }
 
 void clockcheck(void)
