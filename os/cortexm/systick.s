@@ -1,6 +1,3 @@
-#include "thumb2.h"
-#include "vectors.s"
-
 THUMB=4
 
 /* These exception handlers will be entered in handler mode, using the main
@@ -73,4 +70,3 @@ TEXT _preswitch(SB), THUMB, $-4
     MSR(10, 0)                  /* Restore the status bits in R10. */
 
     POP_LR_PC(0x0001, 0, 1)     /* then R0 and PC. */
-
