@@ -7,7 +7,6 @@
 #include    "dat.h"
 #include    "fns.h"
 #include    "../port/error.h"
-#include    "devices/apollo3.h"
 
 extern char bdata[];
 
