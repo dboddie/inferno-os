@@ -16,10 +16,12 @@ considered prototypes:
 
 There are some known issues:
 
+* The system occasionally encounters a lock loop during preemption, causing a
+  panic and a reboot.
 * Text input is handled via a "fake" keyboard device, `kbd.c`, which is not
   very capable or flexible. A proper UART driver would be better.
 
-Hopefully, this can be resolved later.
+Hopefully, these can be resolved later.
 
 ## Building
 
