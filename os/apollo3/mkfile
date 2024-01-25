@@ -15,9 +15,9 @@ INSTALLDIR=$ROOT/Inferno/$OBJTYPE/bin
 
 <| $SHELLNAME ../port/mkdevlist $CONF
 
-# Create a directory to hold frozen modules and run the mkfrozen script to
-# create them, defining MODOBJ as a side effect.
-<| $SHELLNAME ../cortexm/listfrozen $CONF
+# List the frozen modules in the configuration file, defining MODOBJ.
+# This will be used by the mkfrozen script to create frozen module sources.
+<| $SHELLNAME ../cortexm/listfrozen
 
 OBJ=\
 	l.$O\
@@ -90,7 +90,7 @@ rmfrozendir:V:
 MODSRC=${MODOBJ:%.$O=%.s}
 
 frozen.h:V: $MODSRC
-	$SHELLNAME ../cortexm/mkfrozen $CONF
+	$SHELLNAME ../cortexm/mkfrozen
 	# Only build frozen modules if they exist.
 	$MODSRC || $AS $ASFLAGS $MODSRC
 
