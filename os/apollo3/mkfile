@@ -89,7 +89,7 @@ rmfrozendir:V:
 
 MODSRC=${MODOBJ:%.$O=%.s}
 
-frozen.h:V: $MODSRC
+frozen.h:V:
 	$SHELLNAME ../cortexm/mkfrozen
 	# Only build frozen modules if they exist.
 	$MODSRC || $AS $ASFLAGS $MODSRC
