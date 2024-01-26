@@ -56,7 +56,7 @@ HFILES=\
 
 ASFLAGS=$ASFLAGS -I../cortexm
 CFLAGS=-wFV -I./include -I../cortexm -I$ROOT/include -I$ROOT/libinterp
-LDFLAGS=-H0 -l -s -t -f -a
+LDFLAGS=-H0 -l -s -t -f
 KERNDATE=`{$NDATE}
 
 default:V: appl mkfreeze mkfrozendir frozen.h kernel
