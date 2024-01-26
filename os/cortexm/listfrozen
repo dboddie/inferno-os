@@ -12,6 +12,6 @@ $2 ~ path_re {
     gsub("/", "_", prefix)
     prefix=substr(prefix, 1)
 
-    printf("frozen/"prefix".$O ")
+    printf(prefix".fr.$O ")
 }
 ' $CONF
