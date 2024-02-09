@@ -53,7 +53,7 @@ TEXT _preswitch(SB), THUMB, $-4
     CPS(0, CPS_I)
 
     VMRS(0)                     /* Copy FPSCR into R0 */
-    PUSH(0x0001, 0)             /* then push it onto the stack. */
+    PUSH1(0x01, 0)              /* then push it onto the stack. */
     VPUSH(0, 8)                 /* Push D0-D7. */
 
     MOVW    $setR12(SB), R1
@@ -63,7 +63,7 @@ TEXT _preswitch(SB), THUMB, $-4
     BL      ,switcher(SB)
 
     VPOP(0, 8)                  /* Recover D0-D7. */
-    POP(0x0001, 0)              /* Recover FPSCR into R0 */
+    POP1(0x01, 0)               /* Recover FPSCR into R0 */
     VMSR(0)                     /* then restore it. */
 
     POP_LR_PC(0x0ffe, 1, 0)     /* Recover R1-R11 and R14 */

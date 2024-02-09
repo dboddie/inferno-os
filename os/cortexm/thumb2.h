@@ -56,9 +56,17 @@
      WORD $(0x0000e840 | ((Rt & 0xf) << 28) | (Rn & 0xf) | ((Rd & 0xf) << 24) | \
                          (((offset >> 2) & 0xff) << 16))
 
+/* ARM Architecture Reference Manual Thumb-2 Supplement, 4.6.99, T1 */
+#define PUSH1(regs, lr) \
+    WORD $(0x0000b400 | ((lr & 1) << 8) | (regs & 0xff))
+
 /* ARM Architecture Reference Manual Thumb-2 Supplement, 4.6.99, T2 */
 #define PUSH(regs, lr) \
     WORD $(0x0000e92d | ((lr & 1) << 30) | ((regs & 0x1fff) << 16))
+
+/* ARM Architecture Reference Manual Thumb-2 Supplement, 4.6.98, T1 */
+#define POP1(regs, pc) \
+    WORD $(0x0000bc00 | ((pc & 1) << 8) | (regs & 0xff))
 
 /* ARM Architecture Reference Manual Thumb-2 Supplement, 4.6.98, T2 */
 #define POP(regs, pc) \
