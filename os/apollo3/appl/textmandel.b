@@ -90,26 +90,17 @@ render(ox, oy, length: real, iterations: int)
 }
 
 esc := array[1] of {byte 16r1b};
+chars := "0123456789abcdef";
 
 draw(value: int)
 {
     if (value < 0) {
-        sys->write(sys->fildes(1), esc, 1);
-        sys->print("[48;2;0;0;255m ");
-        sys->write(sys->fildes(1), esc, 1);
-        sys->print("[m");
+        sys->print(".");
     } else if (value == 0)
         sys->print(" ");
     else {
-        g: int;
-        if (value <= 7)
-            g = value * 36;
-        else
-            g = (15 - value) * 36;
-
-        sys->write(sys->fildes(1), esc, 1);
-        sys->print("[48;2;%d;%d;%dm ", value * 17, g, 255 - (value * 17));
-        sys->write(sys->fildes(1), esc, 1);
-        sys->print("[m");
+        b := array[1] of byte;
+        b[0] = byte chars[value];
+        sys->write(sys->fildes(1), b, 1);
     }
 }
