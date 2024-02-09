@@ -173,10 +173,16 @@ void halt(void)
 
 void FPsave(FPenv *fps)
 {
+//    savefpregs(fps->regs);
+//    fps->fpscr = getfpscr();
+//    fps->fpistate = up->env->fpu.fpistate;
 }
 
 void FPrestore(FPenv *fps)
 {
+//    restorefpregs(fps->regs);
+//    setfpscr(fps->fpscr);
+//    up->env->fpu.fpistate = fps->fpistate;
 }
 
 void fpinit(void)
