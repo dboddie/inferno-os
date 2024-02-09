@@ -149,10 +149,10 @@ fpithumb2(Ereg *er)
     ufp = &up->env->fpu;
     if(ufp->fpistate != FPACTIVE) {
         ufp->fpistate = FPACTIVE;
-        ufp->control = 0;
-        ufp->status = (0x01<<28)|(1<<12);	/* software emulation, alternative C flag */
-        for (int n = 0; n < 16; n++)
-            er->s[n] = 0;
+//        ufp->control = 0;
+//        ufp->status = (0x01<<28)|(1<<12);	/* software emulation, alternative C flag */
+//        for (int n = 0; n < 16; n++)
+//            er->s[n] = 0;
     }
 
     ushort w0 = *(ushort *)er->pc;
