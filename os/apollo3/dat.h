@@ -50,11 +50,6 @@ enum
 /* In Plan 9 this struct is called FPsave: */
 struct FPenv
 {
-	ulong	status;
-	ulong   control;
-	double  regs[Maxfpregs];
-        int     fpscr;
-	int     fpistate;
         uintptr pc;
 };
 
