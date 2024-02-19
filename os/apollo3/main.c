@@ -32,7 +32,7 @@ void confinit(void)
     conf.ialloc = BY2PG;
 
 //    conf.nproc = 100 + ((conf.npage*BY2PG)/MB)*5;
-    conf.nproc = 10;
+    conf.nproc = 20;
     conf.nmach = 1;
 
     active.machs = 1;
