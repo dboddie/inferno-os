@@ -12,24 +12,42 @@
 implement Mandelbrot;
 
 include "sys.m";
-    sys: Sys;
 include "draw.m";
 include "math.m";
-    math: Math;
+
+sys: Sys;
+math: Math;
 
 Mandelbrot: module
 {
     init: fn(ctx: ref Draw->Context, args: list of string);
 };
 
-displayed := 0;
-
 init(nil: ref Draw->Context, args: list of string)
 {
     sys = load Sys Sys->PATH;
     math = load Math Math->PATH;
 
-    render(-0.5, 0.0, 3.0, 16);
+    x := -0.5;
+    y := 0.0;
+    extent := 3.0;
+
+    if (len args == 4)
+        (x, y, extent) = read_args(tl args);
+    else if (len args != 1) {
+        sys->fprint(sys->fildes(2), "usage: textmandel [x y extent]\n");
+        return;
+    }
+
+    render(x, y, extent, 16);
+}
+
+read_args(args: list of string): (real, real, real)
+{
+    x := hd args; args = tl args;
+    y := hd args; args = tl args;
+    extent := hd args;
+    return (real x, real y, real extent);
 }
 
 render(ox, oy, length: real, iterations: int)
