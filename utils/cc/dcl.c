@@ -223,14 +223,20 @@ nextinit(void)
 		n = a->right;
 		a = a->left;
 	}
+/* Where non-inline strings are converted OCONST nodes. */
 	if(a->op == OUSED) {
 		a = a->left;
+                                                // SSTRING CSTATIC
+//print("%s %ld %d %d %lux\n", a->cstring, a->lineno, a->op, a->class, a->type);
+//print("%lux\n", a->type->link);
+
 		b = new(OCONST, Z, Z);
 		b->type = a->type->link;
 		if(a->op == OSTRING) {
 			b->vconst = convvtox(*a->cstring, TCHAR);
 			a->cstring++;
 		}
+//print("%s %lux\n", a->cstring, a->garb);
 		if(a->op == OLSTRING) {
 			b->vconst = convvtox(*a->rstring, TRUNE);
 			a->rstring++;

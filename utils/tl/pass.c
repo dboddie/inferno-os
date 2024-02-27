@@ -35,8 +35,10 @@ dodata(void)
 		/*
 		 * pull out string constants
 		 */
+//                 print("pull out string constants\n");
 		for(p = datap; p != P; p = p->link) {
 			s = p->from.sym;
+//                        print("%lux\n", p->to.type);
 			if(p->to.type == D_SCONST)
 				s->type = SSTRING;
 		}
@@ -73,6 +75,7 @@ dodata(void)
 	 * pass 2
 	 *	assign large 'data' variables to data segment
 	 */
+//         print("assign large 'data' variables to data segment\n");
 	for(i=0; i<NHASH; i++)
 	for(s = hash[i]; s != S; s = s->link) {
 		t = s->type;

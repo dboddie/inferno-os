@@ -647,6 +647,8 @@ tcomo(Node *n, int f)
 		break;
 
 	case OSTRING:
+//print("%lux %s %lux\n", n, n->cstring, n->type);
+//print("%lux %lux\n", n->type->sym, n->type->tag);
 		if(n->type->link != types[TCHAR]) {
 			o = outstring(0, 0);
 			while(o & 3) {

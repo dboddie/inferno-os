@@ -349,10 +349,12 @@ span(void)
 		/* 
 		 * add strings to text segment
 		 */
+//                 print("add strings to text segment\n");
 		c = rnd(c, 8);
 		INITRODAT = c;
 		for(i=0; i<NHASH; i++)
 		for(s = hash[i]; s != S; s = s->link) {
+//print("sym=%s type=%d subtype=%d SSTRING=%d value=%ld\n", s->name, s->type, s->subtype, SSTRING, s->value);
 			if(s->type != SSTRING)
 				continue;
 			v = s->value;

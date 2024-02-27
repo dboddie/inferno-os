@@ -833,6 +833,7 @@ string:
 		$$->sym = symstring;
 		$$->etype = TARRAY;
 		$$->class = CSTATIC;
+//print("cc.y LSTRING: %lux %s\n", $$, $$->cstring);
 	}
 |	string LSTRING
 	{
