@@ -32,6 +32,8 @@ void trapinit(void)
     /* Disable privileged access, use SP_main as the stack, disable FP extension. */
     setcontrol(0);
     disablefpu();
+    /* Disable lazy stacking of floating point registers, but enable preservation
+       of FP state in general. */
     *(int *)FPCCR_ADDR &= ~FPCCR_LSPEN;
     *(int *)FPCCR_ADDR |= FPCCR_ASPEN;
     /* Enable the FPU again. */
@@ -129,10 +131,9 @@ void kprocchild(Proc *p, void (*func)(void*), void *arg)
     p->arg = arg;
 }
 
-void usage_fault(int sp)
+void usage_fault(Ereg *er)
 {
     /* Entered with sp pointing to an Ereg struct. */
-    Ereg *er = (Ereg *)sp;
 
     if ((*(short *)UFSR_ADDR) & UFSR_UNDEFINSTR) {
         if (fpithumb2(er)) {
@@ -148,11 +149,7 @@ void usage_fault(int sp)
     wrstr("FPCCR="); wrhex(*(int *)FPCCR_ADDR); newline();
     wrstr("up="); wrhex((int)up); newline();
 
-    dumperegs((Ereg *)sp);
-
-    for (int i = 0; i < 64; i+=4) {
-        wrhex(*(int *)(sp + i)); newline();
-    }
+    dumperegs(er);
 
     for (;;) {}
 }

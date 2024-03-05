@@ -135,8 +135,6 @@ static Internal zero_internal = {0, 1, 0, 0};   // according to os/rpi/fpiarm.c
 int
 fpithumb2(Ereg *er)
 {
-    FPenv *ufp;
-
 #ifdef fpudebug
     wrstr("pc="); wrhex(er->pc); wrch(' ');
     wrhex(*(ushort *)er->pc); wrch(' ');
@@ -146,25 +144,11 @@ fpithumb2(Ereg *er)
 //    dumpfpregs(er);
 #endif
 
-    ufp = &up->env->fpu;
-
     ushort w0 = *(ushort *)er->pc;
     ushort w1 = *(ushort *)(er->pc + 2);
-    ulong imm, ea;
+    ulong imm;
     ulong Fd, Fm, Fn;   // just register numbers, either R, S or D
-    ulong Rt, Rn;
     Internal in1, in2, inr;
-
-    /* Check for single precision instructions since these should be
-       implemented by the hardware. */
-    if (((w1 & 0x0f00) == 0xa00) && ((w0 & 0xeeb7) != 0xeeb7)) {
-        wrstr("Single precision FP undefined instruction at ");
-        wrhex(er->pc); newline();
-        wrhex(*(ushort *)er->pc); wrch(' ');
-        wrhex(*((ushort *)er->pc + 1));
-        newline();
-        return 0;
-    }
 
     switch (w0 & 0xffb0) {
     case 0xeeb0:
@@ -323,85 +307,7 @@ fpithumb2(Ereg *er)
         er->pc += 4;
         return 1;
     }
-/*
-    // MOVDW (A7.7.240)
-    case 0xee10:
-    {
-        if ((w0 & 0x40) == 0)
-            break;
 
-        Rt = w1 >> 12;
-        Fn = ((w0 & 0xf) << 1) | ((w1 & 0x80) >> 7);
-        REG(Rt) = er->s[Fn];
-#ifdef fpudebug
-        wrstr("VMOV (to ARM) R"); wrdec(Rt); wrstr(", S"); wrdec(Fn); newline();
-        dumpreg(Rt, REG(Rt));
-        dumpfpreg(er, Fm);
-#endif
-        er->pc += 4;
-        return 1;
-    }
-    // MOVWD (A7.7.240)
-    case 0xee00:
-    {
-        Rt = w1 >> 12;
-        Fn = ((w0 & 0xf) << 1) | ((w1 & 0x80) >> 7);
-        er->s[Fm] = REG(Rt);
-#ifdef fpudebug
-        wrstr("VMOV (to FPU) S"); wrdec(Fn); wrstr(", R"); wrdec(Rt); newline();
-        dumpreg(Rt, REG(Rt));
-        dumpfpreg(er, Fm);
-#endif
-        er->pc += 4;
-        return 1;
-    }
-    // MOVD (A7.7.256)
-    case 0xed00:
-    case 0xed80:
-    {
-        Fd = (w1 >> 12) << 1;
-        Rn = (w0 & 0x0f);
-        imm = (w1 & 0x0f) << 2; // word-aligned offset
-        ea = REG(Rn);
-        if (w0 & 0x80)
-            ea += imm;
-        else
-            ea -= imm;
-
-        *(ulong *)ea = er->s[Fd];
-        *(ulong *)(ea + 4) = er->s[Fd + 1];
-
-#ifdef fpudebug
-        wrstr("VSTR D"); wrdec(Fd>>1); wrstr(", R"); wrdec(Rn); wrstr(", #0x"); wrhex(imm);
-        wrstr(" ("); wrhex(ea); wrstr(")"); newline();
-#endif
-        er->pc += 4;
-        return 1;
-    }
-    // MOVD (A7.7.233)
-    case 0xed10:
-    case 0xed90:
-    {
-        Fd = (w1 >> 12) << 1;
-        Rn = (w0 & 0x0f);
-        imm = (w1 & 0x0f) << 2; // word-aligned offset
-        ea = REG(Rn);
-        if (w0 & 0x80)
-            ea += imm;
-        else
-            ea -= imm;
-
-        er->s[Fd] = *(ulong *)ea;
-        er->s[Fd + 1] = *(ulong *)(ea + 4);
-
-#ifdef fpudebug
-        wrstr("VLDR D"); wrdec(Fd>>1); wrstr(", R"); wrdec(Rn); wrstr(", #0x"); wrhex(imm);
-        wrstr(" ("); wrhex(ea); wrstr(")"); newline();
-#endif
-        er->pc += 4;
-        return 1;
-    }
-*/
     default:
         ;
     }
