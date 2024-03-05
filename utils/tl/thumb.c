@@ -1320,12 +1320,12 @@ if(debug['G']) print("%ulx: %s: thumb\n", (ulong)(p->pc), p->from.sym->name);
 			if (rf == 0) {
                             /* Float constant was zero */
                             /* VSUB rt, rt, rt (ARMv7-M ARM, A7.7.257) */
-                            o1 ^= 1 << 7;
+                            o1 ^= 1 << 7;           /* Makes a VSUB from a VMOV (A7.7.237) */
                             o1 |= (rt & 0xf);       /* Vn */
                             o1 |= ((rt & 0xf)<<16); /* Vm */
                         } else {
                             /* VMOV immediate (ARMv7-M ARM, A7.7.236) */
-                            o1 ^= 1 << 22;
+                            o1 ^= 1 << 22;          /* Makes a VMOV (immediate) from a VMOV (A7.7.237) */
                             o1 |= thumbfloatmap[rf - 1];
                         }
                     } else {
