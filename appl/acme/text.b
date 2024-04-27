@@ -792,14 +792,14 @@ Text.typex(t : self ref Text, r : int, echomode : int)
 #			t.setorigin(q0, FALSE);
 			t.show(q0, q0, TRUE);
 			return;
-#		Keyboard->Home =>
-#			t.commit(TRUE);
-#			t.show(0, 0, FALSE);
-#			return;
-#		Kend or Keyboard->End =>
-#			t.commit(TRUE);
-#			t.show(t.file.buf.nc, t.file.buf.nc, FALSE);
-#			return;
+		16r10 => # ctrl-home
+			t.commit(TRUE);
+			t.show(0, 0, TRUE);
+			return;
+		16r11 => # ctrl-end
+			t.commit(TRUE);
+			t.show(t.file.buf.nc, t.file.buf.nc, TRUE);
+			return;
 		Kleft or Keyboard->Left =>
 			t.commit(TRUE);
 			if(t.q0 != t.q1)

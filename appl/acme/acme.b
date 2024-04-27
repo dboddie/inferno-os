@@ -960,11 +960,11 @@ iconinit()
 
 	# Yellow
 	textcols = array[NCOL] of ref Draw->Image;
-	textcols[BACK] = display.colormix(Draw->Paleyellow, Draw->White);
-	textcols[HIGH] = display.color(Draw->Darkyellow);
+	textcols[BACK] = display.color(int 16rE8E8D0FF);
+	textcols[HIGH] = display.color(int 16r804040FF);
 	textcols[BORD] = display.color(Draw->Yellowgreen); 
 	textcols[TEXT] = black;
-	textcols[HTEXT] = black;
+	textcols[HTEXT] = white;
 
 	if(button != nil)
 		button = modbutton = colbutton = nil;
