@@ -130,7 +130,7 @@ read(fd: ref Iobuf): (ref Rawimage, string)
 	6 =>
 		okcombo = (png.depth == 8 || png.depth == 16);
 		raw.nchans = 3;
-		raw.chandesc = RImagefile->CRGB;
+		raw.chandesc = RImagefile->RGBA;
 		png.alpha = 1;
 	* =>
 		return (nil, "invalid colortype");
@@ -154,9 +154,9 @@ read(fd: ref Iobuf): (ref Rawimage, string)
 # Stash some detail in raw
 	raw.r.min = Point(0, 0);
 	raw.transp = 0;
-	raw.chans = array[raw.nchans] of array of byte;
+	raw.chans = array[raw.nchans + png.alpha] of array of byte;
 	{
-		for (r:= 0; r < raw.nchans; r++)
+		for (r:= 0; r < (raw.nchans + png.alpha); r++)
 			raw.chans[r] = array[raw.r.max.x * raw.r.max.y] of byte;
 	}
 # Get the next chunk
@@ -554,12 +554,15 @@ outputrow(png: ref Png, raw: ref Rawimage, row: array of byte)
 			png.error = "depth not supported (2)";
 			return;
 		8 or 16 =>
-			# split rgb into three channels
+			# split rgb into three channels plus an alpha channel
 			bytespc := png.depth / 8;
-			stride := (3  + png.alpha) * bytespc;
+			stride := (3 + png.alpha) * bytespc;
 			copybytes(raw.chans[0][offset + png.colstart:], png.colstep, row, stride, png.phasecols);
 			copybytes(raw.chans[1][offset + png.colstart:], png.colstep, row[bytespc:], stride, png.phasecols);
 			copybytes(raw.chans[2][offset + png.colstart:], png.colstep, row[bytespc * 2:], stride, png.phasecols);
+                        if (png.alpha) {
+			    copybytes(raw.chans[3][offset + png.colstart:], png.colstep, row[bytespc * 3:], stride, png.phasecols);
+                        }
 		}
 	}
 }
