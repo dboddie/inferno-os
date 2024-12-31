@@ -6,6 +6,7 @@
 #include "io.h"
 #include "sd.h"
 #include "fs.h"
+#include "ureg.h"
 
 #ifndef VERBOSE
 #define VERBOSE 0
@@ -602,6 +603,57 @@ void (*etherdetach)(void);
 void (*floppydetach)(void);
 void (*sddetach)(void);
 
+#define WORD(p) ((p)[0] | ((p)[1]<<8))
+#define LONG(p) ((p)[0] | ((p)[1]<<8) | ((p)[2]<<16) | ((p)[3]<<24))
+
+void	realmode(int intr, Ureg *ureg);		/* from trap.c */
+static uchar modebuf[0x1000];
+
+static uchar*
+vbesetup(Ureg *u, int ax)
+{
+	memset(modebuf, 0, sizeof modebuf);
+	memset(u, 0, sizeof *u);
+	u->ax = ax;
+	u->es = ((ulong)modebuf >> 4) & 0xF000;
+	u->di = (ulong)modebuf & 0xFFFF;
+	return modebuf;
+}
+
+void
+tryvbe(ulong entry)
+{
+	Ureg regs;
+	Ureg *rp = &regs;
+	uchar *p;
+	char *confval;
+	long modeno = 0x118;
+
+	confval = getconf("vbemode");
+	if (confval != nil) {
+		modeno = strtol(confval, nil, 0);
+		if (modeno < 0x100 || modeno > 0x11c)
+			modeno = 0x118;
+	}
+
+	p = vbesetup(rp, 0x4f01);
+	rp->cx = 0x4000 | modeno;
+	realmode(0x10, rp);
+
+	*(uint *)(entry + 0x30) = WORD(p+18); // dx
+	*(uint *)(entry + 0x34) = WORD(p+20); // dy
+	*(uint *)(entry + 0x38) = p[25]; // depth
+	*(uint *)(entry + 0x3c) = (1UL<<p[31])-1 << p[32]; // red mask
+	*(uint *)(entry + 0x40) = (1UL<<p[33])-1 << p[34]; // green mask
+	*(uint *)(entry + 0x44) = (1UL<<p[35])-1 << p[36]; // blue mask
+	*(uint *)(entry + 0x48) = WORD(p+16); // bytes per line
+	*(uint *)(entry + 0x4c) = LONG(p+40); // paddr
+
+	p = vbesetup(rp, 0x4f02);
+	rp->bx = 0x4000 | modeno;
+	realmode(0x10, rp);
+}
+
 void
 warp9(ulong entry)
 {
@@ -615,7 +667,7 @@ warp9(ulong entry)
 
 	splhi();
 	trapdisable();
-
+	tryvbe(entry);
 	/*
 	 * This is where to push things on the stack to
 	 * boot *BSD systems, e.g.

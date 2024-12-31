@@ -49,6 +49,12 @@ TEXT _multibootheader(SB), $0
 	LONG	$0				/* width */
 	LONG	$0				/* height */
 	LONG	$0				/* depth */
+// Extra framebuffer information
+	LONG	$0				/* red mask */
+	LONG	$0				/* green mask */
+	LONG	$0				/* blue mask */
+	LONG	$0				/* bpl */
+	LONG	$0				/* paddr */
 
 /*
  * In protected mode with paging turned off and segment registers setup to linear map all memory.

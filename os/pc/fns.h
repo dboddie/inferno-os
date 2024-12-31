@@ -134,6 +134,7 @@ void	screeninit(void);
 int	screenprint(char*, ...);			/* debugging */
 void	(*screenputs)(char*, int);
 int	segflush(void*, ulong);
+void	swcursorinit(void);
 void	syncclock(void);
 uvlong	tscticks(uvlong*);
 void	trapenable(int, void (*)(Ureg*, void*), void*, char*);
