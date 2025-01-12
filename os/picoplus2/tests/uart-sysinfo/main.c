@@ -2,11 +2,56 @@
 #include "ureg.h"
 #include "../../devices/picoplus2.h"
 #include "../../devices/fns.h"
+#include "thumb2.h"
+
+void wrch(int c)
+{
+    UART *uart1 = (UART *)UART1_BASE;
+    // Wait until the transmit FIFO is empty.
+    while (uart1->fr & UARTFR_TXFF);
+    uart1->dr = c;
+}
+
+void wrstr(char *s)
+{
+    for (; *s != 0; s++) {
+        wrch((int)*s);
+    }
+}
+
+void wrhex(int value)
+{
+    int v = value;
+    for (int s = 28; s >= 0; s -= 4) {
+        int b = (v >> s) & 0xf;
+        if (b > 9)
+            wrch(87 + b);
+        else
+            wrch(48 + b);
+    }
+}
+
+void newline(void)
+{
+    wrch(13); wrch(10);
+}
+
+void prhex(char *s, unsigned int addr)
+{
+    wrstr(s);
+    wrhex(*(unsigned int *)addr);
+    newline();
+}
+
+#define prval(expr) \
+    wrstr("expr = 0x"); \
+    wrhex(expr); \
+    newline();
+
+unsigned int old_vtor;
 
 void main(void)
 {
-    setup_led();
-
     // Use function 2 (UART) for GPIO pins 4 and 5. This function is needed to
     // drive GPIOs, otherwise function 0 can be used to read their states.
     GPIOctrl *gpio4 = (GPIOctrl *)GPIO4_IO_ADDR;
@@ -23,14 +68,6 @@ void main(void)
     xosc->ctrl = XOSC_ENABLE | XOSC_1_15MHZ;
 
     while (!(xosc->status & XOSC_STABLE));
-/*
-    PLL *pll = (PLL *)PLL_SYS_BASE;
-    pll->cs = 1;
-    pll->fbdiv_int = 125;
-    pll->prim = (5 << 16) | (2 << 12);
-*/
-
-//    *(unsigned int *)CLK_SYS_RESUS_CTRL = 0;
 
     Clocks *refclk = (Clocks *)CLK_REF_ADDR;
     refclk->ctrl = CLK_REF_CTRL_XOSC_CLKSRC;
@@ -47,7 +84,6 @@ void main(void)
     clrreset->reset = RESETS_IO_BANK0;
     while (!(resets->reset_done & RESETS_IO_BANK0));
 
-//    resets->reset |= RESETS_UART1;
     clrreset->reset = RESETS_UART1;
     while (!(resets->reset_done & RESETS_UART1));
 
@@ -59,15 +95,35 @@ void main(void)
     uart1->lcr_h = UARTLCR_H_WLEN_8 | UARTLCR_H_FEN;
     uart1->cr = UARTCR_RXE | UARTCR_TXE | UARTCR_EN;
 
-//    set_led(1);
+    wrstr("old VTOR = 0x");
+    wrhex(old_vtor);
+    newline();
+    prhex("SCB_VTOR = 0x", SCB_VTOR);
 
-    spllo();
-    const char s[] = "Hello";
+    prval(xosc->status)
 
-    for (int i = 0; i < 5; i++) {
-        uart1->dr = s[i];
-        while (uart1->fr & (UARTFR_TXFF | UARTFR_BUSY));
-    }
+    clrreset->reset = RESETS_PLL_SYS;
+    while (!(resets->reset_done & RESETS_PLL_SYS));
+
+    PLL *pll = (PLL *)PLL_SYS_BASE;
+    pll->cs = 1;    // refdiv=1
+    pll->fbdiv_int = 125;
+
+    // Power up (set low) PLL and oscillator.
+    pll->pwr &= ~(PLL_PWR_VCOPD | PLL_PWR_PD);
+
+    while (!(pll->cs & PLL_CS_LOCK));
+
+    pll->prim = (5 << 16) | (2 << 12);
+
+    // Power up (set low) PLL and oscillator.
+    pll->pwr &= ~PLL_PWR_POSTDIVD;
+
+    prval(pll->pwr)
+    prval(pll->cs)
+    prval(pll->fbdiv_int)
+    prval(pll->prim)
+
     for (;;) {}
 }
 

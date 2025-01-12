@@ -160,6 +160,13 @@ typedef struct {
     unsigned int ints;
 } PLL;
 
+enum {
+    PLL_CS_LOCK = (1 << 31),
+    PLL_PWR_VCOPD = 0x20,
+    PLL_PWR_POSTDIVD = 0x08,
+    PLL_PWR_PD = 0x01,
+};
+
 #define RESETS_BASE 0x40020000
 #define RESETS_CLR_BASE 0x40023000
 
@@ -171,6 +178,7 @@ typedef struct {
 
 enum {
     RESETS_UART1 = (1 << 27),
+    RESETS_PLL_SYS = (1 << 14),
     RESETS_IO_BANK0 = (1 << 6),
 };
 
@@ -188,6 +196,7 @@ typedef struct {
 #define CLK_REF_CTRL_XOSC_CLKSRC 2
 
 #define CLK_PERI_CTRL_ENABLE (1 << 11)
+#define CLK_PERI_CTRL_CLKSRC_PLL_SYS (1 << 5)
 #define CLK_PERI_CTRL_XOSC_CLKSRC (4 << 5)
 
 #define CLK_SYS_RESUS_CTRL (CLOCKS_BASE + 0x84)
@@ -215,4 +224,4 @@ enum {
     XOSC_X4 = (1 << 20),
 };
 
-#define XOSC_FREQ 3000000
+#define XOSC_FREQ 12000000

@@ -1,0 +1,32 @@
+O=          t
+AS=         5a -I../../../cortexm
+ASFLAGS=    -t
+CC=         tc -I../../include -I../../../cortexm
+CFLAGS=     -wFV
+LD=         tl
+LDFLAGS=    -H0 -R0 -l -s -t -f -a -T0x10000000 -D0x20000000
+
+%.$O:	%.s
+	$AS $ASFLAGS $stem.s
+
+%.$O:	%.c
+	$CC $CFLAGS $stem.c
+
+# Order is important - the loader must be first:
+OBJ=\
+	l.$O\
+	main.$O\
+	../../../cortexm/thumb2.$O\
+
+NOPREFIXOBJ=${OBJ:../../../cortexm/%=%}
+NOPREFIXOBJ=${NOPREFIXOBJ:../../devices/%=%}
+
+BIN=out.bin
+
+default:V: $BIN
+
+$BIN:	$OBJ
+	$LD $LDFLAGS -o $BIN $NOPREFIXOBJ
+
+clean:V:
+	rm -f *.$O $BIN

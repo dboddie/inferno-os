@@ -23,14 +23,28 @@ void main(void)
     xosc->ctrl = XOSC_ENABLE | XOSC_1_15MHZ;
 
     while (!(xosc->status & XOSC_STABLE));
-/*
-    PLL *pll = (PLL *)PLL_SYS_BASE;
-    pll->cs = 1;
-    pll->fbdiv_int = 125;
-    pll->prim = (5 << 16) | (2 << 12);
-*/
 
-//    *(unsigned int *)CLK_SYS_RESUS_CTRL = 0;
+    Resets *clrreset = (Resets *)RESETS_CLR_BASE;
+    Resets *resets = (Resets *)RESETS_BASE;
+    clrreset->reset = RESETS_IO_BANK0;
+    while (!(resets->reset_done & RESETS_IO_BANK0));
+
+    clrreset->reset = RESETS_PLL_SYS;
+    while (!(resets->reset_done & RESETS_PLL_SYS));
+
+    PLL *pll = (PLL *)PLL_SYS_BASE;
+    pll->cs = 1;    // refdiv=1
+    pll->fbdiv_int = 125;
+
+    // Power up (set low) PLL and oscillator.
+    pll->pwr &= ~(PLL_PWR_VCOPD | PLL_PWR_PD);
+
+    while (!(pll->cs & PLL_CS_LOCK));
+
+    pll->prim = (5 << 16) | (2 << 12);
+
+    // Power up (set low) PLL and oscillator.
+    pll->pwr &= ~PLL_PWR_POSTDIVD;
 
     Clocks *refclk = (Clocks *)CLK_REF_ADDR;
     refclk->ctrl = CLK_REF_CTRL_XOSC_CLKSRC;
@@ -40,33 +54,25 @@ void main(void)
     sysclk->div = 1 << 16;
     Clocks *periclk = (Clocks *)CLK_PERI_ADDR;
     periclk->div = 1;
-    periclk->ctrl = CLK_PERI_CTRL_ENABLE | CLK_PERI_CTRL_XOSC_CLKSRC;
+    periclk->ctrl = CLK_PERI_CTRL_ENABLE | CLK_PERI_CTRL_CLKSRC_PLL_SYS;
 
-    Resets *clrreset = (Resets *)RESETS_CLR_BASE;
-    Resets *resets = (Resets *)RESETS_BASE;
-    clrreset->reset = RESETS_IO_BANK0;
-    while (!(resets->reset_done & RESETS_IO_BANK0));
-
-//    resets->reset |= RESETS_UART1;
     clrreset->reset = RESETS_UART1;
     while (!(resets->reset_done & RESETS_UART1));
 
     UART *uart1 = (UART *)UART1_BASE;
     uart1->cr = ~UARTCR_EN;
-    unsigned int baud_rate_div = (2 * XOSC_FREQ / 115200) + 1;
+    unsigned int baud_rate_div = (2 * 150000000 / 115200) + 1;
     uart1->ibrd = baud_rate_div >> 7;
     uart1->fbrd = (baud_rate_div & 0x7f) >> 1;
     uart1->lcr_h = UARTLCR_H_WLEN_8 | UARTLCR_H_FEN;
     uart1->cr = UARTCR_RXE | UARTCR_TXE | UARTCR_EN;
-
-//    set_led(1);
 
     spllo();
     const char s[] = "Hello";
 
     for (int i = 0; i < 5; i++) {
         uart1->dr = s[i];
-        while (uart1->fr & (UARTFR_TXFF | UARTFR_BUSY));
+        while (uart1->fr & UARTFR_TXFF);
     }
     for (;;) {}
 }
