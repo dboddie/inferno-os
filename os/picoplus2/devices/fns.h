@@ -3,6 +3,7 @@
 extern void enablefpu(void);
 extern void disablefpu(void);
 
+extern void setup_clocks(void);
 extern void start_timer(void);
 extern void wait_ms(int);
 

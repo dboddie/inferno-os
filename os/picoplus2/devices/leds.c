@@ -11,6 +11,7 @@ void setup_led(void)
 
     SIOregs *sio = (SIOregs *)SIO_BASE;
     sio->gpio_oe_set = 1 << 25;
+    sio->gpio_out_clr = (1 << 25);
 }
 
 int get_led(void)
