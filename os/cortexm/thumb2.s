@@ -98,6 +98,10 @@ TEXT getprimask(SB), THUMB, $-4
     MRS(0, MRS_PRIMASK)
     RET
 
+TEXT setprimask(SB), THUMB, $-4
+    MSR(0, MRS_PRIMASK)
+    RET
+
 TEXT getbasepri(SB), THUMB, $-4
     MRS(0, MRS_BASEPRI)
     RET
