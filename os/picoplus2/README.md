@@ -65,6 +65,15 @@ open in a file browser. You should see files called `INFO_UF2.TXT` and
 Copy the `out.uf2` file to the root directory of the device. This will take a
 few seconds. The device will reset when this is complete.
 
+## Using Inferno via a serial adaptor
+
+Inferno uses UART1 to present a terminal to the user via the QW/ST connector on
+the board. You will need a USB-to-serial adaptor and a JST-SH cable to access
+the TX, RX and GND lines exposed by this connector. The power line does not
+need to be connected because power is supplied by the USB connection.
+
+Once the adaptor is connected to the board, connect it to your computer.
+
 You should now be able to access the Inferno environment by running a terminal
 emulator, as in this example where `/dev/ttyACM0` is the device file in use:
 
