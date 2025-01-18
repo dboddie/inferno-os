@@ -128,3 +128,6 @@ appl:V:
 	limbo -o $ROOT/dis/blink.dis appl/blink.b
 	limbo -o $ROOT/dis/floattest.dis appl/floattest.b
 	limbo -o $ROOT/dis/textmandel.dis appl/textmandel.b
+
+uf2:V:
+	uf2conv.py -c -b 0x10000000 -f 0xe48bff59 -o inferno.uf2 kernel
