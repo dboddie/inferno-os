@@ -74,11 +74,11 @@ options(void)
 static void
 doc(char *m)
 {
-	int i;
+/*	int i;
 	print("%s...\n", m);
 	for(i = 0; i < 100*1024*1024; i++)
 		i++;
-}
+*/}
 
 void
 main(void)
