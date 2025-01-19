@@ -1,14 +1,14 @@
-#
-# Copyright © 2002 Vita Nuova Holdings Limited.
-#
 implement UsbDriver;
 
 include "sys.m";
 	sys: Sys;
 include "usb.m";
-	usb: Usb;
 
-readerpid: int;
+Setproto: con 16r0b;
+Bootproto: con 0;
+PtrCSP: con big 16r020103;
+
+workpid: int;
 
 kill(pid: int): int
 {
@@ -20,41 +20,91 @@ kill(pid: int): int
 	return 0;
 }
 
-reader(pidc: chan of int, fd: ref Sys->FD)
+mousework(pidc: chan of int, usb: Usb, d: ref Usb->Dev, fd: ref Sys->FD)
 {
+	n: int;
+
+	buf := array [d.maxpkt] of byte;
+	curx := 0;
+	cury := 0;
+
 	pid := sys->pctl(0, nil);
 	pidc <-= pid;
-	buf := array [4] of byte;
-	while ((n := sys->read(fd, buf, len buf)) >= 0)
-		sys->print("%d: %d\n", sys->millisec(), n);
-	readerpid = -1;
+
+	while(1){
+		n = sys->read(d.dfd, buf, d.maxpkt);
+		if(n < 3){
+			sys->sleep(100);
+			continue;
+		}
+		if(usb->usbdebug)
+			usb->dprint(2, sys->sprint("%d: %d\n", sys->millisec(), n));
+		dx := int buf[1];
+		if(dx >= 128)
+			dx = dx - 256;
+		dy := int buf[2];
+		if(dy >= 128)
+			dy = dy - 256;
+		curx += dx;
+		cury += dy;
+		if(curx < 0)
+			curx = 0;
+		if(cury < 0)
+			cury = 0;
+		s := sys->aprint("m%11d %11d %11d %11ud", curx, cury, int buf[0], sys->millisec());
+		sys->write(fd, s, len s);
+	}
+	if(n < 0 && usb->usbdebug)
+		usb->dprint(2, sys->sprint("read failure in mousework: %r\n"));
+	workpid = -1;
 }
 	
-init(usbmod: Usb, setupfd, ctlfd: ref Sys->FD,
-	nil: ref Usb->Device,
-	conf: array of ref Usb->Configuration, path: string): int
+init(usb: Usb, d: ref Usb->Dev): int
 {
-	usb = usbmod;
 	sys = load Sys Sys->PATH;
-	rv := usb->set_configuration(setupfd, conf[0].id);
-	if (rv < 0)
-		return rv;
-	ep := (hd conf[0].iface[0].altiface).ep[0];
-	sys->print("maxpkt %d interval %d\n", ep.maxpkt, ep.interval);
-	rv = sys->fprint(ctlfd, "ep 1 %d r %d 32", ep.maxpkt, ep.interval);
-	if (rv < 0)
-		return rv;
-	datafd := sys->open(path + "ep1data", Sys->OREAD);
-	if (datafd == nil)
+
+	ud := d.usb;
+	for(i := 0; i < len ud.ep; ++i)
+		if(ud.ep[i] != nil
+				 && ud.ep[i].etype == Usb->Eintr
+				 && ud.ep[i].dir == Usb->Ein
+				 && ud.ep[i].iface.csp == PtrCSP)
+			break;
+	if(i >= len ud.ep){
+		sys->fprint(sys->fildes(2), "failed to find pointer endpoint\n");
 		return -1;
-	pidc := chan of int;
-	spawn reader(pidc, datafd);
-	readerpid = <- pidc;
-	return 0;
+	}
+	outfd := sys->open("#m/pointerin", Sys->OWRITE);
+	if(outfd == nil){
+		sys->print("usbmouse: failed to open pointer for writing: %r\n");
+		return -1;
+	}
+	r := Usb->Rh2d|Usb->Rclass|Usb->Riface;
+	ret := usb->usbcmd(d, r, Setproto, Bootproto, ud.ep[i].id, nil, 0);
+	if(ret >= 0){
+		kep := usb->openep(d, ud.ep[i].id);
+		if(kep == nil){
+			sys->fprint(sys->fildes(2), "kb: %s: openep %d: %r\n",
+				d.dir, ud.ep[i].id);
+			return -1;
+		}
+		fd := usb->opendevdata(kep, Sys->OREAD);
+		if(fd == nil){
+			sys->fprint(sys->fildes(2), "mouse: %s: opendevdata: %r\n", kep.dir);
+			usb->closedev(kep);
+			return -1;
+		}
+		pidc := chan of int;
+		spawn mousework(pidc, usb, kep, outfd);
+		workpid =<- pidc;
+	}
+	else
+		sys->fprint(sys->fildes(2), "usbcmd failed: %r\n");
+	return ret;
 }
 
 shutdown()
 {
-	if (readerpid >= 0)
-		kill(readerpid);
+	if(workpid >= 0)
+		kill(workpid);
 }

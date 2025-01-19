@@ -3,8 +3,9 @@
 TARG=\
 	usbd.dis\
 
-SYSMODULES=\
-	usb.m\
+MODULES=
+
+SYSMODULES= 
 
 DISBIN=$ROOT/dis/usb
 

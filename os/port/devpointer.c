@@ -17,6 +17,7 @@
 enum{
 	Qdir,
 	Qpointer,
+	QpointerIn,
 	Qcursor,
 };
 
@@ -27,6 +28,7 @@ struct Pointer {
 	int	y;
 	int	b;
 	ulong	msec;
+	ulong	lastpress;
 };
 
 static struct
@@ -42,7 +44,8 @@ static struct
 static
 Dirtab pointertab[]={
 	".",			{Qdir, 0, QTDIR},	0,	0555,
-	"pointer",		{Qpointer},	0,	0666,
+	"pointer",		{Qpointer},	0,	0444,
+	"pointerin",		{QpointerIn},	0,	0222,
 	"cursor",		{Qcursor},		0,	0222,
 };
 
@@ -76,11 +79,11 @@ mousetrack(int b, int x, int y, int isdelta)
 	}
 	msec = TK2MS(MACHP(0)->ticks);
 	if(b && (mouse.b ^ b)&0x1f){
-		if(msec - mouse.msec < 300 && mouse.lastb == b
+		if(msec - mouse.lastpress < 300 && mouse.lastb == b
 		   && abs(mouse.x - x) < 12 && abs(mouse.y - y) < 12)
 			b |= 1<<8;
 		mouse.lastb = b & 0x1f;
-		mouse.msec = msec;
+		mouse.lastpress = msec;
 	}
 	if(x == mouse.x && y == mouse.y && mouse.b == b)
 		return;
@@ -236,11 +239,12 @@ pointerwrite(Chan* c, void* va, long n, vlong)
 	int b, x, y;
 
 	switch((ulong)c->qid.path){
-	case Qpointer:
+	case QpointerIn:
 		if(n > sizeof buf-1)
 			n = sizeof buf -1;
 		memmove(buf, va, n);
 		buf[n] = 0;
+
 		x = strtoul(buf+1, &a, 0);
 		if(*a == 0)
 			error(Eshort);

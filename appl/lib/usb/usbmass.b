@@ -1,5 +1,5 @@
 #
-# Copyright © 2001 Vita Nuova Holdings Limited.
+# Adapted from earlier usbmass.b
 #
 implement UsbDriver;
 
@@ -7,20 +7,20 @@ include "sys.m";
 	sys: Sys;
 include "usb.m";
 	usb: Usb;
-	Endpt, RD2H, RH2D: import Usb;
+	Ep, Rd2h, Rh2d: import Usb;
 
-ENDPOINT_STALL: con 0;	# TO DO: should be in usb.m
-
-readerpid: int;
+readerpid, watcherpid: int;
 setupfd, ctlfd: ref Sys->FD;
 infd, outfd: ref Sys->FD;
-inep, outep: ref Endpt;
+inep, outep: ref Ep;
+iep, oep: ref Usb->Dev;
 cbwseq := 0;
 capacity: big;
 debug := 0;
 
 lun: int;
 blocksize: int;
+dev: ref Usb->Dev;
 
 kill(pid: int)
 {
@@ -29,11 +29,27 @@ kill(pid: int)
 		sys->fprint(fd, "kill");
 }
 
-reader(pidc: chan of int, fileio: ref Sys->FileIO)
+watcher(pidc: chan of int, watchc: chan of string)
+{
+	pid := sys->pctl(0, nil);
+	pidc <-= pid;
+	while(1){
+		sys->sleep(5000);
+		watchc <-= "poll";
+	}
+}
+
+reader(pidc: chan of int, watchc: chan of string, fileio: ref Sys->FileIO)
 {
 	pid := sys->pctl(0, nil);
 	pidc <-= pid;
 	for(;;) alt{
+	s := <- watchc =>
+		if(scsireadcapacity(0) < 0) {
+			scsirequestsense(0);
+			continue;
+		}
+		setlength("/chan/usbdisk", capacity);
 	(offset, count, nil, rc) := <-fileio.read =>
 		if (rc != nil) {
 			if (offset%blocksize || count%blocksize) {
@@ -70,20 +86,22 @@ reader(pidc: chan of int, fileio: ref Sys->FileIO)
 	readerpid = -1;
 }
 
-massstoragereset(): int
+massstoragereset(d: ref Usb->Dev): int
 {
-	if (usb->setup(setupfd, Usb->RH2D | Usb->Rclass | Usb->Rinterface, 255, 0, 0, nil, nil) < 0) {
-		sys->print("usbmass: storagereset failed\n");
+	if (usb->usbcmd(d, Usb->Rh2d | Usb->Rclass | Usb->Riface, 255, 0, 0, nil, 0)
+			 < 0) {
+		sys->print("usbmass: storagereset failed: %r\n");
 		return -1;
 	}
 	return 0;
 }
 	
-getmaxlun(): int
+getmaxlun(d: ref Usb->Dev): int
 {
 	buf := array[1] of byte;
-	if (usb->setup(setupfd, Usb->RD2H | Usb->Rclass | Usb->Rinterface, 254, 0, 0, nil, buf) < 0) {
-		sys->print("usbmass: getmaxlun failed\n");
+	if (usb->usbcmd(d, Usb->Rd2h | Usb->Rclass | Usb->Riface, 254, 0, 0, buf, 1)
+			< 0) {
+		sys->print("usbmass: getmaxlun failed: %r\n");
 		return -1;
 	}
 	return int buf[0];
@@ -103,9 +121,9 @@ sendcbw(dtl: int, outdir: int, lun: int, cmd: array of byte): int
 	usb->put4(cbw[4:], ++cbwseq);
 	usb->put4(cbw[8:], dtl);
 	if (outdir)
-		cbw[12] = byte RH2D;
+		cbw[12] = byte Rh2d;
 	else
-		cbw[12] = byte RD2H;
+		cbw[12] = byte Rd2h;
 	cbw[13] = byte lun;
 	cbw[14] = byte len cmd;
 	cbw[15:] = cmd;
@@ -141,7 +159,8 @@ recvcsw(tag: int): (int, int)
 	}
 	recvtag := usb->get4(buf[4:]);
 	if (recvtag != tag) {
-		sys->print("recvcsw: tag does not match: sent %d recved %d\n", tag, recvtag);
+		sys->print("recvcsw: tag does not match: sent %d recved %d\n",
+			tag, recvtag);
 		return (-1, -1);
 	}
 	residue := usb->get4(buf[8:]);
@@ -149,19 +168,6 @@ recvcsw(tag: int): (int, int)
 	if(debug)
 		sys->print("recvcsw: residue %d status %d\n", residue, status);
 	return (residue, status);
-}
-
-unstall(ep: ref Endpt)
-{
-	if(debug)
-		sys->print("unstalling bulk %x\n", ep.addr);
-	x := ep.addr & 16rF;
-	sys->fprint(ctlfd, "unstall %d", x);
-	sys->fprint(ctlfd, "data %d 0", x);
-	if (usb->setclear_feature(setupfd, Usb->Rendpt, ENDPOINT_STALL, ep.addr, 0) < 0) {
-		sys->print("unstall: clear_feature() failed: %r\n");
-		return;
-	}
 }
 
 warnfprint(fd: ref Sys->FD, s: string)
@@ -172,11 +178,11 @@ warnfprint(fd: ref Sys->FD, s: string)
 
 bulkread(lun: int, cmd: array of byte, buf: array of byte, dump: int): int
 {
-	if (sendcbw(len buf, 0, lun, cmd) < 0)
+	if(sendcbw(len buf, 0, lun, cmd) < 0)
 		return -1;
 	got := 0;
-	if (buf != nil) {
-		while (got < len buf) {
+	if(buf != nil) {
+		while(got < len buf) {
 			rv := sys->read(infd, buf[got:], len buf - got);
 			if (rv < 0) {
 				sys->print("bulkread: read failed: %r\n");
@@ -187,22 +193,22 @@ bulkread(lun: int, cmd: array of byte, buf: array of byte, dump: int): int
 			got += rv;
 			break;
 		}
-		if (dump) {
+		if(dump) {
 			for (i := 0; i < got; i++)
 				sys->print("%.2ux", int buf[i]);
 			sys->print("\n");
 		}
-		if (got == 0)
-			unstall(inep);
+		if(got == 0)
+			usb->unstall(dev, iep, Usb->Ein);
 	}
 	(residue, status) := recvcsw(cbwseq);
-	if (residue < 0) {
-		unstall(inep);
+	if(residue < 0) {
+		usb->unstall(dev, iep, Usb->Ein);
 		(residue, status) = recvcsw(cbwseq);
-		if (residue < 0)
+		if(residue < 0)
 			return -1;
 	}
-	if (status != 0)
+	if(status != 0)
 		return -1;
 	return got;
 }
@@ -225,11 +231,11 @@ bulkwrite(lun: int, cmd: array of byte, buf: array of byte): int
 			break;
 		}
 		if (got == 0)
-			unstall(outep);
+			usb->unstall(dev, oep, Usb->Eout);
 	}
 	(residue, status) := recvcsw(cbwseq);
 	if (residue < 0) {
-		unstall(inep);
+		usb->unstall(dev, oep, Usb->Eout);
 		(residue, status) = recvcsw(cbwseq);
 		if (residue < 0)
 			return -1;
@@ -259,9 +265,9 @@ scsiinquiry(lun: int): int
 	t := int buf[0] & 16r1f;
 	if(debug)
 		sys->print("scsiinquiry: type %d/%s\n", t, string buf[8:35]);
-	if (t != 0)
+	if (t != 0 && t != 5)
 		return -1;
-	return 0;
+	return t;
 }
 
 scsireadcapacity(lun: int): int
@@ -282,8 +288,10 @@ scsireadcapacity(lun: int): int
 	cmd[8]  = byte 0;
 	cmd[9] = byte 0;
 	got := bulkread(lun, cmd, buf, 0);
-	if (got < 0)
+	if (got < 0){
+#		sys->print("scsireadcapacity: buldread failed: %r\n");
 		return -1;
+	}
 	if (got != len buf) {
 		sys->print("scsireadcapacity: returned data not right size\n");
 		return -1;
@@ -309,7 +317,7 @@ scsirequestsense(lun: int): int
 	cmd[3] = byte 0;
 	cmd[4] = byte len buf;
 	cmd[5]  = byte 0;
-	got := bulkread(lun, cmd, buf, 1);
+	got := bulkread(lun, cmd, buf, 0);
 	if (got < 0)
 		return -1;
 	return 0;
@@ -363,37 +371,33 @@ scsistartunit(lun: int, start: int): int
 	return 0;
 }
 
-init(usbmod: Usb, psetupfd, pctlfd: ref Sys->FD,
-	nil: ref Usb->Device,
-	conf: array of ref Usb->Configuration, path: string): int
+init(usbmod: Usb, d: ref Usb->Dev): int
 {
 	usb = usbmod;
-	setupfd = psetupfd;
-	ctlfd = pctlfd;
+	dev = d;
 
 	sys = load Sys Sys->PATH;
-	rv := usb->set_configuration(setupfd, conf[0].id);
+
+	rv := massstoragereset(d);
 	if (rv < 0)
 		return rv;
-	rv = massstoragereset();
-	if (rv < 0)
-		return rv;
-	maxlun := getmaxlun();
+	maxlun := getmaxlun(d);
 	if (maxlun < 0)
 		return maxlun;
 	lun = 0;
+	debug = usb->usbdebug;
 	if(debug)
 		sys->print("maxlun %d\n", maxlun);
+	ud := d.usb;
 	inep = outep = nil;
-	epts := (hd conf[0].iface[0].altiface).ep;
-	for(i := 0; i < len epts; i++)
-		if(epts[i].etype == Usb->Ebulk){
-			if(epts[i].d2h){
+	for(i := 0; i < len ud.ep; ++i)
+		if(ud.ep[i] != nil && ud.ep[i].etype == Usb->Ebulk){
+			if(ud.ep[i].dir == Usb->Ein){
 				if(inep == nil)
-					inep = epts[i];
+					inep = ud.ep[i];
 			}else{
 				if(outep == nil)
-					outep = epts[i];
+					outep = ud.ep[i];
 			}
 		}
 	if(inep == nil || outep == nil){
@@ -402,59 +406,84 @@ init(usbmod: Usb, psetupfd, pctlfd: ref Sys->FD,
 	}
 	isrw := (inep.addr & 16rF) == (outep.addr & 16rF);
 	if(!isrw){
-		infd = openep(path, inep, Sys->OREAD);
-		if(infd == nil)
+		iep = usb->openep(d, inep.id);
+		if(iep == nil){
+			sys->fprint(sys->fildes(2), "mass: %s: openp %d: %r\n",
+				d.dir, inep.id);
 			return -1;
-		outfd = openep(path, outep, Sys->OWRITE);
-		if(outfd == nil)
+		}
+		infd = usb->opendevdata(iep, Sys->OREAD);
+		if(infd == nil){
+			sys->fprint(sys->fildes(2), "mass: %s: opendevdata: %r\n", iep.dir);
+			usb->closedev(iep);
 			return -1;
-	}else{
-		infd = outfd = openep(path, inep, Sys->ORDWR);
-		if(infd == nil)
+		}
+		oep = usb->openep(d, outep.id);
+		if(oep == nil){
+			sys->fprint(sys->fildes(2), "mass: %s: openp %d: %r\n",
+				d.dir, outep.id);
 			return -1;
+		}
+		outfd = usb->opendevdata(oep, Sys->OWRITE);
+		if(outfd == nil){
+			sys->fprint(sys->fildes(2), "mass: %s: opendevdata: %r\n", oep.dir);
+			usb->closedev(oep);
+			return -1;
+		}
 	}
-	if (scsiinquiry(0) < 0)
-		return -1;
-	scsistartunit(lun, 1);
-	if (scsireadcapacity(0) < 0) {
-		scsirequestsense(0);
-		if (scsireadcapacity(0) < 0)
+	else{
+		oep = iep = usb->openep(d, inep.id);
+		if(iep == nil){
+			sys->fprint(sys->fildes(2), "mass: %s: openp %d: %r\n",
+				d.dir, inep.id);
 			return -1;
+		}
+		outfd = infd = usb->opendevdata(iep, Sys->ORDWR);
+		if(infd == nil){
+			sys->fprint(sys->fildes(2), "mass: %s: opendevdata: %r\n", iep.dir);
+			usb->closedev(iep);
+			return -1;
+		}
+	}
+	if((t := scsiinquiry(0)) < 0){
+		sys->print("usbmass: scsiinquiry failed: %r\n");
+		return -1;
+	}
+	scsistartunit(lun, 1);
+	if(scsireadcapacity(0) < 0) {
+		scsirequestsense(0);
+		if(scsireadcapacity(0) < 0 && t != 5){
+			sys->print("usbmass: scsireadcapacity failed: %r\n");
+			return -1;
+		}
 	}
 	fileio := sys->file2chan("/chan", "usbdisk");
 	if (fileio == nil) {
 		sys->print("file2chan failed: %r\n");
 		return -1;
 	}
+	watchc := chan of string;
+	if(t == 5){
+		wpidc := chan of int;
+		spawn watcher(wpidc, watchc);
+		watcherpid = <- wpidc;
+	}
 	setlength("/chan/usbdisk", capacity);
 #	warnfprint(ctlfd, "debug 0 1");
 #	warnfprint(ctlfd, "debug 1 1");
 #	warnfprint(ctlfd, "debug 2 1");
 	pidc := chan of int;
-	spawn reader(pidc, fileio);
+	spawn reader(pidc, watchc, fileio);
 	readerpid = <- pidc;
 	return 0;
 }
 
 shutdown()
 {
-	if (readerpid >= 0)
+	if(watcherpid >= 0)
+		kill(watcherpid);
+	if(readerpid >= 0)
 		kill(readerpid);
-}
-
-openep(path: string, ep: ref Endpt, mode: int): ref Sys->FD
-{
-	if(debug)
-		sys->print("ep %x maxpkt %d interval %d\n", ep.addr, ep.maxpkt, ep.interval);
-	ms: string;
-	case mode {
-	Sys->OREAD => ms = "r";
-	Sys->OWRITE => ms = "w";
-	* => ms = "rw";
-	}
-	if(sys->fprint(ctlfd, "ep %d bulk %s %d 16", ep.addr&16rF, ms, ep.maxpkt) < 0)
-		return nil;
-	return sys->open(sys->sprint("%s/ep%ddata", path, ep.addr&16rF), mode);
 }
 
 setlength(f: string, size: big)

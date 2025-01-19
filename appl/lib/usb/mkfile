@@ -2,8 +2,9 @@
 
 TARG=\
 	usb.dis\
+	usbkbd.dis\
 	usbmouse.dis\
-	usbmct.dis\
+#	usbmct.dis\
 	usbmass.dis
 
 MODULES=

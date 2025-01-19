@@ -2,15 +2,80 @@ Usb: module
 {
 	PATH: con "/dis/lib/usb/usb.dis";
 	DATABASEPATH: con "/lib/usbdb";
-	RH2D: con 0<<7;
-	RD2H: con 1<<7;
-	Rstandard: con 0<<5;
+
+	# fundamental constants
+	Nep: con 16;	# max. endpoints per usb device & per interface
+
+	# tunable parameters
+	Nconf: con 16;	# max. configurations per usb device
+	Nddesc: con 8*Nep; # max. device-specific descriptors per usb device
+	Niface: con 16;	# max. interfaces per configuration
+	Naltc: con 16;	# max. alt configurations per interface
+	Uctries: con 4;	# no. of tries for usbcmd
+	Ucdelay: con 50;	# delay before retrying
+
+	Rh2d: con 0<<7;
+	Rd2h: con 1<<7;
+	Rstd: con 0<<5;
 	Rclass: con 1<<5;
 	Rvendor: con 2<<5;
-	Rdevice: con 0;
-	Rinterface: con 1;
-	Rendpt: con 2;
+	Rdev: con 0;
+	Riface: con 1;
+	Rep: con 2;
 	Rother: con 3;
+
+	# standard requests
+	Rgetstatus: con 0;
+	Rclearfeature: con 1;
+	Rsetfeature: con 3;
+	Rsetaddress: con 5;
+	Rgetdesc: con 6;
+	Rsetdesc: con 7;
+	Rgetconf: con 8;
+	Rsetconf: con 9;
+	Rgetiface: con 10;
+	Rsetiface: con 11;
+	Rsynchframe: con 12;
+
+	# dev classes
+	Clnone: con 0;		# not in usb
+	Claudio: con 1;
+	Clcomms: con 2;
+	Clhid: con 3;
+	Clprinter: con 7;
+	Clstorage: con 8;
+	Clhub: con 9;
+	Cldata: con 10;
+
+	# standard descriptor sizes
+	Ddevlen: con 18;
+	Dconflen: con 9;
+	Difacelen: con 9;
+	Deplen: con 7;
+
+	# descriptor types
+	Ddev: con 1;
+	Dconf: con 2;
+	Dstr: con 3;
+	Diface: con 4;
+	Dep: con 5;
+	Dreport: con 16r22;
+	Dfunction: con 16r24;
+	Dphysical: con 16r23;
+
+	# feature selectors
+	Fdevremotewakeup: con 1;
+	Fhalt: con 0;
+
+	# device state
+	Detached,
+	Attached,
+	Enabled,
+	Assigned,
+	Configured: con iota;
+
+	# endpoint direction
+	Ein, Eout, Eboth: con iota;
 	
 	GET_STATUS: con 0;
 	CLEAR_FEATURE: con 1;
@@ -42,13 +107,6 @@ Usb: module
 	CL_HUB: con 9;
 	CL_DATA: con 10;
 
-	DDEVLEN: con 18;
-	DCONFLEN: con 9;
-	DINTERLEN: con 9;
-	DENDPLEN: con 7;
-	DHUBLEN: con 9;
-	DHIDLEN: con 9;
-
 	PORT_CONNECTION: con 0;
 	PORT_ENABLE: con 1;
 	PORT_SUSPEND: con 2;
@@ -57,44 +115,150 @@ Usb: module
 	PORT_POWER: con 8;
 	PORT_LOW_SPEED: con 9;
 
-	Endpt: adt {
-		addr: int;
-		d2h:	int;
-		attr:	int;
-		etype:	int;
-		isotype:	int;
-		maxpkt: int;
-		interval: int;
+	Dev: adt {
+		dir: string;		# path for the endpoint dir
+		id: int;		# USB id for device or ep. number
+		dfd: ref Sys->FD;	# descriptor for the data file
+		cfd: ref Sys->FD;	# descriptor for the control file
+		maxpkt: int;	# cached from usb description
+		usb: ref Usbdev;	# USB description
+		mod: UsbDriver;
+	};
+
+	Usbdev: adt {
+		csp: big;		# USB class/subclass/proto
+		vid: int;		# vendor id
+		did: int;		# product (device id)
+		vendor: string;
+		product: string;
+		serial: string;
+		vsid: int;
+		psid: int;
+		ssid: int;
+		class: int;		# from descriptor
+		nconf: int;		# from descriptor
+		conf: array of ref Conf;	# configurations
+		ep: array of ref Ep;	# all endpoints in device
+		ddesc: array of ref Desc;	# (raw) device specific descriptors
+	};
+		
+	Ep: adt {
+		addr: int;		# endpt address, 0-15 (|16r80 if Ein)
+		dir:	int;		# direction Ein/Eout
+		etype:	int;	# Econtrol, Eiso, Ebulk, Eintr
+		isotype:	int;	# Eunknown, Easync, Eadapt, Esync
+		id: int;
+		maxpkt: int;	# max. packet size
+		ntds: int;		# nb. of Tds per μframe
+		conf: cyclic ref Conf;	# the endpoint belongs to
+		iface: cyclic ref Iface;	# the endpoint belongs to
 	};
 
 	Econtrol, Eiso, Ebulk, Eintr: con iota;	# Endpt.etype
 	Eunknown, Easync, Eadapt, Esync: con iota;	# Endpt.isotype
 	
 	NendPt: con 16;
+
+	Altc: adt {
+		attrib: int;
+		interval: int;
+	};
+
+	Iface: adt {
+		id: int;		# interface number
+		csp: big;		# USB class/subclass/proto
+		altc: array of ref Altc;
+		ep: cyclic array of ref Ep;
+	};
+
+	Conf: adt {
+		cval: int;		# value for set configuration
+		attrib: int;
+		milliamps: int;	# maximum power in this config
+		iface: cyclic array of ref Iface;
+	};
+
+	Desc: adt {
+		conf: ref Conf;		# where this descriptor was read
+		iface: ref Iface;		# last iface before desc in conf.
+		ep: ref Ep;			# last endpt before desc in conf.
+		altc: ref Altc;		# last alt.c before desc in conf.
+		data: ref DDesc;		# unparsed standard USB descriptor
+	};
+
+	DDesc: adt {
+		bLength: byte;
+		bDescriptorType: byte;
+		bbytes: array of byte;
+		populate: fn(d: self ref DDesc, b: array of byte);
+		serialize: fn(d: self ref DDesc): array of byte;
+	};
+
+	#
+	# layout of standard descriptor types
+	#
+	DDev: adt {
+		bLength: byte;
+		bDescriptorType: byte;
+		bcdUSB: array of byte;
+		bDevClass: byte;
+		bDevSubClass: byte;
+		bDevProtocol: byte;
+		bMaxPacketSize0: byte;
+		idVendor: array of byte;
+		idProduct: array of byte;
+		bcdDev: array of byte;
+		iManufacturer: byte;
+		iProduct: byte;
+		iSerialNumber: byte;
+		bNumConfigurations: byte;
+		populate: fn(d: self ref DDev, b: array of byte);
+		serialize: fn(d: self ref DDev): array of byte;
+	};
+
+	DConf: adt {
+		bLength: byte;
+		bDescriptorType: byte;
+		wTotalLength: array of byte;
+		bNumInterfaces: byte;
+		bConfigurationValue: byte;
+		iConfiguration: byte;
+		bmAttributes: byte;
+		MaxPower: byte;
+		populate: fn(d: self ref DConf, b: array of byte);
+		serialize: fn(d: self ref DConf): array of byte;
+	};
 	
-	Device: adt {
-		usbmajor, usbminor, relmajor, relminor: int;
-		class, subclass, proto, maxpkt0, vid, did, nconf: int;
+	DIface: adt{
+		bLength: byte;
+		bDescriptorType: byte;
+		bInterfaceNumber: byte;
+		bAlternateSetting: byte;
+		bNumEndpoints: byte;
+		bInterfaceClass: byte;
+		bInterfaceSubClass: byte;
+		bInterfaceProtocol: byte;
+		iInterface: byte;
+		populate: fn(d: self ref DIface, b: array of byte);
+		serialize: fn(d: self ref DIface): array of byte;
 	};
-
-	AltInterface: adt {
-		id: int;
-		class, subclass, proto: int;
-		ep: array of ref Endpt;
+	
+	DEp: adt {
+		bLength: byte;
+		bDescriptorType: byte;
+		bEndpointAddress: byte;
+		bmAttributes: byte;
+		wMaxPacketSize: array of byte;
+		bInterval: byte;
+		populate: fn(d: self ref DEp, b: array of byte);
+		serialize: fn(d: self ref DEp): array of byte;
 	};
-
-	Interface: adt {
-		altiface: list of ref AltInterface;
-	};
-
-	Configuration: adt {
-		id: int;
-		attr: int;
-		powerma: int;
-		iface: array of Interface;
-	};
+	
+		argv0: string;
+	usbdebug: int;
 
 	init: fn();
+	dprint: fn(n: int, s: string);
 	get2: fn(b: array of byte): int;
 	put2: fn(buf: array of byte, v: int);
 	get4: fn(b: array of byte): int;
@@ -103,28 +267,29 @@ Usb: module
 	bigput2: fn(buf: array of byte, v: int);
 	bigget4: fn(b: array of byte): int;
 	bigput4: fn(buf: array of byte, v: int);
-	memset: fn(b: array of byte, v: int);
-	strtol: fn(s: string, base: int): (int, string);
-	sclass: fn(class, subclass, proto: int): string;
-	
-	get_descriptor: fn(fd: ref Sys->FD, rtyp: int, dtyp: int, dindex: int, langid: int, buf: array of byte): int;
-	get_standard_descriptor: fn(fd: ref Sys->FD, dtyp: int, index: int, buf: array of byte): int;
-	get_class_descriptor: fn(fd: ref Sys->FD, dtyp: int, index: int, buf: array of byte): int;
-	get_vendor_descriptor: fn(fd: ref Sys->FD, dtyp: int, index: int, buf: array of byte): int;
-	get_status: fn(fd: ref Sys->FD, port: int): int;
-	set_address: fn(fd: ref Sys->FD, address: int): int;
-	set_configuration: fn(fd: ref Sys->FD, n: int): int;
-	setclear_feature: fn(fd: ref Sys->FD, rtyp: int, value: int, index: int, on: int): int;
-	setup: fn(setupfd: ref Sys->FD, typ, req, value, index: int, outbuf: array of byte, inbuf: array of byte): int;
-	get_parsed_configuration_descriptor: fn(fd: ref Sys->FD, n: int): ref Configuration;
-	get_parsed_device_descriptor: fn(fd: ref Sys->FD): ref Device;
-
-	dump_configuration: fn(fd: ref Sys->FD, conf: ref Configuration);
+	classname: fn(c: int): string;
+	closedev: fn(d: ref Dev);
+	configdev: fn(d: ref Dev): int;
+	devctl: fn(dev: ref Dev, msg: string): int;
+	hexstr: fn(a: array of byte, n: int): string;
+	loaddevconf: fn(d: ref Dev, n: int): int;
+	loaddevdesc: fn(d: ref Dev): int;
+	loaddevstr: fn(d: ref Dev, sid: int): string;
+	opendev: fn(fname: string): ref Dev;
+	opendevdata: fn(d: ref Dev, mode: int): ref Sys->FD;
+	openep: fn(d: ref Dev, id: int): ref Dev;
+	parseconf: fn(d: ref Usbdev, c: ref Conf, b: array of byte, n: int): int;
+	parsedesc: fn(d: ref Usbdev, c: ref Conf, b: array of byte, n: int): int;
+	parsedev: fn(xd: ref Dev, b: array of byte, n: int): int;
+	unstall: fn(dev: ref Dev, ep: ref Dev, dir: int): int;
+	usbcmd: fn(d: ref Dev, typ: int, req: int, value: int, index: int,
+		data: array of byte, count: int): int;
+	Ufmt: fn(d: ref Dev): string;
+	strtol: fn(s:string, base:int): (int, string);
 };
 
 UsbDriver: module
 {
-	MOUSEPATH: con "/appl/cmd/usb/usbmouse.dis";
-	init: fn(usb: Usb, setupfd, ctlfd: ref Sys->FD, dev: ref Usb->Device, conf: array of ref Usb->Configuration, path: string): int;
+	init: fn(usb: Usb, dev: ref Usb->Dev): int;
 	shutdown: fn();
 };
