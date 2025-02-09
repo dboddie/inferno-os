@@ -107,3 +107,15 @@ TEXT _dumpregs(SB), THUMB, $-4
     MOVW SP, R0
     BL ,dumpregs(SB)
     POP(0x0fff, 1)
+
+TEXT _usbctrl(SB), THUMB, $-4
+    PUSH(0x0fff, 1)
+    MOVW SP, R0
+    BL ,usbctrl(SB)
+    POP(0x0fff, 1)
+
+TEXT _uart_intr(SB), THUMB, $-4
+    PUSH(0x0fff, 1)
+    MOVW SP, R0
+    BL ,uart_intr(SB)
+    POP(0x0fff, 1)

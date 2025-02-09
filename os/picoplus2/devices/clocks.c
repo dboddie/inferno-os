@@ -19,6 +19,9 @@ void setup_clocks(void)
     Clocks *periclk = (Clocks *)CLK_PERI_ADDR;
     periclk->div = 1;
     periclk->ctrl = CLK_PERI_CTRL_ENABLE | CLK_PERI_CTRL_XOSC_CLKSRC;
+    Clocks *usbclk = (Clocks *)CLK_USB_ADDR;
+    usbclk->div = 1;
+    usbclk->ctrl = CLK_USB_CTRL_XOSC_CLKSRC;
 
     Resets *clrreset = (Resets *)RESETS_CLR_BASE;
     Resets *resets = (Resets *)RESETS_BASE;

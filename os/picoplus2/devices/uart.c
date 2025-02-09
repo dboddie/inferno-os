@@ -4,6 +4,10 @@
 
 void setup_uart(void)
 {
+    // Enable UART interrupts for testing.
+//    NVIC *nvic = (NVIC *)NVIC_ISER;
+//    nvic->iser32_63 |= (1 << (UART0_IRQ - 32)) | (1 << (UART1_IRQ - 32));
+
     // Use function 2 (UART) for GPIO pins 4 and 5. This function is needed to
     // drive GPIOs, otherwise function 0 can be used to read their states.
     GPIOctrl *gpio4 = (GPIOctrl *)GPIO4_IO_ADDR;
@@ -26,6 +30,9 @@ void setup_uart(void)
     uart1->fbrd = (baud_rate_div & 0x7f) >> 1;
     uart1->lcr_h = UARTLCR_H_WLEN_8 | UARTLCR_H_FEN;
     uart1->cr = UARTCR_RXE | UARTCR_TXE | UARTCR_EN;
+
+    // Enable the RX and RT interrupts for testing.
+    //uart1->imsc |= 0x50;
 }
 
 int rdch_wait(void)
@@ -110,4 +117,12 @@ void wrdec(int value)
 
     for (; s < 10; s++)
         wrch(ch[s]);
+}
+
+void uart_intr(void)
+{
+    UART *uart1 = (UART *)UART1_BASE;
+    if (uart1->imsc & 0x50) {
+        uart1->icr = 0x50;
+    }
 }

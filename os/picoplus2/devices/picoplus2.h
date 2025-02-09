@@ -53,11 +53,16 @@ typedef struct {
 #define NVIC_ICER1 0xe000e184   // interrupts 32-63
 #define NVIC_ICER2 0xe000e188   // interrupts 64-95
 
+#define NVIC_ICPR0 0xe000e280
+#define NVIC_ICPR1 0xe000e284
+#define NVIC_IPR 0xe000e400
+
 /* GPIO */
 #define IO_BANK0_BASE 0x40028000
 #define GPIO4_IO_ADDR (IO_BANK0_BASE + 0x20)
 #define GPIO5_IO_ADDR (IO_BANK0_BASE + 0x28)
 #define GPIO25_IO_ADDR (IO_BANK0_BASE + 0xc8)
+#define GPIO47_IO_ADDR (IO_BANK0_BASE + 0x178)
 
 typedef struct {
     unsigned int status;
@@ -68,6 +73,7 @@ typedef struct {
 #define GPIO4_PAD_ADDR (PADS_BANK0_BASE + 0x14)
 #define GPIO5_PAD_ADDR (PADS_BANK0_BASE + 0x18)
 #define GPIO25_PAD_ADDR (PADS_BANK0_BASE + 0x68)
+#define GPIO47_PAD_ADDR (PADS_BANK0_BASE + 0xc0)
 
 enum {
     PADS_IE = 0x40,
@@ -147,7 +153,11 @@ enum {
     UARTFR_BUSY = 0x08,
 };
 
+#define UART0_IRQ 33
+#define UART1_IRQ 34
+
 #define PLL_SYS_BASE 0x40050000
+#define PLL_USB_BASE 0x40058000
 
 typedef struct {
     unsigned int cs;
@@ -177,15 +187,18 @@ typedef struct {
 } Resets;
 
 enum {
+    RESETS_USB = (1 << 28),
     RESETS_UART1 = (1 << 27),
     RESETS_PLL_SYS = (1 << 14),
     RESETS_IO_BANK0 = (1 << 6),
 };
 
+// See section 8.1.6 in the RP2350 datasheet.
 #define CLOCKS_BASE 0x40010000
 #define CLK_REF_ADDR (CLOCKS_BASE + 0x30)
 #define CLK_SYS_ADDR (CLOCKS_BASE + 0x3c)
 #define CLK_PERI_ADDR (CLOCKS_BASE + 0x48)
+#define CLK_USB_ADDR (CLOCKS_BASE + 0x60)
 
 typedef struct {
     unsigned int ctrl;
@@ -195,9 +208,12 @@ typedef struct {
 
 #define CLK_REF_CTRL_XOSC_CLKSRC 2
 
-#define CLK_PERI_CTRL_ENABLE (1 << 11)
+#define CLK_CTRL_ENABLE (1 << 11)
+
+#define CLK_PERI_CTRL_ENABLE CLK_CTRL_ENABLE
 #define CLK_PERI_CTRL_CLKSRC_PLL_SYS (1 << 5)
 #define CLK_PERI_CTRL_XOSC_CLKSRC (4 << 5)
+#define CLK_USB_CTRL_XOSC_CLKSRC (3 << 5)
 
 #define CLK_SYS_RESUS_CTRL (CLOCKS_BASE + 0x84)
 
@@ -225,3 +241,69 @@ enum {
 };
 
 #define XOSC_FREQ 12000000
+
+#define USBCTRL_REGS_BASE 0x50110000
+#define USBCTRL_REGS_CLR_BASE 0x50113000
+
+typedef struct {
+    unsigned int addr_endp[16];
+    unsigned int main_ctrl;
+    unsigned int sof_wr;
+    unsigned int sof_rd;
+    unsigned int sie_ctrl;
+    unsigned int sie_status;
+    unsigned int int_ep_ctrl;
+    unsigned int buff_status;
+    unsigned int buff_cpu_should_handle;
+    unsigned int ep_abort;
+    unsigned int ep_abort_done;
+    unsigned int ep_stall_arm;
+    unsigned int nak_poll;
+    unsigned int ep_status_stall_nak;
+    unsigned int usb_muxing;
+    unsigned int usb_pwr;
+    unsigned int usbphy_direct;
+    unsigned int usbphy_direct_override;
+    unsigned int usbphy_trim;
+    unsigned int linestate_tuning;
+    unsigned int intr;
+    unsigned int inte;
+    unsigned int intf;
+    unsigned int ints;
+    unsigned int sof_timestamp_raw;
+    unsigned int sof_timestamp_last;
+    unsigned int sm_state;
+    unsigned int ep_tx_error;
+    unsigned int ep_rx_error;
+    unsigned int dev_sm_watchdog;
+} USBregs;
+
+enum {
+    USB_MAIN_CTRL_PHY_ISO = 0x4,
+    USB_MAIN_CTRL_HOST_NDEVICE = 0x2,
+    USB_MAIN_CTRL_CONTROLLER_EN = 0x1,
+    USB_MUXING_SOFTCON = 0x8,
+    USB_MUXING_TO_PHY = 0x1,
+    USB_SIE_CTRL_EP0_INT_1BUF = 0x20000000,
+    USB_SIE_CTRL_PULLUP_EN = 0x10000,
+    USB_SIE_STATUS_BUS_RESET = 0x80000,
+    USB_SIE_STATUS_SETUP_REC = 0x20000,
+    USB_INT_SETUP_REQ = 0x10000,
+    USB_INT_BUS_RESET = 0x1000,
+    USB_INT_BUFF_STATUS = 0x10,
+    USB_PWR_VBUS_DETECT_OVERRIDE_EN = 0x8,
+    USB_PWR_VBUS_DETECT = 0x4,
+};
+
+#define USBCTRL_DEVREGS_BASE (USBCTRL_REGS_BASE + 0x100)
+
+typedef struct {
+    unsigned int sof_timestamp_raw;
+    unsigned int sof_timestamp_last;
+    unsigned int sm_state;
+    unsigned int ep_tx_error;
+    unsigned int ep_rx_error;
+    unsigned int dev_sm_watchdog;
+} USBdevregs;
+
+#define USBCTRL_IRQ 14
