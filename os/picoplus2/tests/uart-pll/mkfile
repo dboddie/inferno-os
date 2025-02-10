@@ -31,3 +31,6 @@ $BIN:	$OBJ
 
 clean:V:
 	rm -f *.$O $BIN
+
+uf2:V:
+	uf2conv.py -c -b 0x10000000 -f 0xe48bff59 -o $BIN.uf2 $BIN
