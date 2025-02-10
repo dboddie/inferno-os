@@ -10,21 +10,55 @@ void setup_clocks(void)
     xosc->ctrl = XOSC_ENABLE | XOSC_1_15MHZ;
 
     while (!(xosc->status & XOSC_STABLE));
+
+    // Reset the system clock PLL.
+    Resets *clrreset = (Resets *)RESETS_CLR_BASE;
+    Resets *resets = (Resets *)RESETS_BASE;
+    clrreset->reset = RESETS_PLL_SYS;
+    while (!(resets->reset_done & RESETS_PLL_SYS));
+
+    PLL *pll = (PLL *)PLL_SYS_BASE;
+    pll->cs = 1;    // refdiv=1
+    pll->fbdiv_int = 125;
+
+    // Power up (set low) PLL and oscillator.
+    pll->pwr &= ~(PLL_PWR_VCOPD | PLL_PWR_PD);
+    while (!(pll->cs & PLL_CS_LOCK));
+    pll->prim = (5 << 16) | (2 << 12);
+
+    // Power up (set low) PLL and oscillator.
+    pll->pwr &= ~PLL_PWR_POSTDIVD;
+
     Clocks *refclk = (Clocks *)CLK_REF_ADDR;
     refclk->ctrl = CLK_REF_CTRL_XOSC_CLKSRC;
     refclk->div = 1 << 16;
     Clocks *sysclk = (Clocks *)CLK_SYS_ADDR;
-    sysclk->ctrl = 0;
+    sysclk->ctrl = CLK_SYS_CTRL_CLKSRC_PLL_SYS | CLK_SYS_CTRL_CLKSRC_CLK_SYS_AUX;
     sysclk->div = 1 << 16;
     Clocks *periclk = (Clocks *)CLK_PERI_ADDR;
     periclk->div = 1;
     periclk->ctrl = CLK_PERI_CTRL_ENABLE | CLK_PERI_CTRL_XOSC_CLKSRC;
+
+    // Reset and configure the USB clock PLL.
+    clrreset->reset = RESETS_PLL_USB;
+    while (!(resets->reset_done & RESETS_PLL_USB));
+
+    pll = (PLL *)PLL_USB_BASE;
+    pll->cs = 1;    // refdiv=1
+    pll->fbdiv_int = 64;
+
+    // Power up (set low) PLL and oscillator.
+    pll->pwr &= ~(PLL_PWR_VCOPD | PLL_PWR_PD);
+    while (!(pll->cs & PLL_CS_LOCK));
+    pll->prim = (4 << 16) | (4 << 12);
+
+    // Power up (set low) PLL and oscillator.
+    pll->pwr &= ~PLL_PWR_POSTDIVD;
+
     Clocks *usbclk = (Clocks *)CLK_USB_ADDR;
     usbclk->div = 1;
-    usbclk->ctrl = CLK_USB_CTRL_XOSC_CLKSRC;
+    usbclk->ctrl = CLK_USB_CTRL_CLKSRC_PLL_USB;
 
-    Resets *clrreset = (Resets *)RESETS_CLR_BASE;
-    Resets *resets = (Resets *)RESETS_BASE;
     clrreset->reset = RESETS_IO_BANK0;
     while (!(resets->reset_done & RESETS_IO_BANK0));
 }

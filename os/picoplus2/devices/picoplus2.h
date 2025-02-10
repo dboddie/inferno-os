@@ -189,6 +189,7 @@ typedef struct {
 enum {
     RESETS_USB = (1 << 28),
     RESETS_UART1 = (1 << 27),
+    RESETS_PLL_USB = (1 << 15),
     RESETS_PLL_SYS = (1 << 14),
     RESETS_IO_BANK0 = (1 << 6),
 };
@@ -214,6 +215,10 @@ typedef struct {
 #define CLK_PERI_CTRL_CLKSRC_PLL_SYS (1 << 5)
 #define CLK_PERI_CTRL_XOSC_CLKSRC (4 << 5)
 #define CLK_USB_CTRL_XOSC_CLKSRC (3 << 5)
+#define CLK_USB_CTRL_CLKSRC_PLL_USB 0
+#define CLK_SYS_CTRL_CLKSRC_PLL_SYS (0 << 5)
+#define CLK_SYS_CTRL_CLKSRC_PLL_USB (1 << 5)
+#define CLK_SYS_CTRL_CLKSRC_CLK_SYS_AUX 1
 
 #define CLK_SYS_RESUS_CTRL (CLOCKS_BASE + 0x84)
 
@@ -244,6 +249,7 @@ enum {
 
 #define USBCTRL_REGS_BASE 0x50110000
 #define USBCTRL_REGS_CLR_BASE 0x50113000
+#define USB_DPRAM_BASE 0x50100000
 
 typedef struct {
     unsigned int addr_endp[16];
