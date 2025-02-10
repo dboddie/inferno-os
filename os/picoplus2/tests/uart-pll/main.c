@@ -50,7 +50,7 @@ void main(void)
     refclk->ctrl = CLK_REF_CTRL_XOSC_CLKSRC;
     refclk->div = 1 << 16;
     Clocks *sysclk = (Clocks *)CLK_SYS_ADDR;
-    sysclk->ctrl = 0;
+    sysclk->ctrl = CLK_SYS_CTRL_CLKSRC_PLL_SYS | CLK_SYS_CTRL_CLKSRC_CLK_SYS_AUX;
     sysclk->div = 1 << 16;
     Clocks *periclk = (Clocks *)CLK_PERI_ADDR;
     periclk->div = 1;
