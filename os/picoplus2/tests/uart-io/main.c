@@ -31,7 +31,7 @@ void main(void)
     sysclk->ctrl = 0;
     sysclk->div = 1 << 16;
     Clocks *periclk = (Clocks *)CLK_PERI_ADDR;
-    periclk->div = 1;
+    periclk->div = 1 << 16;
     periclk->ctrl = CLK_PERI_CTRL_ENABLE | CLK_PERI_CTRL_XOSC_CLKSRC;
 
     Resets *clrreset = (Resets *)RESETS_CLR_BASE;
@@ -44,7 +44,7 @@ void main(void)
 
     UART *uart1 = (UART *)UART1_BASE;
     uart1->cr = ~UARTCR_EN;
-    unsigned int baud_rate_div = (2 * XOSC_FREQ / 115200) + 1;
+    unsigned int baud_rate_div = (8 * XOSC_FREQ / 115200) + 1;
     uart1->ibrd = baud_rate_div >> 7;
     uart1->fbrd = (baud_rate_div & 0x7f) >> 1;
     uart1->lcr_h = UARTLCR_H_WLEN_8 | UARTLCR_H_FEN;
