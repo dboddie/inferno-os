@@ -10,12 +10,12 @@ usb_init(void)
 
     Resets *clrreset = (Resets *)RESETS_CLR_BASE;
     Resets *resets = (Resets *)RESETS_BASE;
-    clrreset->reset = RESETS_USB;
-    while (!(resets->reset_done & RESETS_USB));
+    clrreset->reset = RESETS_USBCTRL;
+    while (!(resets->reset_done & RESETS_USBCTRL));
 
-    unsigned int *dpram = (unsigned int *)USB_DPRAM_BASE;
+    unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
     for (int i = 0; i < 1024; i++)
-        dpram[i] = 0;
+        dpsram[i] = 0;
 
     NVIC *nvic = (NVIC *)NVIC_ISER;
     nvic->iser0_31 |= (1 << USBCTRL_IRQ);
@@ -27,7 +27,14 @@ usb_init(void)
     regs->sie_ctrl = USB_SIE_CTRL_EP0_INT_1BUF;
     regs->inte = USB_INT_SETUP_REQ | USB_INT_BUFF_STATUS | USB_INT_BUS_RESET;
 
-    regs->sie_ctrl |= USB_SIE_CTRL_PULLUP_EN;
+//    dpsram[3] = (1 << 31) | 0x100;
+//    dpsram[35] = (1 << 10);
+
+    dpsram[32] = 1 << 10;
+    dpsram[33] = 1 << 10;
+
+    USBregs *setregs = (USBregs *)USBCTRL_REGS_SET_BASE;
+    setregs->sie_ctrl = USB_SIE_CTRL_PULLUP_EN;
 }
 
 void
@@ -60,14 +67,16 @@ usb_info(char *buf, int n)
 void usbctrl(void)
 {
     USBregs *regs = (USBregs *)USBCTRL_REGS_BASE;
-    USBregs *clrregs = (USBregs *)USBCTRL_REGS_CLR_BASE;
-    print("%08x\n", regs->ints);
-    if (regs->ints & USB_INT_BUS_RESET) {
-        clrregs->sie_status = USB_SIE_STATUS_BUS_RESET;
+    int status = regs->ints;
+    print("s %08ux\n", status);
+    if (status & USB_INT_BUS_RESET) {
+        regs->sie_status = USB_SIE_STATUS_BUS_RESET;
         regs->addr_endp[0] = 0;
-    } else if (regs->ints & USB_INT_SETUP_REQ) {
-        clrregs->sie_status = USB_SIE_STATUS_SETUP_REC;
-    } else if (regs->ints & USB_INT_BUFF_STATUS) {
+    }
+    if (status & USB_INT_SETUP_REQ) {
+        regs->sie_status = USB_SIE_STATUS_SETUP_REC;
+    }
+    if (status & USB_INT_BUFF_STATUS) {
         print("buff_status\n");
     }
 }
