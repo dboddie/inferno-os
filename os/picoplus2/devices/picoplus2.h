@@ -316,3 +316,11 @@ typedef struct {
 #define USBCTRL_IRQ 14
 
 #define USB_DPSRAM_BASE 0x50100000
+#define USB_DPSRAM_EP0_BUF (USB_DPSRAM_BASE + 0x100)
+
+enum {
+    USB_BCR_FULL  = 0x8000,
+    USB_BCR_AVAIL = 0x0400,
+    USB_BCR_DATA0 = 0x0000,
+    USB_BCR_DATA1 = 0x2000,
+};

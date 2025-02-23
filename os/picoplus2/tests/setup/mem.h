@@ -43,3 +43,6 @@
 #define MEMORY_TOP      MACHADDR      /* End of memory Inferno can use */
 
 #define MAXRPC (IOHDRSZ+512)
+
+#define EXTRAM_BASE     0x60000000
+#define EXTRAM_TOP      (EXTRAM_BASE + 0x800000)
