@@ -32,7 +32,7 @@ init(context: ref Draw->Context, nil: list of string)
     sys->bind("#e", "/env", sys->MREPL | sys->MCREATE);
     sys->bind("#p", "/prog", sys->MREPL);
     sys->bind("#d", "/fd", sys->MREPL);
-    sys->bind("#u", "/dev/usb", sys->MAFTER);   # USB device
+#    sys->bind("#u", "/dev/usb", sys->MAFTER);   # USB device
 
     fd := sys->open("/dev/sysname", sys->OWRITE);
     b := array of byte "picoplus2";

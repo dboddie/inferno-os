@@ -11,7 +11,8 @@
 #define SVCALL _svcall(SB)
 #define DEBUGMON _debugmon(SB)
 #define PENDSV _pendsv(SB)
-#define USBCTRL _usbctrl(SB)
+/*#define USBCTRL _usbctrl(SB)*/
+#define USBCTRL _dummy(SB)
 #define UARTINTR _uart_intr(SB)
 
 TEXT vectors(SB), $0
