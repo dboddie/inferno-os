@@ -55,9 +55,13 @@ HFILES=\
 	../cortexm/thumb2.h\
 
 MK_UART=1
+MK_UART_TX=4
+MK_UART_RX=5
+MK_UART_FN=2
 
 ASFLAGS=$ASFLAGS -I../cortexm
-CFLAGS=-wFV -I./include -I../cortexm -I$ROOT/include -I$ROOT/libinterp -DMK_UART=$MK_UART 
+CFLAGS=-wFV -I./include -I../cortexm -I$ROOT/include -I$ROOT/libinterp \
+	-DMK_UART=$MK_UART -DMK_UART_TX=$MK_UART_TX -DMK_UART_RX=$MK_UART_RX -DMK_UART_FN=$MK_UART_FN
 LDFLAGS=-H0 -l -s -t -f
 KERNDATE=`{$NDATE}
 
