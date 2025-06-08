@@ -54,6 +54,13 @@ HFILES=\
 	../cortexm/fpi.h\
 	../cortexm/thumb2.h\
 
+# UART0 (Adafruit Feather RP2350)
+MK_UART=0
+MK_UART_TX=2
+MK_UART_RX=3
+MK_UART_FN=11
+
+# UART1 (Pimoroni Pico Plus 2 and Raspberry Pi Pico 2W)
 MK_UART=1
 MK_UART_TX=4
 MK_UART_RX=5
