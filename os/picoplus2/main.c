@@ -64,7 +64,7 @@ void main(void)
     trapinit();                 // in trap.c
 
     setup_clocks();
-    setup_uart(MK_UART);
+    setup_uart();
 
 //    uartconsinit();
     serwrite = uart_serwrite;

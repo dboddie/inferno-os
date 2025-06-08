@@ -7,7 +7,7 @@ extern void setup_clocks(void);
 extern void start_timer(void);
 extern void wait_ms(int);
 
-extern void setup_uart(int);
+extern void setup_uart(void);
 extern void newline(void);
 extern int rdch_ready(void);
 extern int rdch(void);
