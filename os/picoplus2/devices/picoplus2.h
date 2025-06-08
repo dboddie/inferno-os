@@ -59,6 +59,8 @@ typedef struct {
 
 /* GPIO */
 #define IO_BANK0_BASE 0x40028000
+#define GPIO2_IO_ADDR (IO_BANK0_BASE + 0x10)
+#define GPIO3_IO_ADDR (IO_BANK0_BASE + 0x18)
 #define GPIO4_IO_ADDR (IO_BANK0_BASE + 0x20)
 #define GPIO5_IO_ADDR (IO_BANK0_BASE + 0x28)
 #define GPIO25_IO_ADDR (IO_BANK0_BASE + 0xc8)
@@ -70,6 +72,8 @@ typedef struct {
 } GPIOctrl;
 
 #define PADS_BANK0_BASE 0x40038000
+#define GPIO2_PAD_ADDR (PADS_BANK0_BASE + 0x0c)
+#define GPIO3_PAD_ADDR (PADS_BANK0_BASE + 0x10)
 #define GPIO4_PAD_ADDR (PADS_BANK0_BASE + 0x14)
 #define GPIO5_PAD_ADDR (PADS_BANK0_BASE + 0x18)
 #define GPIO25_PAD_ADDR (PADS_BANK0_BASE + 0x68)
@@ -189,6 +193,7 @@ typedef struct {
 enum {
     RESETS_USBCTRL = (1 << 28),
     RESETS_UART1 = (1 << 27),
+    RESETS_UART0 = (1 << 26),
     RESETS_PLL_USB = (1 << 15),
     RESETS_PLL_SYS = (1 << 14),
     RESETS_IO_BANK0 = (1 << 6),
