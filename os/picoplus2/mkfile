@@ -54,8 +54,10 @@ HFILES=\
 	../cortexm/fpi.h\
 	../cortexm/thumb2.h\
 
+MK_UART=1
+
 ASFLAGS=$ASFLAGS -I../cortexm
-CFLAGS=-wFV -I./include -I../cortexm -I$ROOT/include -I$ROOT/libinterp
+CFLAGS=-wFV -I./include -I../cortexm -I$ROOT/include -I$ROOT/libinterp -DMK_UART=$MK_UART 
 LDFLAGS=-H0 -l -s -t -f
 KERNDATE=`{$NDATE}
 

@@ -2,59 +2,78 @@
 #include "picoplus2.h"
 #include "fns.h"
 
-void setup_uart(void)
+static UART *uart;
+
+void setup_uart(int n)
 {
     // Enable UART interrupts for testing.
 //    NVIC *nvic = (NVIC *)NVIC_ISER;
 //    nvic->iser32_63 |= (1 << (UART0_IRQ - 32)) | (1 << (UART1_IRQ - 32));
 
-    // Use function 2 (UART) for GPIO pins 4 and 5. This function is needed to
-    // drive GPIOs, otherwise function 0 can be used to read their states.
-    GPIOctrl *gpio4 = (GPIOctrl *)GPIO4_IO_ADDR;
-    gpio4->ctrl = 2;
-    GPIOctrl *gpio5 = (GPIOctrl *)GPIO5_IO_ADDR;
-    gpio5->ctrl = 2;
-
-    *(unsigned int *)GPIO4_PAD_ADDR = PADS_IE | PADS_DRIVE_4mA | PADS_SCHMITT;
-    *(unsigned int *)GPIO5_PAD_ADDR = PADS_IE | PADS_DRIVE_4mA | PADS_SCHMITT;
-
     Resets *clrreset = (Resets *)RESETS_CLR_BASE;
     Resets *resets = (Resets *)RESETS_BASE;
-    clrreset->reset = RESETS_UART1;
-    while (!(resets->reset_done & RESETS_UART1));
 
-    UART *uart1 = (UART *)UART1_BASE;
-    uart1->cr = ~UARTCR_EN;
+    // Set the function for the GPIO pins so that the UART peripheral can drive
+    // them. Function 0 can be used to read their states.
+    if (n == 0) {
+        // Use function 11 (UART) for GPIO pins 2 and 3 to enable UART0.
+        GPIOctrl *gpio2 = (GPIOctrl *)GPIO2_IO_ADDR;
+        gpio2->ctrl = 11;
+        GPIOctrl *gpio3 = (GPIOctrl *)GPIO3_IO_ADDR;
+        gpio3->ctrl = 11;
+
+        *(unsigned int *)GPIO2_PAD_ADDR = PADS_IE | PADS_DRIVE_4mA | PADS_SCHMITT;
+        *(unsigned int *)GPIO3_PAD_ADDR = PADS_IE | PADS_DRIVE_4mA | PADS_SCHMITT;
+
+        clrreset->reset = RESETS_UART0;
+        while (!(resets->reset_done & RESETS_UART0));
+
+        uart = (UART *)UART0_BASE;
+    } else {
+        // Use function 2 (UART) for GPIO pins 4 and 5 to enable UART1.
+        GPIOctrl *gpio4 = (GPIOctrl *)GPIO4_IO_ADDR;
+        gpio4->ctrl = 2;
+        GPIOctrl *gpio5 = (GPIOctrl *)GPIO5_IO_ADDR;
+        gpio5->ctrl = 2;
+
+        *(unsigned int *)GPIO4_PAD_ADDR = PADS_IE | PADS_DRIVE_4mA | PADS_SCHMITT;
+        *(unsigned int *)GPIO5_PAD_ADDR = PADS_IE | PADS_DRIVE_4mA | PADS_SCHMITT;
+
+        clrreset->reset = RESETS_UART1;
+        while (!(resets->reset_done & RESETS_UART1));
+
+        uart = (UART *)UART1_BASE;
+    }
+
+    uart->cr = ~UARTCR_EN;
+
     unsigned int baud_rate_div = (8 * XOSC_FREQ / 115200) + 1;
-    uart1->ibrd = baud_rate_div >> 7;
-    uart1->fbrd = (baud_rate_div & 0x7f) >> 1;
-    uart1->lcr_h = UARTLCR_H_WLEN_8 | UARTLCR_H_FEN;
-    uart1->cr = UARTCR_RXE | UARTCR_TXE | UARTCR_EN;
+    uart->ibrd = baud_rate_div >> 7;
+    uart->fbrd = (baud_rate_div & 0x7f) >> 1;
+    uart->lcr_h = UARTLCR_H_WLEN_8 | UARTLCR_H_FEN;
+    uart->cr = UARTCR_RXE | UARTCR_TXE | UARTCR_EN;
 
     // Enable the RX and RT interrupts for testing.
-    //uart1->imsc |= 0x50;
+    //uart->imsc |= 0x50;
 }
 
 int rdch_wait(void)
 {
-    UART *uart1 = (UART *)UART1_BASE;
     /* Wait until the receive FIFO is not empty. */
-    while (uart1->fr & UARTFR_RXFE);
-    return uart1->dr & 0xff;
+    while (uart->fr & UARTFR_RXFE);
+    return uart->dr & 0xff;
 }
 
 int rdch(void)
 {
-    UART *uart1 = (UART *)UART1_BASE;
-    return uart1->dr & 0xff;
+    return uart->dr & 0xff;
 }
 
 void wrch(int c)
 {
-    UART *uart1 = (UART *)UART1_BASE;
     // Wait until the transmit FIFO is empty.
-    while (uart1->fr & UARTFR_TXFF);
-    uart1->dr = c;
+    while (uart->fr & UARTFR_TXFF);
+    uart->dr = c;
 }
 
 void wrstr(char *s)
@@ -92,8 +111,7 @@ void uart_serwrite(char *s, int n)
 
 int rdch_ready(void)
 {
-    UART *uart1 = (UART *)UART1_BASE;
-    return (uart1->fr & UARTFR_RXFE) == 0;
+    return (uart->fr & UARTFR_RXFE) == 0;
 }
 
 void wrdec(int value)
@@ -121,8 +139,7 @@ void wrdec(int value)
 
 void uart_intr(void)
 {
-    UART *uart1 = (UART *)UART1_BASE;
-    if (uart1->imsc & 0x50) {
-        uart1->icr = 0x50;
+    if (uart->imsc & 0x50) {
+        uart->icr = 0x50;
     }
 }
