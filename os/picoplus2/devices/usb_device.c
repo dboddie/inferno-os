@@ -22,7 +22,7 @@
 static const char CDC_Device_Desc[] = {
     0x12,       /* length */
     0x01,       /* type */
-    0x10, 0x02, /* usb_version */
+    0x00, 0x02, /* usb_version (2.0) */
     0xef,       /* class: miscellaneous device */
     0x02,       /* subclass */
     0x01,       /* protocol (interface association descriptor) */
@@ -44,10 +44,10 @@ static const char CDC_Config_Desc[] = {
     0x01,       /* config_value */
     0x00,       /* string_index: no string description */
     0x80,       /* attributes: reserved bit */
-    0xfa        /* max_power: 250 * 2mA */
-};
-
-static const char CDC_Interface_Association_Desc[] = {
+    0xfa,       /* max_power: 250 * 2mA */
+//};
+//
+//static const char CDC_Interface_Association_Desc[] = {
     0x08,   /* length */
     0x0b,   /* type */
     0x00,   /* first_iface */
@@ -55,10 +55,10 @@ static const char CDC_Interface_Association_Desc[] = {
     0x02,   /* fn_class */
     0x02,   /* fn_subclass */
     0x00,   /* fn_protocol */
-    0x00    /* string_index: no string description */
-};
-
-static const char CDC_Comms_Interface_Desc[] = {
+    0x00,   /* string_index: no string description */
+//};
+//
+//static const char CDC_Comms_Interface_Desc[] = {
     0x09,   /* length */
     0x04,   /* type */
     0x00,   /* number */
@@ -66,52 +66,52 @@ static const char CDC_Comms_Interface_Desc[] = {
     0x01,   /* endpoints: 1 interrupt IN */
     0x02,   /* class: communications interface */
     0x02,   /* subclass: subclass code for abstract control model (ACM) */
-    0x00,   /* no protocol */
-    0x00    /* no string description */
-};
-
-static const char CDC_CS_Interface_Desc[] = {
+    0x01,   /* V.25ter */
+    0x00,   /* no string description */
+//};
+//
+//static const char CDC_CS_Interface_Desc[] = {
     0x05,       /* length */
     0x24,       /* type: CS_INTERFACE */
     0x00,       /* subtype: header (first of these interfaces) */
-    0x10, 0x01  /* BCD rel number */
-};
-
-static const char CDC_CS_ACM_Interface_Desc[] = {
+    0x10, 0x01, /* BCD rel number */
+//};
+//
+//static const char CDC_CS_ACM_Interface_Desc[] = {
     0x04,   /* length */
     0x24,   /* type: CS_INTERFACE */
     0x02,   /* subtype: ACM functional descriptor */
-    0x02    /* bmCapabilities: Table 28, Universal Serial Bus Class Definitions
+    0x06,   /* bmCapabilities: Table 28, Universal Serial Bus Class Definitions
                for Communications Devices*/
-};
-
-static const char CDC_CS_Union_Interface_Desc[] = {
+//};
+//
+//static const char CDC_CS_Union_Interface_Desc[] = {
     0x05,   /* length */
     0x24,   /* type: CS_INTERFACE */
     0x06,   /* subtype: union */
     0x00,   /* bMasterIface: the comms interface */
-    0x01    /* bSlaveIface0: the data interface */
-};
-
-static const char CDC_CS_Call_Management_Interface_Desc[] = {
+    0x01,   /* bSlaveIface0: the data interface */
+//};
+//
+//static const char CDC_CS_Call_Management_Interface_Desc[] = {
     0x05,   /* length */
     0x24,   /* type: CS_INTERFACE */
     0x01,   /* subtype: call management */
     0x03,   /* bmCapabilities: Table 27, Universal Serial Bus Class Definitions
                for Communications Devices */
-    0x01    /* bDataIface: the data interface */
-};
-
-static const char CDC_Comms_Endpoint_In_Desc[] = {
+    0x01,   /* bDataIface: the data interface */
+//};
+//
+//static const char CDC_Comms_Endpoint_In_Desc[] = {
     0x07,       /* length */
     0x05,       /* type */
     0x83,       /* address: IN 3 */
     0x03,       /* attributes: interrupt (0x3) */
     0x08, 0x00, /* max_pktsize */
-    0xff        /* interval */
-};
-
-static const char CDC_Data_Interface_Desc[] = {
+    0xff,       /* interval */
+//};
+//
+//static const char CDC_Data_Interface_Desc[] = {
     0x09,   /* length */
     0x04,   /* type */
     0x01,   /* number */
@@ -120,19 +120,19 @@ static const char CDC_Data_Interface_Desc[] = {
     0x0a,   /* class: communications interface */
     0x00,   /* subclass */
     0x00,   /* protocol */
-    0x00    /* no string description */
-};
-
-static const char CDC_Data_Endpoint_In_Desc[] = {
+    0x00,   /* no string description */
+//};
+//
+//static const char CDC_Data_Endpoint_In_Desc[] = {
     0x07,       /* length */
     0x05,       /* type */
     0x81,       /* address: IN 1 */
     0x02,       /* attributes: bulk (0x2) */
     0x40, 0x00, /* max_pktsize */
-    0x00        /* interval */
-};
-
-static const char CDC_Data_Endpoint_Out_Desc[] = {
+    0x00,       /* interval */
+//};
+//
+//static const char CDC_Data_Endpoint_Out_Desc[] = {
     0x07,       /* length */
     0x05,       /* type */
     0x02,       /* address: OUT 2 */
@@ -174,9 +174,13 @@ usb_init(void)
     regs->sie_ctrl = USB_SIE_CTRL_EP0_INT_1BUF;
     regs->inte = USB_INT_BUS_RESET | USB_INT_SETUP_REQ | USB_INT_BUFF_STATUS;
 
-//    dpsram[3] = (1 << 31) | 0x100;
-//    dpsram[35] = (1 << 10);
+    // Enable EP1 for in bulk transfers with a buffer at offset 0x200.
+    dpsram[USB_EP1_IN_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_BULK | 0x200;
+    // Enable EP2 for out bulk transfers with a buffer at offset 0x200.
+    dpsram[USB_EP2_OUT_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_BULK | 0x300;
+    dpsram[USB_EP2_OUT_BUFCTL] = USB_BCR_AVAIL;
 
+    // Enable full speed device.
     USBregs *setregs = (USBregs *)USBCTRL_REGS_SET_BASE;
     setregs->sie_ctrl = USB_SIE_CTRL_PULLUP_EN;
 }
@@ -209,16 +213,70 @@ usb_info(char *buf, int n)
 */
 }
 
+static int ep0_pid = 0;
+
+unsigned int
+ep0_next_pid(void)
+{
+    ep0_pid = ep0_pid ^ 1;
+    // Return a flag for the previous value.
+    return ep0_pid == 0 ? USB_BCR_DATA1 : USB_BCR_DATA0;
+}
+
+void
+usb_recv_ack(void)
+{
+    unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
+
+    // Mark the buffer as available in the control register for a data packet.
+    dpsram[USB_EP0_OUT_BUFCTL] = 0 | ep0_next_pid() | USB_BCR_AVAIL;
+    print("ep0 out bufctl %08ux\n", dpsram[USB_EP0_OUT_BUFCTL]);
+}
+
+void
+usb_send_ack(void)
+{
+    unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
+
+    // Mark the buffer as available in the control register for a data packet.
+    dpsram[USB_EP0_IN_BUFCTL] = 0 | ep0_next_pid() | USB_BCR_AVAIL | USB_BCR_FULL;
+    print("ep0 in bufctl %08ux\n", dpsram[USB_EP0_IN_BUFCTL]);
+}
+
 void
 usb_send_descriptor(const char *src, int len)
 {
     unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
+    int flags, n;
 
-    // Copy the data into the buffer in DPSRAM.
-    memmove((void *)USB_DPSRAM_EP0_BUF, src, len);
-    // Mark the buffer as available in the control register for a data1 packet.
-    dpsram[32] = len | USB_BCR_DATA1 | USB_BCR_AVAIL | USB_BCR_FULL;
-    print("%08ux\n", dpsram[32]);
+    for (int i = 0; i < len; i += 64) {
+        n = len - i;
+        flags = 0;
+        if (n > 64)
+            n = 64;
+        else
+            flags = USB_BCR_LAST;
+
+        // Copy the data into the buffer in DPSRAM.
+        memmove((void *)USB_DPSRAM_EP0_BUF, src, n);
+        src += n;
+        // Mark the buffer as available in the control register for a data packet.
+        dpsram[USB_EP0_IN_BUFCTL] = n | ep0_next_pid() | USB_BCR_AVAIL |
+                                    USB_BCR_FULL | flags;
+        print("%08ux\n", dpsram[USB_EP0_IN_BUFCTL]);
+
+        USBregs *regs = (USBregs *)USBCTRL_REGS_BASE;
+        while (regs->buff_status & 1 == 0);
+    }
+}
+
+void
+usb_cdc_set_line_coding(void)
+{
+    unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
+    print("%08ux\n", *(unsigned int *)&dpsram[USB_EP0_OUT_BUFCTL]);
+    //USB_DPSRAM_EP0_BUF
+    usb_send_ack();
 }
 
 typedef struct {
@@ -229,12 +287,16 @@ typedef struct {
     unsigned short length;
 } usb_setup_packet;
 
+static int setting_addr = 0;
+
 void
 usb_handle_setup(void)
 {
     usb_setup_packet *p = (usb_setup_packet *)0x50100000;
-    print("%08ux %08ux %016ux %016ux %016ux\n", p->requestType,
+    print("%02ux %02ux %04ux %04ux %04ux\n", p->requestType,
           p->request, p->value, p->index, p->length);
+
+    ep0_pid = 1;
 
     if (p->requestType == USB_DIR_IN) {
         switch (p->request) {
@@ -247,8 +309,16 @@ usb_handle_setup(void)
                 usb_send_descriptor(CDC_Device_Desc, sizeof(CDC_Device_Desc));
                 break;
             case USB_DESCTYPE_CONFIG:
+                if (p->length == CDC_Config_Desc[0])
+                    usb_send_descriptor(CDC_Config_Desc, 9);
+                else if (p->length == 75)
+                    usb_send_descriptor(CDC_Config_Desc, 75);
+                else
+                    print("? %d\n", p->length);
                 break;
             case USB_DESCTYPE_STRING:
+                if (descIndex > 3) descIndex = 0;
+                usb_send_descriptor(strings[descIndex], strings[descIndex][0]);
                 break;
             default:
                 break;
@@ -260,10 +330,21 @@ usb_handle_setup(void)
         }
     } else {
         switch (p->request) {
-        case USB_SET_ADDRESS: {
-            //usb_ack_out();
-            print("set address\n");
-            }
+        case USB_SET_ADDRESS:
+            // Send an ack (zero length response).
+            print("set address %d\n", p->value);
+            setting_addr = p->value;
+            usb_send_ack();
+            break;
+        case USB_SET_CONFIGURATION:
+            usb_send_ack();
+            break;
+        case USB_CDC_SET_LINE_CODING:
+            usb_cdc_set_line_coding();
+            break;
+        case USB_CDC_SET_CONTROL_LINE_STATE:
+            usb_send_ack();
+            break;
         }
     }
 }
@@ -272,7 +353,7 @@ void usbctrl(void)
 {
     USBregs *regs = (USBregs *)USBCTRL_REGS_BASE;
     int status = regs->ints;
-    print("s %08ux\n", status);
+    //print("s %08ux\n", status);
     if (status & USB_INT_BUS_RESET) {
         regs->sie_status = USB_SIE_STATUS_BUS_RESET;
         regs->addr_endp[0] = 0;
@@ -282,12 +363,28 @@ void usbctrl(void)
         usb_handle_setup();
     }
     if (status & USB_INT_BUFF_STATUS) {
-        print("buff_status %08ux\n", regs->buff_status);
         // EP0 in
-        if (regs->buff_status & 1)
+        if (regs->buff_status & 1) {
             regs->buff_status = 1;
+            if (setting_addr) {
+                USBregs *regs = (USBregs *)USBCTRL_REGS_BASE;
+                regs->addr_endp[0] = setting_addr;
+                setting_addr = 0;
+            } else
+                usb_recv_ack();
+        }
         // EP0 out
         if (regs->buff_status & 2)
             regs->buff_status = 2;
+        // EP1 in
+        if (regs->buff_status & 4)
+            regs->buff_status = 4;
+        // EP2 out
+        if (regs->buff_status & 32) {
+            regs->buff_status = 32;
+            unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
+            dpsram[USB_EP2_OUT_BUFCTL] &= ~USB_BCR_FULL;
+            dpsram[USB_EP2_OUT_BUFCTL] |= USB_BCR_AVAIL;
+        }
     }
 }
