@@ -97,7 +97,7 @@ static const char *strings[] = {
     "\x00\x22COMMAND SET:HP PCL;MODEL:RP2350;"
     };
 
-static int ep_pid[3] = {0, 0, 0};
+static int ep_pid[3] = {0, 1, 0};
 
 unsigned int
 usb_pid(int i)
@@ -134,6 +134,7 @@ usb_init(void)
 
     // Enable EP1 for in bulk transfers with a buffer at offset 0x180.
     dpsram[USB_EP1_IN_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_BULK | 0x180;
+    dpsram[USB_EP1_IN_BUFCTL] = 0 | usb_pid(1) | USB_BCR_AVAIL;
     // Enable EP2 for out bulk transfers with a buffer at offset 0x200.
     dpsram[USB_EP2_OUT_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_BULK | 0x200;
     dpsram[USB_EP2_OUT_BUFCTL] = 64 | usb_pid(2) | USB_BCR_AVAIL;
@@ -209,7 +210,7 @@ usb_send_stall(void)
 }
 
 void
-usb_send_data(int bufctl, char *bufaddr, int bit, char *src, int len)
+usb_send_data(int bufctl, char *bufaddr, int ep, int bit, char *src, int len)
 {
     unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
     int flags, n;
@@ -227,7 +228,7 @@ usb_send_data(int bufctl, char *bufaddr, int bit, char *src, int len)
         memmove((void *)bufaddr, src, n);
         src += n;
         // Mark the buffer as available in the control register for a data packet.
-        dpsram[bufctl] = n | usb_pid(0) | USB_BCR_AVAIL | USB_BCR_FULL | flags;
+        dpsram[bufctl] = n | usb_pid(ep) | USB_BCR_AVAIL | USB_BCR_FULL | flags;
 //        print("%08ux\n", dpsram[bufctl]);
 
         USBregs *regs = (USBregs *)USBCTRL_REGS_BASE;
@@ -266,20 +267,20 @@ usb_handle_setup(void)
             switch (descType) {
             case USB_DESCTYPE_DEVICE:
                 descLength = (p->length < Device_Desc[0]) ? p->length : Device_Desc[0];
-                usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 1,
+                usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
                               Device_Desc, descLength);
                 break;
             case USB_DESCTYPE_DEVICE_QUALIFIER:
-                usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 1,
+                usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
                               DeviceQualifier_Desc, 10);
             case USB_DESCTYPE_CONFIG:
                 descLength = (p->length < Config_Desc[2]) ? p->length : Config_Desc[2];
-                usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 1,
+                usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
                               Config_Desc, descLength);
                 break;
             case USB_DESCTYPE_STRING:
                 if (descIndex > 4) descIndex = 0;
-                usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 1,
+                usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
                               strings[descIndex], strings[descIndex][0]);
                 break;
             default:
@@ -289,7 +290,7 @@ usb_handle_setup(void)
             break;
         }
         case USB_GET_STATUS:
-            usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 1,
+            usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
                           (char *)&device_status, 2);
         default:
             break;
@@ -300,7 +301,7 @@ usb_handle_setup(void)
     {
         switch (p->request) {
         case USB_PRINTER_GET_DEVICE_ID:
-            usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 1,
+            usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
                           strings[5], strings[5][1]);
             break;
         case USB_PRINTER_GET_PORT_STATUS:
@@ -379,8 +380,9 @@ void usbctrl(void)
         if (bs & 0x04) {
             clrregs->buff_status = 4;
             print("EP1 %08ux\n", dpsram[USB_EP1_IN_BUFCTL]);
-            usb_send_data(USB_EP1_IN_BUFCTL, (char *)USB_DPSRAM_EP1_BUF, 4,
-                          "Testing\n", 8);
+            //usb_send_data(USB_EP1_IN_BUFCTL, (char *)USB_DPSRAM_EP1_BUF, 1, 4,
+            //              "Testing\n", 8);
+            dpsram[USB_EP2_OUT_BUFCTL] = 64 | usb_pid(2) | USB_BCR_AVAIL;
         }
         // EP2 out
         if (bs & 0x20) {
@@ -392,7 +394,8 @@ void usbctrl(void)
                 if ((i & 15) == 15) print("\n");
             }
             print("\n");
-            dpsram[USB_EP2_OUT_BUFCTL] = 64 | usb_pid(2) | USB_BCR_AVAIL;
+            usb_send_data(USB_EP1_IN_BUFCTL, (char *)USB_DPSRAM_EP1_BUF, 1, 4,
+                          (char *)USB_DPSRAM_EP2_BUF, len);
         }
     }
 }
