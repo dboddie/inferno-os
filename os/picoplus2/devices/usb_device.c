@@ -97,7 +97,7 @@ static const char *strings[] = {
     "\x00\x22COMMAND SET:HP PCL;MODEL:RP2350;"
     };
 
-static int ep_pid[3] = {0, 1, 0};
+static int ep_pid[3] = {0, 0, 0};
 
 unsigned int
 usb_pid(int i)
@@ -134,7 +134,6 @@ usb_init(void)
 
     // Enable EP1 for in bulk transfers with a buffer at offset 0x180.
     dpsram[USB_EP1_IN_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_BULK | 0x180;
-    dpsram[USB_EP1_IN_BUFCTL] = 0 | usb_pid(1) | USB_BCR_AVAIL;
     // Enable EP2 for out bulk transfers with a buffer at offset 0x200.
     dpsram[USB_EP2_OUT_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_BULK | 0x200;
     dpsram[USB_EP2_OUT_BUFCTL] = 64 | usb_pid(2) | USB_BCR_AVAIL;
