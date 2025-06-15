@@ -142,6 +142,6 @@ appl:V:
 	limbo -o $ROOT/dis/floattest.dis appl/floattest.b
 	limbo -o $ROOT/dis/textmandel.dis appl/textmandel.b
 
-uf2:V:
+uf2:V: kernel
 	limbo -o $ROOT/dis/mkuf2.dis appl/mkuf2.b
 	emu mkuf2 os/picoplus2/kernel os/picoplus2/inferno.uf2
