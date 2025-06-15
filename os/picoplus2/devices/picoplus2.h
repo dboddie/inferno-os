@@ -323,6 +323,8 @@ typedef struct {
 
 #define USB_DPSRAM_BASE 0x50100000
 #define USB_DPSRAM_EP0_BUF (USB_DPSRAM_BASE + 0x100)
+#define USB_DPSRAM_EP1_BUF (USB_DPSRAM_BASE + 0x180)
+#define USB_DPSRAM_EP2_BUF (USB_DPSRAM_BASE + 0x200)
 #define USB_EP0_IN_BUFCTL 32
 #define USB_EP0_OUT_BUFCTL 33
 #define USB_EP1_IN_EPCTL 2
@@ -333,9 +335,12 @@ typedef struct {
 enum {
     USB_BCR_FULL  = 0x8000,
     USB_BCR_LAST  = 0x4000,
+    USB_BCR_SEL   = 0x1000,
+    USB_BCR_STALL = 0x0800,
     USB_BCR_AVAIL = 0x0400,
     USB_BCR_DATA0 = 0x0000,
     USB_BCR_DATA1 = 0x2000,
+    USB_BCR_LEN_MASK = 0x03ff,
 };
 
 enum {
