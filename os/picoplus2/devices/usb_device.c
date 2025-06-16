@@ -19,9 +19,8 @@
 #define USB_DEVICE_IN 0x80
 #define USB_DEVICE_OUT 0x0
 
-#define USB_PRINTER_REQUEST 0xa1
-#define USB_PRINTER_GET_DEVICE_ID 0
-#define USB_PRINTER_GET_PORT_STATUS 1
+#define USB_CDC_SET_LINE_CODING 0x20
+#define USB_CDC_SET_CONTROL_LINE_STATE 0x22
 
 static const char Device_Desc[] = {
     0x12,       // length
@@ -55,36 +54,31 @@ static const char DeviceQualifier_Desc[] = {
 static const char Config_Desc[] = {
     0x09,       // length
     0x02,       // type: configuration
-    0x20, 0x00, // total_length: (this and all of the following descriptors)
-    0x01,       // interfaces
+    0x4b, 0x00, // total_length: (this and all of the following descriptors)
+    0x02,       // interfaces
     0x01,       // config_value
     0x00,       // string_index: no string description
     0x80,       // attributes: reserved bit
     0xfa,       // max_power: 250 * 2mA
 
-    0x09,       // length
-    0x04,       // type: interface
-    0x00,       // number
-    0x00,       // alternative
-    0x02,       // endpoints: 2 endpoints (1 IN, 1 OUT)
-    0xff,       // printer class
-    0x00,       // printer subclass
-    0x00,       // bi-directional
-    0x04,       // interface string index
+    // Interface association, interface 0 of 1, class=subclass=2, no protocol
+    0x08, 0x0b, 0x00, 0x02, 0x02, 0x02, 0x00, 0x00,
 
-    0x07,       // length
-    0x05,       // type: endpoint
-    0x81,       // address: IN 1
-    0x02,       // attributes: bulk (0x2)
-    0x40, 0x00, // max_pktsize
-    0x00,       // interval
+    // Interface 0, alt 0, 1 endpoint, Communications, Abstract, no protocol
+    0x09, 0x04, 0x00, 0x00, 0x01, 0x02, 0x02, 0x00, 0x00,
 
-    0x07,       // length
-    0x05,       // type
-    0x02,       // address: OUT 2
-    0x02,       // attributes: bulk (0x2)
-    0x40, 0x00, // max_pktsize
-    0x00        // interval
+    0x05, 0x24, 0x00, 0x10, 0x01,
+    0x04, 0x24, 0x02, 0x02,
+    0x05, 0x24, 0x06, 0x00, 0x01,
+    0x05, 0x24, 0x01, 0x03, 0x01,
+    0x07, 0x05, 0x83, 0x03, 0x08, 0x00, 0xff,
+
+    // Interface 1, alt 0, 2 endpoints, CDC Data class (10), no subclass or protocol
+    0x09, 0x04, 0x01, 0x00, 0x02, 0x0a, 0x00, 0x00, 0x00,
+    // Endpoint 1 (IN), bulk, 64 bytes
+    0x07, 0x05, 0x81, 0x02, 0x40, 0x00, 0x00,
+    // Endpoint 2 (OUT), bulk, 64 bytes
+    0x07, 0x05, 0x02, 0x02, 0x40, 0x00, 0x00,
 };
 
 /* String descriptors */
@@ -92,9 +86,7 @@ static const char *strings[] = {
     "\x04\x03\x09\x04",
     "\x10\x03T\x00e\x00s\x00t\x00i\x00n\x00g\x00",
     "\x0e\x03P\x00i\x00c\x00o\x002\x00W\x00",
-    "\x0e\x031\x002\x003\x004\x005\x006\x00",
-    "\x20\x03V\x00i\x00r\x00t\x00u\x00a\x00l\x00 \x00P\x00r\x00i\x00n\x00t\x00e\x00r\x00",
-    "\x00\x22COMMAND SET:HP PCL;MODEL:RP2350;"
+    "\x0e\x031\x002\x003\x004\x005\x006\x00"
     };
 
 static int ep_pid[3] = {0, 0, 0};
@@ -205,8 +197,11 @@ usb_send_stall(void)
     dpsram[USB_EP0_IN_BUFCTL] = USB_BCR_STALL;
     USBregs *regs = (USBregs *)USBCTRL_REGS_BASE;
     regs->ep_stall_arm = 1;
-    print("stall ep0 in\n");
+//    print("stall ep0 in\n");
 }
+
+char *ep0_src;
+int ep0_len;
 
 void
 usb_send_data(int bufctl, char *bufaddr, int ep, int bit, char *src, int len)
@@ -214,25 +209,24 @@ usb_send_data(int bufctl, char *bufaddr, int ep, int bit, char *src, int len)
     unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
     int flags, n;
 //    print("send %d\n", len);
+    ep0_src = src;
+    ep0_len = len;
 
-    for (int i = 0; i < len; i += 64) {
-        n = len - i;
-        flags = 0;
-        if (n > 64)
-            n = 64;
-        else
-            flags = USB_BCR_LAST;
+    flags = 0;
+    if (len > 64)
+        len = 64;
+    else
+        flags = USB_BCR_LAST;
 
-        // Copy the data into the buffer in DPSRAM.
-        memmove((void *)bufaddr, src, n);
-        src += n;
-        // Mark the buffer as available in the control register for a data packet.
-        dpsram[bufctl] = n | usb_pid(ep) | USB_BCR_AVAIL | USB_BCR_FULL | flags;
-//        print("%08ux\n", dpsram[bufctl]);
+    // Copy the data into the buffer in DPSRAM.
+    memmove((void *)bufaddr, src, len);
 
-        USBregs *regs = (USBregs *)USBCTRL_REGS_BASE;
-        while (regs->buff_status & bit == 0);
-    }
+    // Mark the buffer as available in the control register for a data packet.
+    dpsram[bufctl] = len | usb_pid(ep) | USB_BCR_AVAIL | USB_BCR_FULL | flags;
+//    print("%08ux\n", dpsram[bufctl]);
+
+    ep0_src += len;
+    ep0_len -= len;
 }
 
 typedef struct {
@@ -296,14 +290,16 @@ usb_handle_setup(void)
         }
         break;
     }
-    case USB_PRINTER_REQUEST:
+    case USB_DEVICE_OUT:
     {
         switch (p->request) {
-        case USB_PRINTER_GET_DEVICE_ID:
-            usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
-                          strings[5], strings[5][1]);
+        case USB_SET_ADDRESS:
+            // Send an ack (zero length response).
+//            print("set address %d\n", p->value);
+            setting_addr = p->value;
+            usb_send_ack();
             break;
-        case USB_PRINTER_GET_PORT_STATUS:
+        case USB_SET_CONFIGURATION:
             usb_send_ack();
             break;
         default:
@@ -312,16 +308,13 @@ usb_handle_setup(void)
         }
         break;
     }
-    case USB_DEVICE_OUT:
+    case 0x21:
     {
         switch (p->request) {
-        case USB_SET_ADDRESS:
-            // Send an ack (zero length response).
-            print("set address %d\n", p->value);
-            setting_addr = p->value;
+        case USB_CDC_SET_LINE_CODING:
             usb_send_ack();
             break;
-        case USB_SET_CONFIGURATION:
+        case USB_CDC_SET_CONTROL_LINE_STATE:
             usb_send_ack();
             break;
         default:
@@ -358,7 +351,7 @@ void usbctrl(void)
     if (status & USB_INT_BUFF_STATUS) {
         // A buffer has finished transferring for one or more endpoints.
         unsigned int bs = regs->buff_status;
-        print("%08ux\n", bs);
+//        print("%08ux\n", bs);
         // Handle each endpoint in turn.
         if (bs & 0x01) {
             // EP0 in
@@ -367,32 +360,34 @@ void usbctrl(void)
                 USBregs *regs = (USBregs *)USBCTRL_REGS_BASE;
                 regs->addr_endp[0] = setting_addr;
                 setting_addr = 0;
-            } else
+            } else if (ep0_len > 0) {
+                usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
+                              ep0_src, ep0_len);
+            } else {
                 usb_recv_ack();
+            }
         }
         if (bs & 0x02) {
             // EP0 out
-            print("EP0 %08ux\n", dpsram[USB_EP0_OUT_BUFCTL]);
+            //print("EP0 %08ux\n", dpsram[USB_EP0_OUT_BUFCTL]);
             clrregs->buff_status = 2;
         }
         // EP1 in
         if (bs & 0x04) {
             clrregs->buff_status = 4;
-            print("EP1 %08ux\n", dpsram[USB_EP1_IN_BUFCTL]);
+            //print("EP1 %08ux\n", dpsram[USB_EP1_IN_BUFCTL]);
             //usb_send_data(USB_EP1_IN_BUFCTL, (char *)USB_DPSRAM_EP1_BUF, 1, 4,
             //              "Testing\n", 8);
             dpsram[USB_EP2_OUT_BUFCTL] = 64 | usb_pid(2) | USB_BCR_AVAIL;
         }
         // EP2 out
         if (bs & 0x20) {
-            print("EP2 %08ux\n", dpsram[USB_EP2_OUT_BUFCTL]);
+            //print("EP2 %08ux\n", dpsram[USB_EP2_OUT_BUFCTL]);
             clrregs->buff_status = 32;
             int len = dpsram[USB_EP2_OUT_BUFCTL] & USB_BCR_LEN_MASK;
             for (int i = 0; i < len; i++) {
-                print("%02x ", *(unsigned char *)(USB_DPSRAM_EP2_BUF + i));
-                if ((i & 15) == 15) print("\n");
+                print("%c", *(unsigned char *)(USB_DPSRAM_EP2_BUF + i));
             }
-            print("\n");
             usb_send_data(USB_EP1_IN_BUFCTL, (char *)USB_DPSRAM_EP1_BUF, 1, 4,
                           (char *)USB_DPSRAM_EP2_BUF, len);
         }
