@@ -1,5 +1,6 @@
 #include "u.h"
 #include "../../port/lib.h"
+#include "../dat.h"
 #include "picoplus2.h"
 
 #define USB_SET_ADDRESS 0x05
@@ -71,6 +72,7 @@ static const char Config_Desc[] = {
     0x04, 0x24, 0x02, 0x02,
     0x05, 0x24, 0x06, 0x00, 0x01,
     0x05, 0x24, 0x01, 0x03, 0x01,
+    // Endpoint 3 (IN), interrupt, 8 bytes, 255 frames (255 ms) interval
     0x07, 0x05, 0x83, 0x03, 0x08, 0x00, 0xff,
 
     // Interface 1, alt 0, 2 endpoints, CDC Data class (10), no subclass or protocol
@@ -89,7 +91,7 @@ static const char *strings[] = {
     "\x0e\x031\x002\x003\x004\x005\x006\x00"
     };
 
-static int ep_pid[3] = {0, 0, 0};
+static int ep_pid[4] = {0, 0, 0, 0};
 
 unsigned int
 usb_pid(int i)
@@ -129,6 +131,8 @@ usb_init(void)
     // Enable EP2 for out bulk transfers with a buffer at offset 0x200.
     dpsram[USB_EP2_OUT_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_BULK | 0x200;
     dpsram[USB_EP2_OUT_BUFCTL] = 64 | usb_pid(2) | USB_BCR_AVAIL;
+    // Enable EP3 for in interrupt transfers with a buffer at offset 0x280.
+    dpsram[USB_EP3_IN_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_INTERRUPT | 0x280;
 
     // Enable full speed device.
     USBregs *setregs = (USBregs *)USBCTRL_REGS_SET_BASE;
@@ -200,17 +204,12 @@ usb_send_stall(void)
 //    print("stall ep0 in\n");
 }
 
-char *ep0_src;
-int ep0_len;
-
-void
+int
 usb_send_data(int bufctl, char *bufaddr, int ep, int bit, char *src, int len)
 {
     unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
     int flags, n;
 //    print("send %d\n", len);
-    ep0_src = src;
-    ep0_len = len;
 
     flags = 0;
     if (len > 64)
@@ -225,8 +224,33 @@ usb_send_data(int bufctl, char *bufaddr, int ep, int bit, char *src, int len)
     dpsram[bufctl] = len | usb_pid(ep) | USB_BCR_AVAIL | USB_BCR_FULL | flags;
 //    print("%08ux\n", dpsram[bufctl]);
 
-    ep0_src += len;
-    ep0_len -= len;
+    return len;
+}
+
+char *ep0_src;
+int ep0_len;
+
+void
+usb_ep0_send_data(int bufctl, char *bufaddr, int ep, int bit, char *src, int len)
+{
+    ep0_src = src;
+    ep0_len = len;
+    int sent = usb_send_data(bufctl, bufaddr, ep, bit, src, len);
+    ep0_src += sent;
+    ep0_len -= sent;
+}
+
+char *ep1_src;
+int ep1_len;
+
+void
+usb_ep1_send_data(int bufctl, char *bufaddr, int ep, int bit, char *src, int len)
+{
+    ep1_src = src;
+    ep1_len = len;
+    int sent = usb_send_data(bufctl, bufaddr, ep, bit, src, len);
+    ep1_src += sent;
+    ep1_len -= sent;
 }
 
 typedef struct {
@@ -244,8 +268,8 @@ void
 usb_handle_setup(void)
 {
     usb_setup_packet *p = (usb_setup_packet *)0x50100000;
-    print("%02ux %02ux %04ux %04ux %04ux\n", p->requestType,
-          p->request, p->value, p->index, p->length);
+//    print("%02ux %02ux %04ux %04ux %04ux\n", p->requestType,
+//          p->request, p->value, p->index, p->length);
 
     ep_pid[0] = 1;
 
@@ -260,21 +284,21 @@ usb_handle_setup(void)
             switch (descType) {
             case USB_DESCTYPE_DEVICE:
                 descLength = (p->length < Device_Desc[0]) ? p->length : Device_Desc[0];
-                usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
-                              Device_Desc, descLength);
+                usb_ep0_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
+                                  Device_Desc, descLength);
                 break;
             case USB_DESCTYPE_DEVICE_QUALIFIER:
-                usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
-                              DeviceQualifier_Desc, 10);
+                usb_ep0_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
+                                  DeviceQualifier_Desc, 10);
             case USB_DESCTYPE_CONFIG:
                 descLength = (p->length < Config_Desc[2]) ? p->length : Config_Desc[2];
-                usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
-                              Config_Desc, descLength);
+                usb_ep0_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
+                                  Config_Desc, descLength);
                 break;
             case USB_DESCTYPE_STRING:
                 if (descIndex > 4) descIndex = 0;
-                usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
-                              strings[descIndex], strings[descIndex][0]);
+                usb_ep0_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
+                                  strings[descIndex], strings[descIndex][0]);
                 break;
             default:
                 usb_send_stall();
@@ -283,8 +307,8 @@ usb_handle_setup(void)
             break;
         }
         case USB_GET_STATUS:
-            usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
-                          (char *)&device_status, 2);
+            usb_ep0_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
+                              (char *)&device_status, 2);
         default:
             break;
         }
@@ -329,6 +353,18 @@ usb_handle_setup(void)
     }
 }
 
+extern void (*serwrite)(char*, int);
+void (*old_serwrite)(char *, int) = 0;
+
+extern Queue* kbdq;
+
+void
+usb_serwrite(char *s, int n)
+{
+    old_serwrite(s, n);
+    usb_ep1_send_data(USB_EP1_IN_BUFCTL, (char *)USB_DPSRAM_EP1_BUF, 1, 4, s, n);
+}
+
 void usbctrl(void)
 {
     USBregs *regs = (USBregs *)USBCTRL_REGS_BASE;
@@ -361,8 +397,8 @@ void usbctrl(void)
                 regs->addr_endp[0] = setting_addr;
                 setting_addr = 0;
             } else if (ep0_len > 0) {
-                usb_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
-                              ep0_src, ep0_len);
+                usb_ep0_send_data(USB_EP0_IN_BUFCTL, (char *)USB_DPSRAM_EP0_BUF, 0, 1,
+                                  ep0_src, ep0_len);
             } else {
                 usb_recv_ack();
             }
@@ -376,20 +412,26 @@ void usbctrl(void)
         if (bs & 0x04) {
             clrregs->buff_status = 4;
             //print("EP1 %08ux\n", dpsram[USB_EP1_IN_BUFCTL]);
-            //usb_send_data(USB_EP1_IN_BUFCTL, (char *)USB_DPSRAM_EP1_BUF, 1, 4,
+            //usb_ep1_send_data(USB_EP1_IN_BUFCTL, (char *)USB_DPSRAM_EP1_BUF, 1, 4,
             //              "Testing\n", 8);
-            dpsram[USB_EP2_OUT_BUFCTL] = 64 | usb_pid(2) | USB_BCR_AVAIL;
+            if (ep1_len > 0) {
+                usb_ep1_send_data(USB_EP1_IN_BUFCTL, (char *)USB_DPSRAM_EP1_BUF, 1, 4,
+                                  ep1_src, ep1_len);
+            }
         }
         // EP2 out
         if (bs & 0x20) {
             //print("EP2 %08ux\n", dpsram[USB_EP2_OUT_BUFCTL]);
+            if (!old_serwrite) {
+                old_serwrite = serwrite;
+                serwrite = usb_serwrite;
+            }
             clrregs->buff_status = 32;
             int len = dpsram[USB_EP2_OUT_BUFCTL] & USB_BCR_LEN_MASK;
-            for (int i = 0; i < len; i++) {
-                print("%c", *(unsigned char *)(USB_DPSRAM_EP2_BUF + i));
-            }
-            usb_send_data(USB_EP1_IN_BUFCTL, (char *)USB_DPSRAM_EP1_BUF, 1, 4,
-                          (char *)USB_DPSRAM_EP2_BUF, len);
+            for (int i = 0; i < len; i++)
+                kbdputc(kbdq, *(unsigned char *)(USB_DPSRAM_EP2_BUF + i));
+
+            dpsram[USB_EP2_OUT_BUFCTL] = 64 | usb_pid(2) | USB_BCR_AVAIL;
         }
     }
 }
