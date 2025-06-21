@@ -141,6 +141,7 @@ appl:V:
 	limbo -o $ROOT/dis/blink.dis appl/blink.b
 	limbo -o $ROOT/dis/floattest.dis appl/floattest.b
 	limbo -o $ROOT/dis/textmandel.dis appl/textmandel.b
+	limbo -o $ROOT/dis/usbsh.dis appl/usbsh.b
 
 uf2:V: kernel
 	limbo -o $ROOT/dis/mkuf2.dis appl/mkuf2.b

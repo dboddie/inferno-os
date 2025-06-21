@@ -10,16 +10,14 @@
 
 enum{
     Qdir,
-    Qin,
-    Qout,
+    Qdata,
     Qinfo
 };
 
 static
 Dirtab usbtab[]={
     ".",        {Qdir, 0, QTDIR}, 0, 0555, /* entry for "." must be first if devgen used */
-    "in",       {Qin, 0},         0, 0222,
-    "out",      {Qout, 0},        0, 0444,
+    "data",     {Qdata, 0},       0, 0666,
     "info",     {Qinfo, 0},      38, 0444,
 };
 
@@ -68,15 +66,11 @@ usbread(Chan* c, void* a, long n, vlong offset)
     switch((ulong)c->qid.path){
     case Qdir:
         return devdirread(c, a, n, usbtab, nelem(usbtab), devgen);
-    case Qin:
-        error(Eperm);
-        break;
-    case Qout:
-        /* Data from the host */
-//        bytes_read = usb_read(a, n, offset);
-//        if (bytes_read == -1)
+    case Qdata:
+        bytes_read = usb_read(a, n);
+        if (bytes_read == -1)
             error(Eio);
-//        return bytes_read;
+        return bytes_read;
     case Qinfo:
 	usb_info(lbuf, 128);
 	return readstr(offset, a, n, lbuf);
@@ -91,9 +85,8 @@ static long
 usbwrite(Chan* c, void* a, long n, vlong offset)
 {
     switch((ulong)c->qid.path){
-    case Qin:
-        /* Data to the host */
-//        return usb_write(a, n, offset);
+    case Qdata:
+        return usb_write((char *)a, (int)n);
     default:
         error(Eperm);
         break;
