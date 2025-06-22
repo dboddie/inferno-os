@@ -97,6 +97,8 @@ static int ep_pid[4] = {0, 0, 0, 0};
 static char ep2_buf[EP2_BUFSIZE];
 int ep2_w = 0, ep2_r = 0, ep2_full = 0;
 
+unsigned char usb_priority;
+
 void usb_request_data(int);
 
 unsigned int
@@ -124,6 +126,8 @@ usb_init(void)
 
     NVIC *nvic = (NVIC *)NVIC_ISER;
     nvic->iser0_31 |= (1 << USBCTRL_IRQ);
+/*    *(unsigned char *)(NVIC_IPR + USBCTRL_IRQ) = 0xd0;
+    usb_priority = *(unsigned char *)(NVIC_IPR + USBCTRL_IRQ);*/
 
     USBregs *regs = (USBregs *)USBCTRL_REGS_BASE;
     regs->usb_muxing = USB_MUXING_SOFTCON | USB_MUXING_TO_PHY;
@@ -136,7 +140,7 @@ usb_init(void)
     dpsram[USB_EP1_IN_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_BULK | 0x180;
     // Enable EP2 for out bulk transfers with a buffer at offset 0x200.
     dpsram[USB_EP2_OUT_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_BULK | 0x200;
-    dpsram[USB_EP2_OUT_BUFCTL] = EP2_BUFSIZE | usb_pid(2) | USB_BCR_AVAIL;
+//    dpsram[USB_EP2_OUT_BUFCTL] = EP2_BUFSIZE | usb_pid(2) | USB_BCR_AVAIL;
     // Enable EP3 for in interrupt transfers with a buffer at offset 0x280.
     dpsram[USB_EP3_IN_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_INTERRUPT | 0x280;
 
@@ -154,6 +158,7 @@ usb_info(char *buf, int n)
     int i = 0;
 
     unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
+//    i += snprint(buf + i, n, "%02x\n", usb_priority);
     i += snprint(buf + i, n, "%d %d\n", ep2_r, ep2_w);
 /*
     i += snprint(buf + i, n, "%08ux\n", dpsram[USB_EP1_IN_EPCTL]);
@@ -391,6 +396,9 @@ usb_get_available(void)
 void
 usb_get_more_data(void)
 {
+    unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
+    dpsram[USB_EP2_OUT_BUFCTL] |= USB_BCR_STALL;
+
     int unused = ep2_r - ep2_w;
     if (unused < 0)
         unused = EP2_BUFSIZE + unused;
@@ -469,12 +477,7 @@ void usbctrl(void)
 
             if (ep2_len > 0)
                 ep2_full = ep2_w == ep2_r;
-/*
-            for (int i = 0; i < ep2_len; i++) {
-                print("%c", ep2_buf[ep2_r++]);
-                ep2_r = ep2_r % EP2_BUFSIZE;
-            }
-*/
+
             if (!ep2_full) {
                 usb_get_more_data();
             } else
@@ -507,9 +510,6 @@ long
 usb_read(char *a, long n)
 {
     if (n == 0) return 0;
-
-    unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
-    dpsram[USB_EP2_OUT_BUFCTL] |= USB_BCR_STALL;
 
 //    print("read %08ux %d %d %d\n", dpsram[USB_EP2_OUT_BUFCTL], n, ep2_w, ep2_r);
 
