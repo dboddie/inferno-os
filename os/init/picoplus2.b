@@ -18,7 +18,7 @@ Init: module
 init(context: ref Draw->Context, nil: list of string)
 {
     sys = load Sys Sys->PATH;
-    sh = load Sh "/dis/tiny/sh.dis";
+    sh = load Sh Sh->PATH; # "/dis/tiny/sh.dis";
 
     sys->print("**\n** Inferno\n** Vita Nuova\n**\n");
 
@@ -37,6 +37,12 @@ init(context: ref Draw->Context, nil: list of string)
     fd := sys->open("/dev/sysname", sys->OWRITE);
     b := array of byte "picoplus2";
     sys->write(fd, b, len b);
+
+    usbinfd := sys->open("/dev/usb/data", sys->OWRITE);
+    usboutfd := sys->open("/dev/usb/data", sys->OREAD);
+    sys->dup(usboutfd.fd, 0);
+    sys->dup(usbinfd.fd, 1);
+    sys->dup(1, 2);
 
     args: list of string;
     sh->init(context, args);
