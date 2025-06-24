@@ -91,6 +91,8 @@ static const char *strings[] = {
     "\x0e\x031\x002\x003\x004\x005\x006\x00"
     };
 
+extern Queue* kbdq;
+
 static int ep_pid[4] = {0, 0, 0, 0};
 
 #define EP2_BUFSIZE 64
@@ -126,8 +128,8 @@ usb_init(void)
 
     NVIC *nvic = (NVIC *)NVIC_ISER;
     nvic->iser0_31 |= (1 << USBCTRL_IRQ);
-/*    *(unsigned char *)(NVIC_IPR + USBCTRL_IRQ) = 0xd0;
-    usb_priority = *(unsigned char *)(NVIC_IPR + USBCTRL_IRQ);*/
+    *(unsigned char *)(NVIC_IPR + USBCTRL_IRQ) = 0xd0;
+    usb_priority = *(unsigned char *)(NVIC_IPR + USBCTRL_IRQ);
 
     USBregs *regs = (USBregs *)USBCTRL_REGS_BASE;
     regs->usb_muxing = USB_MUXING_SOFTCON | USB_MUXING_TO_PHY;
@@ -140,7 +142,7 @@ usb_init(void)
     dpsram[USB_EP1_IN_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_BULK | 0x180;
     // Enable EP2 for out bulk transfers with a buffer at offset 0x200.
     dpsram[USB_EP2_OUT_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_BULK | 0x200;
-//    dpsram[USB_EP2_OUT_BUFCTL] = EP2_BUFSIZE | usb_pid(2) | USB_BCR_AVAIL;
+    usb_request_data(EP2_BUFSIZE);
     // Enable EP3 for in interrupt transfers with a buffer at offset 0x280.
     dpsram[USB_EP3_IN_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_INTERRUPT | 0x280;
 
@@ -467,21 +469,13 @@ void usbctrl(void)
 //            print("EP2 %08ux %d %d\n", dpsram[USB_EP2_OUT_BUFCTL], ep2_w, ep2_r);
             clrregs->buff_status = 32;
 
-            char *ep2_src = (char *)USB_DPSRAM_EP2_BUF;
+            unsigned char *ep2_src = (unsigned char *)USB_DPSRAM_EP2_BUF;
             int ep2_len = dpsram[USB_EP2_OUT_BUFCTL] & USB_BCR_LEN_MASK;
 
-            for (int i = 0; i < ep2_len; i++) {
-                ep2_buf[ep2_w++] = ep2_src[i];
-                ep2_w = ep2_w % EP2_BUFSIZE;
-            }
+            for (int i = 0; i < ep2_len; i++)
+                kbdputc(kbdq, ep2_src[i]);
 
-            if (ep2_len > 0)
-                ep2_full = ep2_w == ep2_r;
-
-            if (!ep2_full) {
-                usb_get_more_data();
-            } else
-                dpsram[USB_EP2_OUT_BUFCTL] |= USB_BCR_STALL;
+            usb_request_data(EP2_BUFSIZE);
         }
     }
 }

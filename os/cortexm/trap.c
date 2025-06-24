@@ -103,8 +103,10 @@ void switcher(Ureg *ureg)
     m->inidle = 0;
     splhi();
 
+#ifndef NO_KEYBOARD_IN_SWITCHER
     if (rdch_ready())
         kbd_readc();
+#endif
 }
 
 void setpanic(void)

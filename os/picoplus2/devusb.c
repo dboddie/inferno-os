@@ -67,10 +67,10 @@ usbread(Chan* c, void* a, long n, vlong offset)
     case Qdir:
         return devdirread(c, a, n, usbtab, nelem(usbtab), devgen);
     case Qdata:
-        bytes_read = usb_read(a, n);
-        if (bytes_read == -1)
+//        bytes_read = usb_read(a, n);
+//        if (bytes_read == -1)
             error(Eio);
-        return bytes_read;
+//        return bytes_read;
     case Qinfo:
 	usb_info(lbuf, 128);
 	return readstr(offset, a, n, lbuf);
