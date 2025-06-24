@@ -411,6 +411,25 @@ usb_get_more_data(void)
     usb_request_data(unused);
 }
 
+void
+usb_kbd_in(char c)
+{
+    /* Filter backspace */
+    if (c == 127) {
+        kbdputc(kbdq, 8);
+        return;
+    }
+    if (c != 13) {
+        /* Process characters normally */
+        kbdputc(kbdq, c);
+    } else {
+        /* Add additional newlines for carriage returns */
+        char buf[2];
+        buf[0] = 13; buf[1] = 10;
+        qproduce(kbdq, buf, 2);
+    }
+}
+
 void usbctrl(void)
 {
     USBregs *regs = (USBregs *)USBCTRL_REGS_BASE;
@@ -473,7 +492,7 @@ void usbctrl(void)
             int ep2_len = dpsram[USB_EP2_OUT_BUFCTL] & USB_BCR_LEN_MASK;
 
             for (int i = 0; i < ep2_len; i++)
-                kbdputc(kbdq, ep2_src[i]);
+                usb_kbd_in(ep2_src[i]);
 
             usb_request_data(EP2_BUFSIZE);
         }
