@@ -101,14 +101,19 @@ int ep2_w = 0, ep2_r = 0, ep2_full = 0;
 
 unsigned char usb_priority;
 
-void usb_request_data(int);
-
 unsigned int
 usb_pid(int i)
 {
     int ep = ep_pid[i];
     ep_pid[i] ^= 1;
     return (ep == 0) ? USB_BCR_DATA0 : USB_BCR_DATA1;
+}
+
+void
+usb_request_data(int n)
+{
+    unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
+    dpsram[USB_EP2_OUT_BUFCTL] = n | usb_pid(2) | USB_BCR_AVAIL;
 }
 
 void
@@ -243,8 +248,8 @@ usb_send_data(int bufctl, char *bufaddr, int ep, char *src, int len)
     return len;
 }
 
-char *ep0_src;
-int ep0_len;
+static char *ep0_src;
+static int ep0_len;
 
 void
 usb_ep0_send_data(int bufctl, char *bufaddr, char *src, int len)
@@ -256,8 +261,10 @@ usb_ep0_send_data(int bufctl, char *bufaddr, char *src, int len)
     ep0_len -= sent;
 }
 
-char *ep1_src;
-int ep1_len;
+static Lock in_lock;
+
+static char *ep1_src;
+static int ep1_len;
 
 void
 usb_ep1_send_data(int bufctl, char *bufaddr, char *src, int len)
@@ -283,9 +290,7 @@ static short device_status = 0;
 void
 usb_handle_setup(void)
 {
-    usb_setup_packet *p = (usb_setup_packet *)0x50100000;
-//    print("%02ux %02ux %04ux %04ux %04ux\n", p->requestType,
-//          p->request, p->value, p->index, p->length);
+    usb_setup_packet *p = (usb_setup_packet *)USB_DPSRAM_BASE;
 
     ep_pid[0] = 1;
 
@@ -335,7 +340,6 @@ usb_handle_setup(void)
         switch (p->request) {
         case USB_SET_ADDRESS:
             // Send an ack (zero length response).
-//            print("set address %d\n", p->value);
             setting_addr = p->value;
             usb_send_ack();
             break;
@@ -369,46 +373,12 @@ usb_handle_setup(void)
     }
 }
 
-int
-usb_data_in_ready(void)
-{
-    return ep1_len == 0;
-}
-
 void
 usb_write(char *s, int n)
 {
-    while (!usb_data_in_ready());
+    ilock(&in_lock);
     usb_ep1_send_data(USB_EP1_IN_BUFCTL, (char *)USB_DPSRAM_EP1_BUF, s, n);
-}
-
-int
-usb_get_available(void)
-{
-    if (ep2_full)
-        return EP2_BUFSIZE;
-
-    int available = ep2_w - ep2_r;
-    if (available < 0)
-        available = EP2_BUFSIZE + available;
-
-    return available;
-}
-
-void
-usb_get_more_data(void)
-{
-    unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
-    dpsram[USB_EP2_OUT_BUFCTL] |= USB_BCR_STALL;
-
-    int unused = ep2_r - ep2_w;
-    if (unused < 0)
-        unused = EP2_BUFSIZE + unused;
-    else if (unused == 0)
-        unused = EP2_BUFSIZE;
-
-//    print("get more %d\n", unused);
-    usb_request_data(unused);
+    iunlock(&in_lock);
 }
 
 void
@@ -451,7 +421,6 @@ void usbctrl(void)
     if (status & USB_INT_BUFF_STATUS) {
         // A buffer has finished transferring for one or more endpoints.
         unsigned int bs = regs->buff_status;
-        //print("%08ux\n", bs);
         // Handle each endpoint in turn.
         if (bs & 0x01) {
             // EP0 in
@@ -469,23 +438,20 @@ void usbctrl(void)
         }
         if (bs & 0x02) {
             // EP0 out
-            //print("EP0 %08ux\n", dpsram[USB_EP0_OUT_BUFCTL]);
             clrregs->buff_status = 2;
         }
         // EP1 in
         if (bs & 0x04) {
             clrregs->buff_status = 4;
-            //print("EP1 %08ux\n", dpsram[USB_EP1_IN_BUFCTL]);
-            //usb_ep1_send_data(USB_EP1_IN_BUFCTL, (char *)USB_DPSRAM_EP1_BUF, 1, 4,
-            //              "Testing\n", 8);
             if (ep1_len > 0) {
+                lock(&in_lock);
                 usb_ep1_send_data(USB_EP1_IN_BUFCTL, (char *)USB_DPSRAM_EP1_BUF,
                                   ep1_src, ep1_len);
+                unlock(&in_lock);
             }
         }
         // EP2 out
         if (bs & 0x20) {
-//            print("EP2 %08ux %d %d\n", dpsram[USB_EP2_OUT_BUFCTL], ep2_w, ep2_r);
             clrregs->buff_status = 32;
 
             unsigned char *ep2_src = (unsigned char *)USB_DPSRAM_EP2_BUF;
@@ -497,53 +463,4 @@ void usbctrl(void)
             usb_request_data(EP2_BUFSIZE);
         }
     }
-}
-
-void
-usb_request_data(int n)
-{
-//    print("request %d\n", n);
-    unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
-    dpsram[USB_EP2_OUT_BUFCTL] = n | usb_pid(2) | USB_BCR_AVAIL;
-}
-
-int
-usb_data_out_available(void)
-{
-    return ep2_w != ep2_r;
-}
-
-int
-usb_ready(void)
-{
-    return ep2_full || (ep2_w != ep2_r);
-}
-
-long
-usb_read(char *a, long n)
-{
-    if (n == 0) return 0;
-
-//    print("read %08ux %d %d %d\n", dpsram[USB_EP2_OUT_BUFCTL], n, ep2_w, ep2_r);
-
-    int available = usb_get_available();
-    if (available == 0) {
-        usb_get_more_data();
-        while (!usb_ready());
-        available = usb_get_available();
-    }
-
-    n = (n > available) ? available : n;
-
-    if (n != 0) {
-        for (int i = 0; i < n; i++) {
-            a[i] = ep2_buf[ep2_r++];
-            ep2_r = ep2_r % EP2_BUFSIZE;
-        }
-        ep2_full = 0;
-    }
-
-    usb_get_more_data();
-
-    return n;
 }

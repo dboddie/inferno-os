@@ -64,6 +64,7 @@ typedef struct {
 #define GPIO4_IO_ADDR (IO_BANK0_BASE + 0x20)
 #define GPIO5_IO_ADDR (IO_BANK0_BASE + 0x28)
 #define GPIO25_IO_ADDR (IO_BANK0_BASE + 0xc8)
+#define GPIO45_IO_ADDR (IO_BANK0_BASE + 0x168)
 #define GPIO47_IO_ADDR (IO_BANK0_BASE + 0x178)
 
 typedef struct {
@@ -78,6 +79,7 @@ typedef struct {
 #define GPIO4_PAD_ADDR (PADS_BANK0_BASE + 0x14)
 #define GPIO5_PAD_ADDR (PADS_BANK0_BASE + 0x18)
 #define GPIO25_PAD_ADDR (PADS_BANK0_BASE + 0x68)
+#define GPIO45_PAD_ADDR (PADS_BANK0_BASE + 0xb8)
 #define GPIO47_PAD_ADDR (PADS_BANK0_BASE + 0xc0)
 
 enum {
