@@ -17,7 +17,7 @@ enum{
 static
 Dirtab usbtab[]={
     ".",        {Qdir, 0, QTDIR}, 0, 0555, /* entry for "." must be first if devgen used */
-    "data",     {Qdata, 0},       0, 0222,
+    "data",     {Qdata, 0},       0, 0666,
     "info",     {Qinfo, 0},      38, 0444,
 };
 
@@ -67,7 +67,10 @@ usbread(Chan* c, void* a, long n, vlong offset)
     case Qdir:
         return devdirread(c, a, n, usbtab, nelem(usbtab), devgen);
     case Qdata:
-        error(Eperm);
+        bytes_read = usb_read(a, n);
+        if (bytes_read == -1)
+          error(Eio);
+        return bytes_read;
     case Qinfo:
 	usb_info(lbuf, 128);
 	return readstr(offset, a, n, lbuf);

@@ -38,11 +38,13 @@ init(context: ref Draw->Context, nil: list of string)
     b := array of byte "picoplus2";
     sys->write(fd, b, len b);
 
-    usbinfd := sys->open("/dev/usb/data", sys->OWRITE);
-#    usboutfd := sys->open("/dev/usb/data", sys->OREAD);
-#    sys->dup(usboutfd.fd, 0);
-    sys->dup(usbinfd.fd, 1);
-    sys->dup(1, 2);
+#    usbinfd := sys->open("/dev/usb/data", sys->OWRITE);
+#    sys->dup(usbinfd.fd, 1);
+#    sys->dup(1, 2);
+
+#    usbfd := sys->open("/dev/usb/data", sys->ORDWR);
+#    sys->dup(usbfd.fd, 0);
+#    sys->dup(usbfd.fd, 1);
 
     args: list of string;
     sh->init(context, args);

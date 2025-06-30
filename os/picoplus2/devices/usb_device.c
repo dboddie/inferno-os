@@ -1,6 +1,7 @@
 #include "u.h"
 #include "../../port/lib.h"
 #include "../dat.h"
+#include "../fns.h"
 #include "picoplus2.h"
 
 #define USB_SET_ADDRESS 0x05
@@ -91,13 +92,10 @@ static const char *strings[] = {
     "\x0e\x031\x002\x003\x004\x005\x006\x00"
     };
 
-extern Queue* kbdq;
+Queue *outq;
+void usb_request_data(void *);
 
 static int ep_pid[4] = {0, 0, 0, 0};
-
-#define EP2_BUFSIZE 64
-static char ep2_buf[EP2_BUFSIZE];
-int ep2_w = 0, ep2_r = 0, ep2_full = 0;
 
 unsigned char usb_priority;
 
@@ -107,13 +105,6 @@ usb_pid(int i)
     int ep = ep_pid[i];
     ep_pid[i] ^= 1;
     return (ep == 0) ? USB_BCR_DATA0 : USB_BCR_DATA1;
-}
-
-void
-usb_request_data(int n)
-{
-    unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
-    dpsram[USB_EP2_OUT_BUFCTL] = n | usb_pid(2) | USB_BCR_AVAIL;
 }
 
 void
@@ -147,9 +138,10 @@ usb_init(void)
     dpsram[USB_EP1_IN_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_BULK | 0x180;
     // Enable EP2 for out bulk transfers with a buffer at offset 0x200.
     dpsram[USB_EP2_OUT_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_BULK | 0x200;
-    usb_request_data(EP2_BUFSIZE);
     // Enable EP3 for in interrupt transfers with a buffer at offset 0x280.
     dpsram[USB_EP3_IN_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_INTERRUPT | 0x280;
+
+    outq = qopen(128, 0, usb_request_data, nil);
 
     // Enable full speed device.
     USBregs *setregs = (USBregs *)USBCTRL_REGS_SET_BASE;
@@ -166,7 +158,7 @@ usb_info(char *buf, int n)
 
     unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
 //    i += snprint(buf + i, n, "%02x\n", usb_priority);
-    i += snprint(buf + i, n, "%d %d\n", ep2_r, ep2_w);
+//    i += snprint(buf + i, n, "%d %d\n", ep2_r, ep2_w);
 /*
     i += snprint(buf + i, n, "%08ux\n", dpsram[USB_EP1_IN_EPCTL]);
     i += snprint(buf + i, n, "%08ux\n", dpsram[USB_EP2_OUT_EPCTL]);
@@ -259,21 +251,6 @@ usb_ep0_send_data(int bufctl, char *bufaddr, char *src, int len)
     int sent = usb_send_data(bufctl, bufaddr, 0, src, len);
     ep0_src += sent;
     ep0_len -= sent;
-}
-
-static Lock in_lock;
-
-static char *ep1_src;
-static int ep1_len;
-
-void
-usb_ep1_send_data(int bufctl, char *bufaddr, char *src, int len)
-{
-    ep1_src = src;
-    ep1_len = len;
-    int sent = usb_send_data(bufctl, bufaddr, 1, src, len);
-    ep1_src += sent;
-    ep1_len -= sent;
 }
 
 typedef struct {
@@ -373,6 +350,20 @@ usb_handle_setup(void)
     }
 }
 
+static Lock in_lock;
+static char *ep1_src;
+static int ep1_len;
+
+void
+usb_ep1_send_data(int bufctl, char *bufaddr, char *src, int len)
+{
+    ep1_src = src;
+    ep1_len = len;
+    int sent = usb_send_data(bufctl, bufaddr, 1, src, len);
+    ep1_src += sent;
+    ep1_len -= sent;
+}
+
 void
 usb_write(char *s, int n)
 {
@@ -381,23 +372,33 @@ usb_write(char *s, int n)
     iunlock(&in_lock);
 }
 
-void
-usb_kbd_in(char c)
+#define EP2_BUFSIZE 64
+static Lock out_lock;
+static char *ep2_src;
+static int ep2_len;
+
+int
+usb_ready(void)
 {
-    /* Filter backspace */
-    if (c == 127) {
-        kbdputc(kbdq, 8);
-        return;
-    }
-    if (c != 13) {
-        /* Process characters normally */
-        kbdputc(kbdq, c);
-    } else {
-        /* Add additional newlines for carriage returns */
-        char buf[2];
-        buf[0] = 13; buf[1] = 10;
-        qproduce(kbdq, buf, 2);
-    }
+    return ep2_len != 0;
+}
+
+void
+usb_request_data(void *)
+{
+    unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
+    dpsram[USB_EP2_OUT_BUFCTL] = 64 | usb_pid(2) | USB_BCR_AVAIL;
+}
+
+long
+usb_read(char *a, long n)
+{
+    n = (n > EP2_BUFSIZE) ? EP2_BUFSIZE : n;
+    if (qlen(outq) > 0)
+        return qconsume(outq, (void *)a, (n > qlen(outq)) ? qlen(outq) : n);
+
+    usb_request_data(nil);
+    return qread(outq, (void *)a, 1);
 }
 
 void usbctrl(void)
@@ -454,13 +455,8 @@ void usbctrl(void)
         if (bs & 0x20) {
             clrregs->buff_status = 32;
 
-            unsigned char *ep2_src = (unsigned char *)USB_DPSRAM_EP2_BUF;
-            int ep2_len = dpsram[USB_EP2_OUT_BUFCTL] & USB_BCR_LEN_MASK;
-
-            for (int i = 0; i < ep2_len; i++)
-                usb_kbd_in(ep2_src[i]);
-
-            usb_request_data(EP2_BUFSIZE);
+            qproduce(outq, (void *)USB_DPSRAM_EP2_BUF,
+                     dpsram[USB_EP2_OUT_BUFCTL] & USB_BCR_LEN_MASK);
         }
     }
 }
