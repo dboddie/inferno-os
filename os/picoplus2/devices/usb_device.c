@@ -69,10 +69,18 @@ static const char Config_Desc[] = {
     // Interface 0, alt 0, 1 endpoint, Communications, Abstract, no protocol
     0x09, 0x04, 0x00, 0x00, 0x01, 0x02, 0x02, 0x00, 0x00,
 
+    // CS_Interfaces
+    // Header Functional Descriptor (0)
     0x05, 0x24, 0x00, 0x10, 0x01,
-    0x04, 0x24, 0x02, 0x02,
+    // Abstract Control Management Functional Descriptor (2)
+    // capabilities (0=nothing supported)
+    0x04, 0x24, 0x02, 0x00,
+    // Union Functional Descriptor (6)
+    // (master interface=0, slave interface=1)
     0x05, 0x24, 0x06, 0x00, 0x01,
+    // Call Management Functional Descriptor (1)
     0x05, 0x24, 0x01, 0x03, 0x01,
+
     // Endpoint 3 (IN), interrupt, 8 bytes, 255 frames (255 ms) interval
     0x07, 0x05, 0x83, 0x03, 0x08, 0x00, 0xff,
 
@@ -455,8 +463,9 @@ void usbctrl(void)
         if (bs & 0x20) {
             clrregs->buff_status = 32;
 
-            qproduce(outq, (void *)USB_DPSRAM_EP2_BUF,
-                     dpsram[USB_EP2_OUT_BUFCTL] & USB_BCR_LEN_MASK);
+            int len = dpsram[USB_EP2_OUT_BUFCTL] & USB_BCR_LEN_MASK;
+            char *ep2_src = (char *)USB_DPSRAM_EP2_BUF;
+            qproduce(outq, (void *)USB_DPSRAM_EP2_BUF, len);
         }
     }
 }
