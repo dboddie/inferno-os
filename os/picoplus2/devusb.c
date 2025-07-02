@@ -11,14 +11,12 @@
 enum{
     Qdir,
     Qdata,
-    Qinfo
 };
 
 static
 Dirtab usbtab[]={
     ".",        {Qdir, 0, QTDIR}, 0, 0555, /* entry for "." must be first if devgen used */
     "data",     {Qdata, 0},       0, 0666,
-    "info",     {Qinfo, 0},      38, 0444,
 };
 
 static void
@@ -71,9 +69,6 @@ usbread(Chan* c, void* a, long n, vlong offset)
         if (bytes_read == -1)
           error(Eio);
         return bytes_read;
-    case Qinfo:
-	usb_info(lbuf, 128);
-	return readstr(offset, a, n, lbuf);
     default:
         n=0;
         break;

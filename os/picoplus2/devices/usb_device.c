@@ -157,49 +157,12 @@ usb_init(void)
 }
 
 void
-usb_info(char *buf, int n)
-{
-    USBregs *regs = (USBregs *)USBCTRL_REGS_BASE;
-    NVIC *nvic = (NVIC *)NVIC_ISER;
-    PLL *pll = (PLL *)PLL_USB_BASE;
-    int i = 0;
-
-    unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
-//    i += snprint(buf + i, n, "%02x\n", usb_priority);
-//    i += snprint(buf + i, n, "%d %d\n", ep2_r, ep2_w);
-/*
-    i += snprint(buf + i, n, "%08ux\n", dpsram[USB_EP1_IN_EPCTL]);
-    i += snprint(buf + i, n, "%08ux\n", dpsram[USB_EP2_OUT_EPCTL]);
-    i += snprint(buf + i, n, "%08ux\n", dpsram[USB_EP2_OUT_BUFCTL]);
-
-    i += snprint(buf + i, n, "%08ux ", regs->main_ctrl);
-    i += snprint(buf + i, n, "%08ux ", regs->sie_ctrl);
-    i += snprint(buf + i, n, "%08ux ", regs->usb_muxing);
-    i += snprint(buf + i, n, "%08ux ", regs->usb_pwr);
-    i += snprint(buf + i, n, "%08ux ", regs->inte);
-    i += snprint(buf + i, n, "%08ux ", nvic->iser0_31);
-//    i += snprint(buf + i, n, "%08ux ", *(unsigned int *)(NVIC_IPR + 12));
-//    i += snprint(buf + i, n, "%08ux ", *(unsigned int *)NVIC_ICPR0);
-    i += snprint(buf + i, n, "%08ux ", pll->cs);
-    i += snprint(buf + i, n, "%08ux ", pll->pwr);
-    i += snprint(buf + i, n, "%08ux ", pll->fbdiv_int);
-    i += snprint(buf + i, n, "%08ux ", pll->prim);
-*/
-/*
-    Clocks *usbclk = (Clocks *)CLK_USB_ADDR;
-    i += snprint(buf + i, n, "%08ux ", usbclk->ctrl);
-    i += snprint(buf + i, n, "%08ux ", usbclk->div);
-*/
-}
-
-void
 usb_recv_ack(void)
 {
     unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
 
     // Mark the buffer as available in the control register for a data packet.
     dpsram[USB_EP0_OUT_BUFCTL] = 0 | usb_pid(0) | USB_BCR_AVAIL;
-//    print("ep0 out bufctl %08ux\n", dpsram[USB_EP0_OUT_BUFCTL]);
 }
 
 void
@@ -209,7 +172,6 @@ usb_send_ack(void)
 
     // Mark the buffer as available in the control register for a data packet.
     dpsram[USB_EP0_IN_BUFCTL] = 0 | usb_pid(0) | USB_BCR_AVAIL | USB_BCR_FULL;
-//    print("ep0 in bufctl %08ux\n", dpsram[USB_EP0_IN_BUFCTL]);
 }
 
 void
@@ -222,7 +184,6 @@ usb_send_stall(void)
     dpsram[USB_EP0_IN_BUFCTL] = USB_BCR_STALL;
     USBregs *regs = (USBregs *)USBCTRL_REGS_BASE;
     regs->ep_stall_arm = 1;
-//    print("stall ep0 in\n");
 }
 
 int
@@ -230,7 +191,6 @@ usb_send_data(int bufctl, char *bufaddr, int ep, char *src, int len)
 {
     unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
     int flags;
-//    print("send %d\n", len);
 
     flags = 0;
     if (len > 64)
@@ -243,7 +203,6 @@ usb_send_data(int bufctl, char *bufaddr, int ep, char *src, int len)
 
     // Mark the buffer as available in the control register for a data packet.
     dpsram[bufctl] = len | usb_pid(ep) | USB_BCR_AVAIL | USB_BCR_FULL | flags;
-//    print("%08ux\n", dpsram[bufctl]);
 
     return len;
 }
