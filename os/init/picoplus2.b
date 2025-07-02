@@ -45,6 +45,7 @@ init(context: ref Draw->Context, nil: list of string)
 #    usbfd := sys->open("/dev/usb/data", sys->ORDWR);
 #    sys->dup(usbfd.fd, 0);
 #    sys->dup(usbfd.fd, 1);
+#    sys->dup(usbfd.fd, 2);
 
     args: list of string;
     sh->init(context, args);

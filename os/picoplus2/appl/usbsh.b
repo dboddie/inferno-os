@@ -12,21 +12,13 @@ UsbSh: module
 init(context: ref Draw->Context, args: list of string)
 {
     sys := load Sys Sys->PATH;
-    sh := load Sh "/dis/tiny/sh.dis";
+    sh := load Sh Sh->PATH;
 
     fd := sys->open("/dev/usb/data", sys->ORDWR);
 
-#    sys->dup(infd.fd, 0);
-#    sys->dup(outfd.fd, 1);
+    sys->dup(fd.fd, 0);
+    sys->dup(fd.fd, 1);
+    sys->dup(fd.fd, 2);
 
-#    sh->init(context, args);
-
-    for (;;) {
-        b := array[64] of byte;
-        n := sys->read(fd, b, 1);
-        sys->print("%s", string b[:n]);
-#        if (n > 0) {
-#            sys->write(fd, b, 1);
-#        }
-    }
+    sh->init(context, args);
 }
