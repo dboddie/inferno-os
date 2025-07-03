@@ -116,15 +116,7 @@ frozen.h:V:
 
 EXTRADIS=\
 	/dis/tiny/ls.dis\
-#	/dis/makecol.dis\
-#	/dis/banner.dis\
-#	/dis/banner16.dis\
 	/dis/blink.dis\
-	/dis/ink.dis\
-	/dis/aht.dis\
-	/dis/makecol.dis\
-	/dis/mandel.dis\
-	/dis/ledsegment.dis\
 	/dis/floattest.dis\
 	/dis/textmandel.dis\
 
