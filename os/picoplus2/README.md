@@ -1,8 +1,7 @@
 # Inferno for RP2350-based boards
 
-This directory contains a port of Inferno to the Pimoroni Pico 2 Plus. This is
-a development board using the RP2350 microcontroller that is also found on the
-Raspberry Pi Pico 2 and derivatives.
+This directory contains a port of Inferno to the Raspberry Pi Pico 2 and
+related development boards that use the RP2350 microcontroller.
 
 ## Current state
 
@@ -37,7 +36,9 @@ If this was successful, it should be possible to enter the `os/picoplus2`
 directory and build the port:
 
 * Run `mk appl` to build any port-specific tools.
-* Run `mk` to build the port.
+* Run `mk CONF=<file>` to build the port, where `<file>` is the name of the
+  configuration file for a particular board. For example, `picoplus2.conf` is
+  the file to use for the Pimoroni Pico Plus 2.
 
 This should result in a `inferno.uf2` file in the current directory. This can
 be installed on the device.
