@@ -10,9 +10,10 @@ The port provides the following features, which generally work, but should be
 considered prototypes:
 
 * Basic multitasking.
-* Keyboard input and text output via a UART.
 * Floating point arithmetic support.
 * Access to the status LED.
+* USB device support, functioning as a serial-like device.
+* Optional keyboard input and text output via a UART.
 
 There are some known issues:
 
@@ -38,22 +39,8 @@ directory and build the port:
 * Run `mk appl` to build any port-specific tools.
 * Run `mk` to build the port.
 
-This should result in a `kernel` file in the current directory. This will need
-to be encoded as a UF2 file for installation on the device.
-
-## Creating a UF2 file
-
-Probably the easiest way to create a UF2 file from the `kernel` file is to use
-the `uf2conv.py` utility. This can be found in [this repository](https://github.com/microsoft/uf2).
-
-Clone the repository, then add the `utils` directory within to the `PATH`
-environment variable.
-
-You can then run the `uf2conv.py` script to create a UF2 file:
-
-    uf2conv.py -c -b 0x10000000 -f 0xe48bff59 -o out.uf2 kernel
-
-The `out.uf2` file can then be installed on the device.
+This should result in a `inferno.uf2` file in the current directory. This can
+be installed on the device.
 
 ## Installing
 
@@ -62,10 +49,68 @@ should appear as a mass storage device called `RP2350` which you can mount and
 open in a file browser. You should see files called `INFO_UF2.TXT` and
 `INDEX.HTM` in the root directory of the device.
 
-Copy the `out.uf2` file to the root directory of the device. This will take a
+Copy the `inferno.uf2` file to the root directory of the device. This will take a
 few seconds. The device will reset when this is complete.
 
+## Using Inferno via the USB-C connection
+
+Inferno will automatically act as a USB communication device. On systems that
+provide it, running the `lsusb -v` command will show a line like this to
+indicate that the device has been found:
+
+    Bus 001 Device 010: ID dbdb:5678 Testing Pico2W
+
+A TTY device file should have been created by the operating system, and this
+can be used to access the console on the device. For example, on Debian, the
+`picocom` tool can be used to do this. In this example command, `ttyACM0` is
+the appropriate device file, but this will depend on your system:
+
+    picocom -b 115200 --echo --imap lfcrlf --omap crlf /dev/ttyACM0
+
+The mapping options help to ensure a conventional terminal experience.
+
+Once you have opened the terminal, it is possible to export a namespace over
+the USB connection with
+
+    export / /dev/usb/data
+
+or, alternatively
+
+    export / #u/data
+
+The connection can be used from Inferno hosted on Linux by first ensuring that
+the TTY device raw is configured to be used for raw data. On Debian, the `stty`
+command is used for this; for example:
+
+    stty /dev/ttyACM0 raw -icanon -iexten -echo
+
+This can also be done from within the hosted environment, using the `os`
+command in the Inferno shell:
+
+    os stty /dev/ttyACM0 raw -icanon -iexten -echo
+
+Note that the `stty` command is using paths in the external Linux environment.
+
+If the device file is symlinked from Linux into a hosted Inferno directory
+structure, such as with the command
+
+    ln -s /dev/ttyACM0 acm
+
+the `mount` command can then be used to access the namespace exported by the
+device:
+
+    mount -A acm /n/pico
+
+This should run successfully and return immediately, allowing access to the
+device's namespace via the `/n/pico` directory. If the `mount` command stalls,
+it is possible that the TTY is not configured correctly and the bytes are being
+transformed in transit.
+
 ## Using Inferno via a serial adaptor
+
+By default, the keyboard interface that accepts input via a UART is disabled
+by the `-DNO_KEYBOARD_IN_SWITCHER` definition in the `mkfile`. If this is
+commented out or removed, Inferno will provide this interface.
 
 Inferno uses UART1 to present a terminal to the user via the QW/ST connector on
 the board. You will need a USB-to-serial adaptor and a JST-SH cable to access

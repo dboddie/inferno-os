@@ -31,6 +31,7 @@ OBJ=\
 	fpithumb2.$O\
 	devices/clocks.$O\
 	devices/sys.$O\
+	devices/buttons.$O\
 #	$IP\
 	$DEVS\
 #	$ETHERS\
@@ -68,11 +69,12 @@ MK_UART_FN=2
 
 ASFLAGS=$ASFLAGS -I../cortexm
 CFLAGS=-wFV -I./include -I../cortexm -I$ROOT/include -I$ROOT/libinterp \
-	-DMK_UART=$MK_UART -DMK_UART_TX=$MK_UART_TX -DMK_UART_RX=$MK_UART_RX -DMK_UART_FN=$MK_UART_FN
+	-DMK_UART=$MK_UART -DMK_UART_TX=$MK_UART_TX -DMK_UART_RX=$MK_UART_RX -DMK_UART_FN=$MK_UART_FN \
+	-DNO_KEYBOARD_IN_SWITCHER
 LDFLAGS=-H0 -l -s -t -f
 KERNDATE=`{$NDATE}
 
-default:V: appl mkfreeze mkfrozendir frozen.h kernel
+default:V: appl mkfreeze mkfrozendir frozen.h kernel uf2
 
 kernel: $OBJ $CONF.c $CONF.root.h $LIBNAMES $MODOBJ
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
@@ -114,15 +116,7 @@ frozen.h:V:
 
 EXTRADIS=\
 	/dis/tiny/ls.dis\
-#	/dis/makecol.dis\
-#	/dis/banner.dis\
-#	/dis/banner16.dis\
 	/dis/blink.dis\
-	/dis/ink.dis\
-	/dis/aht.dis\
-	/dis/makecol.dis\
-	/dis/mandel.dis\
-	/dis/ledsegment.dis\
 	/dis/floattest.dis\
 	/dis/textmandel.dis\
 
@@ -141,7 +135,8 @@ appl:V:
 	limbo -o $ROOT/dis/blink.dis appl/blink.b
 	limbo -o $ROOT/dis/floattest.dis appl/floattest.b
 	limbo -o $ROOT/dis/textmandel.dis appl/textmandel.b
+	limbo -o $ROOT/dis/usbsh.dis appl/usbsh.b
 
-uf2:V:
+uf2:V: kernel
 	limbo -o $ROOT/dis/mkuf2.dis appl/mkuf2.b
 	emu mkuf2 os/picoplus2/kernel os/picoplus2/inferno.uf2

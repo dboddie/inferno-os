@@ -18,16 +18,12 @@ Init: module
 init(context: ref Draw->Context, nil: list of string)
 {
     sys = load Sys Sys->PATH;
-    sh = load Sh "/dis/tiny/sh.dis";
+    sh = load Sh Sh->PATH; # "/dis/tiny/sh.dis";
 
     sys->print("**\n** Inferno\n** Vita Nuova\n**\n");
 
-#    sys->bind("#^", "/chan", sys->MBEFORE);
     sys->bind("#c", "/dev", sys->MAFTER);
     sys->bind("#L", "/dev", sys->MAFTER);   # status LED
-#    sys->bind("#t", "/dev", sys->MAFTER);
-#    sys->bind("#u", "/dev/ink", sys->MAFTER);   # UC8159 e-ink driver
-    sys->bind("#v", "/dev/display", sys->MAFTER);   # ILI9341 display driver
     sys->bind("#Y", "/dev", sys->MAFTER);   # system information
     sys->bind("#e", "/env", sys->MREPL | sys->MCREATE);
     sys->bind("#p", "/prog", sys->MREPL);
@@ -38,6 +34,16 @@ init(context: ref Draw->Context, nil: list of string)
     b := array of byte "picoplus2";
     sys->write(fd, b, len b);
 
-    args: list of string;
+#    usbinfd := sys->open("/dev/usb/data", sys->OWRITE);
+#    sys->dup(usbinfd.fd, 1);
+#    sys->dup(1, 2);
+
+    usbfd := sys->open("/dev/usb/data", sys->ORDWR);
+    sys->dup(usbfd.fd, 0);
+    sys->dup(usbfd.fd, 1);
+    sys->dup(usbfd.fd, 2);
+    args := "sh"::"-i"::nil;
+
+#    args: list of string;
     sh->init(context, args);
 }

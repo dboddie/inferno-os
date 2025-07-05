@@ -29,3 +29,8 @@ extern void setup_i2c(void);
 extern void setup_led(void);
 extern int get_led(void);
 extern void set_led(int);
+
+extern void usb_serwrite(char *, int);
+
+extern void buttons_init(void);
+extern int buttons_user(void);
