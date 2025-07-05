@@ -32,7 +32,7 @@ of Inferno in the usual way:
 * Run `mk nuke` then `mk mkdirs` to prepare the build environment.
 * Run `mk install` to build a hosted system.
 
-If this was successful, it should be possible to enter the `os/picoplus2`
+If this was successful, it should be possible to enter the `os/rp2350`
 directory and build the port:
 
 * Run `mk appl` to build any port-specific tools.

@@ -131,4 +131,4 @@ appl:V:
 
 uf2:V: kernel
 	limbo -o $ROOT/dis/mkuf2.dis appl/mkuf2.b
-	emu mkuf2 os/picoplus2/kernel os/picoplus2/inferno.uf2
+	emu mkuf2 os/rp2350/kernel os/rp2350/inferno.uf2
