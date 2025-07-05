@@ -1,4 +1,4 @@
-#include "picoplus2.h"
+#include "rp2350.h"
 
 void
 buttons_init(void)

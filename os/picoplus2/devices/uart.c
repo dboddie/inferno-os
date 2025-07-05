@@ -1,6 +1,8 @@
 /* Include constants and GPIO functions */
-#include "picoplus2.h"
+#include "rp2350.h"
 #include "fns.h"
+// Include board-specific configuration.
+#include "config.h"
 
 static UART *uart;
 

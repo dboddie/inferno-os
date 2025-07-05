@@ -1,4 +1,4 @@
-# Inferno for the Pimoroni Pico 2 Plus
+# Inferno for RP2350-based boards
 
 This directory contains a port of Inferno to the Pimoroni Pico 2 Plus. This is
 a development board using the RP2350 microcontroller that is also found on the

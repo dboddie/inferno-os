@@ -1,6 +1,6 @@
 #include "u.h"
 #include "ureg.h"
-#include "../../devices/picoplus2.h"
+#include "../../devices/rp2350.h"
 
 #define SHPR3 0xe000ed20
 #define SHCSR_ADDR 0xe000ed24

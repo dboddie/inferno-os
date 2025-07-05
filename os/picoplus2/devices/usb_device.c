@@ -2,7 +2,7 @@
 #include "../../port/lib.h"
 #include "../dat.h"
 #include "../fns.h"
-#include "picoplus2.h"
+#include "rp2350.h"
 
 #define USB_SET_ADDRESS 0x05
 #define USB_GET_DESCRIPTOR 0x06

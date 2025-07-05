@@ -1,6 +1,6 @@
 #include "u.h"
 #include "ureg.h"
-#include "../../devices/picoplus2.h"
+#include "../../devices/rp2350.h"
 
 extern void setup_led(void);
 extern void set_led(int);

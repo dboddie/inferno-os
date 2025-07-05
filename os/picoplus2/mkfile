@@ -1,7 +1,6 @@
 <../../mkconfig
 
-CONF=picoplus2.conf
-CONFLIST=picoplus2.conf
+CONF=default.conf
 DATA2S=data2texts
 loadaddr=0x10000000
 # Put data at the start of RAM.
@@ -45,8 +44,14 @@ OBJ=\
 LIBNAMES=${LIBS:%=lib%.a}
 LIBDIRS=$LIBS
 
+CONFNAME=${CONF:%.conf=%}
+
 # Strip off the devices prefix of any object paths.
-NOPREFIXOBJ=${OBJ:devices/%=%}
+NOPREFIXOBJ=${OBJ:devices/pico2/%=%}
+NOPREFIXOBJ=${NOPREFIXOBJ:devices/feather2350/%=%}
+NOPREFIXOBJ=${NOPREFIXOBJ:devices/%=%}
+
+CONFIGDIR=${CONF:%.conf=devices/%}
 
 HFILES=\
 	mem.h\
@@ -55,21 +60,8 @@ HFILES=\
 	../cortexm/fpi.h\
 	../cortexm/thumb2.h\
 
-# UART0 (Adafruit Feather RP2350)
-MK_UART=0
-MK_UART_TX=2
-MK_UART_RX=3
-MK_UART_FN=11
-
-# UART1 (Pimoroni Pico Plus 2 and Raspberry Pi Pico 2W)
-MK_UART=1
-MK_UART_TX=4
-MK_UART_RX=5
-MK_UART_FN=2
-
 ASFLAGS=$ASFLAGS -I../cortexm
-CFLAGS=-wFV -I./include -I../cortexm -I$ROOT/include -I$ROOT/libinterp \
-	-DMK_UART=$MK_UART -DMK_UART_TX=$MK_UART_TX -DMK_UART_RX=$MK_UART_RX -DMK_UART_FN=$MK_UART_FN \
+CFLAGS=-wFV -I./include -I../cortexm -I$ROOT/include -I$ROOT/libinterp -I$CONFIGDIR \
 	-DNO_KEYBOARD_IN_SWITCHER
 LDFLAGS=-H0 -l -s -t -f
 KERNDATE=`{$NDATE}
@@ -121,7 +113,7 @@ EXTRADIS=\
 	/dis/textmandel.dis\
 
 # Expand the targets to clean after the definition in portmkfile.
-CLEANEXTRA=$CLEANEXTRA ${MODOBJ:%.fr.$O=frozen/%.s} frozen.h ${EXTRADIS:%=$ROOT/%} $ROOT/*.fdis kernel
+CLEANEXTRA=$CLEANEXTRA ${MODOBJ:%.fr.$O=frozen/%.s} frozen.h ${EXTRADIS:%=$ROOT/%} $ROOT/*.fdis kernel $CONF.c
 
 $ROOT/dis/%.dis:V: appl/%.b
 	limbo -o $target $prereq

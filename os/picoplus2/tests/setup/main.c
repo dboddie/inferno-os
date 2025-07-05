@@ -1,6 +1,6 @@
 #include "u.h"
 #include "ureg.h"
-#include "../../devices/picoplus2.h"
+#include "../../devices/rp2350.h"
 #include "../../devices/fns.h"
 #include "../../../cortexm/thumb2.h"
 
