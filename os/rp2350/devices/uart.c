@@ -16,18 +16,18 @@ void setup_uart(void)
     Resets *resets = (Resets *)RESETS_BASE;
 
     // Set the UART function for the GPIO pins used for TX and RX.
-    GPIOctrl *gpio = (GPIOctrl *)(IO_BANK0_BASE + (MK_UART_TX * 8));
-    gpio->ctrl = MK_UART_FN;
-    gpio = (GPIOctrl *)(IO_BANK0_BASE + (MK_UART_RX * 8));
-    gpio->ctrl = MK_UART_FN;
+    GPIOctrl *gpio = (GPIOctrl *)(IO_BANK0_BASE + (CONFIG_UART_TX * 8));
+    gpio->ctrl = CONFIG_UART_FN;
+    gpio = (GPIOctrl *)(IO_BANK0_BASE + (CONFIG_UART_RX * 8));
+    gpio->ctrl = CONFIG_UART_FN;
 
     unsigned int *pad_base = (unsigned int *)GPIO0_PAD_ADDR;
-    pad_base[MK_UART_TX] = PADS_IE | PADS_DRIVE_4mA | PADS_SCHMITT;
-    pad_base[MK_UART_RX] = PADS_IE | PADS_DRIVE_4mA | PADS_SCHMITT;
+    pad_base[CONFIG_UART_TX] = PADS_IE | PADS_DRIVE_4mA | PADS_SCHMITT;
+    pad_base[CONFIG_UART_RX] = PADS_IE | PADS_DRIVE_4mA | PADS_SCHMITT;
 
     // Set the function for the GPIO pins so that the UART peripheral can drive
     // them. Function 0 can be used to read their states.
-    if (MK_UART == 0) {
+    if (CONFIG_UART == 0) {
         clrreset->reset = RESETS_UART0;
         while (!(resets->reset_done & RESETS_UART0));
         uart = (UART *)UART0_BASE;
