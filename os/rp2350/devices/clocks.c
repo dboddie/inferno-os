@@ -20,12 +20,13 @@ void setup_clocks(void)
 
     PLL *pll;
     pll = (PLL *)PLL_SYS_BASE;
-    pll->cs = 1;    // refdiv=1
-    pll->fbdiv_int = 64;
+    pll->cs = 1;                    // refdiv = 1
+    pll->fbdiv_int = 64;            // fbdiv = 64
 
     // Power up (set low) PLL and oscillator.
     pll->pwr &= ~(PLL_PWR_VCOPD | PLL_PWR_PD);
     while (!(pll->cs & PLL_CS_LOCK));
+    // postdiv1 = 4, postdiv2 = 4
     pll->prim = (4 << 16) | (4 << 12);
 
     // Power up (set low) PLL and oscillator.
@@ -36,18 +37,23 @@ void setup_clocks(void)
     while (!(resets->reset_done & RESETS_PLL_USB));
 
     pll = (PLL *)PLL_USB_BASE;
-    pll->cs = 1;    // refdiv=1
-    pll->fbdiv_int = 64;
+    pll->cs = 1;                    // refdiv = 1
+    pll->fbdiv_int = 64;            // fbdiv = 64
+
+    // See 8.6.3 in the RP2350 datasheet.
+    // f = (XOSC_FREQ (12 MHz) / fbdiv) * fbdiv / (postdiv1 * postdiv2)
+    // f = 48 MHz
 
     // Power up (set low) PLL and oscillator.
     pll->pwr &= ~(PLL_PWR_VCOPD | PLL_PWR_PD);
     while (!(pll->cs & PLL_CS_LOCK));
+    // postdiv1 = 4, postdiv2 = 4
     pll->prim = (4 << 16) | (4 << 12);
 
     // Power up (set low) PLL and oscillator.
     pll->pwr &= ~PLL_PWR_POSTDIVD;
 
-    // Configure the clock sources.
+    // Configure the clock sources, using a divisor of 1 for each of them.
     Clocks *refclk = (Clocks *)CLK_REF_ADDR;
     refclk->ctrl = CLK_REF_CTRL_XOSC_CLKSRC;
     refclk->div = 1 << 16;

@@ -55,6 +55,8 @@ usbclose(Chan* c)
     USED(c);
 }
 
+extern long usb_read(char *, long);
+
 static long
 usbread(Chan* c, void* a, long n, vlong offset)
 {
@@ -75,6 +77,8 @@ usbread(Chan* c, void* a, long n, vlong offset)
     }
     return n;
 }
+
+extern long usb_write(char *, long);
 
 static long
 usbwrite(Chan* c, void* a, long n, vlong offset)

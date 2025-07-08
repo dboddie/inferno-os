@@ -101,7 +101,6 @@ static const char *strings[] = {
     };
 
 Queue *outq;
-void usb_request_data(void *);
 
 static int ep_pid[4] = {0, 0, 0, 0};
 
@@ -149,7 +148,7 @@ usb_init(void)
     // Enable EP3 for in interrupt transfers with a buffer at offset 0x280.
     dpsram[USB_EP3_IN_EPCTL] = USB_ECR_EN | USB_ECR_INTEN | USB_ECR_INTERRUPT | 0x280;
 
-    outq = qopen(128, 0, usb_request_data, nil);
+    outq = qopen(128, 0, nil, nil);
 
     // Enable full speed device.
     USBregs *setregs = (USBregs *)USBCTRL_REGS_SET_BASE;
@@ -331,12 +330,13 @@ usb_ep1_send_data(int bufctl, char *bufaddr, char *src, int len)
     ep1_len -= sent;
 }
 
-void
-usb_write(char *s, int n)
+long
+usb_write(char *s, long n)
 {
     ilock(&in_lock);
     usb_ep1_send_data(USB_EP1_IN_BUFCTL, (char *)USB_DPSRAM_EP1_BUF, s, n);
     iunlock(&in_lock);
+    return n;
 }
 
 #define EP2_BUFSIZE 64
@@ -351,10 +351,10 @@ usb_ready(void)
 }
 
 void
-usb_request_data(void *)
+usb_request_data(int n)
 {
     unsigned int *dpsram = (unsigned int *)USB_DPSRAM_BASE;
-    dpsram[USB_EP2_OUT_BUFCTL] = 64 | usb_pid(2) | USB_BCR_AVAIL;
+    dpsram[USB_EP2_OUT_BUFCTL] = n | usb_pid(2) | USB_BCR_AVAIL;
 }
 
 long
@@ -364,8 +364,8 @@ usb_read(char *a, long n)
     if (qlen(outq) > 0)
         return qconsume(outq, (void *)a, (n > qlen(outq)) ? qlen(outq) : n);
 
-    usb_request_data(nil);
-    return qread(outq, (void *)a, 1);
+    usb_request_data(n);
+    return qread(outq, (void *)a, n);
 }
 
 void usbctrl(void)
@@ -424,7 +424,7 @@ void usbctrl(void)
 
             int len = dpsram[USB_EP2_OUT_BUFCTL] & USB_BCR_LEN_MASK;
             char *ep2_src = (char *)USB_DPSRAM_EP2_BUF;
-            qproduce(outq, (void *)USB_DPSRAM_EP2_BUF, len);
+            qproduce(outq, (void *)ep2_src, len);
         }
     }
 }
